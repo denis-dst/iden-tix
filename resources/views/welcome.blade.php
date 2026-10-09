@@ -165,7 +165,7 @@
             background-color: #ea580c !important;
         }
     </style>
-    <meta name="wago-verification" content="WAGO-C2742A2D">
+    <meta name="wago-verification" content="WAGO-1BE5FB2B">
 </head>
 
 <body class="antialiased bg-[#111118] text-[#e8e4df] min-h-screen">

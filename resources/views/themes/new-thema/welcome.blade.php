@@ -101,7 +101,7 @@
             box-shadow: 0 16px 32px -8px rgba(15, 23, 42, 0.12), 0 4px 12px -2px rgba(15, 23, 42, 0.06);
         }
     </style>
-    <meta name="wago-verification" content="WAGO-C2742A2D">
+    <meta name="wago-verification" content="WAGO-1BE5FB2B">
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-900 flex flex-col antialiased">
 
@@ -695,13 +695,13 @@
                 <div class="space-y-3">
                     <h4 class="text-xs font-black uppercase tracking-widest text-white mb-4">Kontak Usaha</h4>
                     <p class="text-xs text-slate-400 leading-relaxed">
-                        {{ $settings['address'] ?? 'DUSUN MANDAH INDUK 00/001 MANDAH, NATAR, LAMPUNG SELATAN, LAMPUNG 35362' }}
+                        {{ $settings['address'] ?? 'VHEDORA RESIDENCE, PESAWARAN, LAMPUNG.' }}
                     </p>
                     <p class="text-xs text-slate-300 font-bold">
-                        Email: <a href="mailto:{{ $settings['contact_email'] ?? 'virtusunity@gmail.com' }}" class="text-blue-400 hover:underline">{{ $settings['contact_email'] ?? 'virtusunity@gmail.com' }}</a>
+                        Email: <a href="mailto:{{ $settings['contact_email'] ?? 'info@iden-tix.com' }}" class="text-blue-400 hover:underline">{{ $settings['contact_email'] ?? 'info@iden-tix.com' }}</a>
                     </p>
                     <p class="text-xs text-slate-300 font-bold">
-                        WhatsApp: <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $settings['contact_phone'] ?? '083878537818') }}" class="text-emerald-400 hover:underline">{{ $settings['contact_phone'] ?? '083878537818' }}</a>
+                        WhatsApp: <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $settings['contact_phone'] ?? '081389890092') }}" class="text-emerald-400 hover:underline">{{ $settings['contact_phone'] ?? '081389890092' }}</a>
                     </p>
                 </div>
 

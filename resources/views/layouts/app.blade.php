@@ -83,7 +83,7 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
     </style>
-    <meta name="wago-verification" content="WAGO-C2742A2D">
+    <meta name="wago-verification" content="WAGO-1BE5FB2B">
 </head>
 @php
     $shouldHideNav = isset($hideNav) && trim($hideNav->toHtml()) === '1';

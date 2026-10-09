@@ -66,7 +66,7 @@
             background-color: #3b82f6;
         }
     </style>
-    <meta name="wago-verification" content="WAGO-C2742A2D">
+    <meta name="wago-verification" content="WAGO-1BE5FB2B">
 @php
     $emailSetting = $globalEmailEnabled ?? \App\Models\Setting::where('key', 'global_email_notifications_enabled')->value('value');
     $isEmailNotifEnabled = $emailSetting === null || ($emailSetting !== '0' && $emailSetting !== false);

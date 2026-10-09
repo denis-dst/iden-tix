@@ -1,9 +1,9 @@
 @php
-    $st = $settings ?? $global_settings ?? [];
+    $st = $settings ?? $global_settings ?? \App\Models\Setting::pluck('value', 'key')->all();
     $appName = $st['app_name'] ?? 'IdenTix';
-    $email = $st['contact_email'] ?? 'virtusunity@gmail.com';
-    $phone = $st['contact_phone'] ?? '083878537818';
-    $address = $st['address'] ?? 'DUSUN MANDAH INDUK 00/001 MANDAH, NATAR, LAMPUNG SELATAN, LAMPUNG 35362';
+    $email = $st['contact_email'] ?? 'info@iden-tix.com';
+    $phone = $st['contact_phone'] ?? '081389890092';
+    $address = $st['address'] ?? 'VHEDORA RESIDENCE, PESAWARAN, LAMPUNG.';
     $footerText = $st['footer_text'] ?? '&copy; ' . date('Y') . ' IdenTix. All rights reserved.';
 
     // Formatting Phone for WhatsApp Link

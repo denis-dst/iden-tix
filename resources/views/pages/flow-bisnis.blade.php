@@ -1,3 +1,16 @@
+@php
+    $st = $settings ?? $global_settings ?? \App\Models\Setting::pluck('value', 'key')->all();
+    $appName = $st['app_name'] ?? 'IdenTix';
+    $email = $st['contact_email'] ?? 'info@iden-tix.com';
+    $phone = $st['contact_phone'] ?? '081389890092';
+    $address = $st['address'] ?? 'VHEDORA RESIDENCE, PESAWARAN, LAMPUNG.';
+    $appLogo = $st['app_logo'] ?? null;
+
+    $waPhone = preg_replace('/[^0-9]/', '', $phone);
+    if (str_starts_with($waPhone, '0')) {
+        $waPhone = '62' . substr($waPhone, 1);
+    }
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -87,6 +100,7 @@
             }
         }
     </style>
+    <meta name="wago-verification" content="WAGO-1BE5FB2B">
 </head>
 <body class="bg-[#111118] text-[#e8e4df] antialiased flex flex-col min-h-screen bg-gradient-main selection:bg-orange-500/30">
 
@@ -516,11 +530,11 @@
                     <div class="space-y-3.5 text-sm">
                         <div class="flex items-start gap-3">
                             <span class="text-stone-400 font-medium w-36 shrink-0">Nama Platform:</span>
-                            <span class="text-white font-bold">IdenTix</span>
+                            <span class="text-white font-bold">{{ $appName }}</span>
                         </div>
                         <div class="flex items-start gap-3">
                             <span class="text-stone-400 font-medium w-36 shrink-0">Pengelola / Developer:</span>
-                            <span class="text-stone-200">DnD Tech Solutions / Virtus Unity</span>
+                            <span class="text-stone-200">DnD Tech Solutions / InfiniTix</span>
                         </div>
                         <div class="flex items-start gap-3">
                             <span class="text-stone-400 font-medium w-36 shrink-0">Domain Resmi:</span>
@@ -535,15 +549,15 @@
                     <div class="space-y-3.5 text-sm">
                         <div class="flex items-start gap-3">
                             <span class="text-stone-400 font-medium w-36 shrink-0">Email Resmi:</span>
-                            <a href="mailto:virtusunity@gmail.com" class="text-orange-400 font-bold hover:underline">virtusunity@gmail.com</a>
+                            <a href="mailto:{{ $email }}" class="text-orange-400 font-bold hover:underline">{{ $email }}</a>
                         </div>
                         <div class="flex items-start gap-3">
                             <span class="text-stone-400 font-medium w-36 shrink-0">WhatsApp / Telepon:</span>
-                            <a href="https://wa.me/6283878537818" target="_blank" class="text-orange-400 font-bold hover:underline">083878537818</a>
+                            <a href="https://wa.me/{{ $waPhone }}" target="_blank" class="text-orange-400 font-bold hover:underline">{{ $phone }}</a>
                         </div>
                         <div class="flex items-start gap-3">
                             <span class="text-stone-400 font-medium w-36 shrink-0">Alamat Usaha:</span>
-                            <span class="text-stone-300 leading-snug">DUSUN MANDAH INDUK 00/001 MANDAH, NATAR, LAMPUNG SELATAN, LAMPUNG 35362</span>
+                            <span class="text-stone-300 leading-snug">{{ $address }}</span>
                         </div>
                         <div class="flex items-start gap-3">
                             <span class="text-stone-400 font-medium w-36 shrink-0">Jam Operasional:</span>

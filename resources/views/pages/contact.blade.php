@@ -1,9 +1,24 @@
+@php
+    $st = $settings ?? $global_settings ?? \App\Models\Setting::pluck('value', 'key')->all();
+    $appName = $st['app_name'] ?? 'IdenTix';
+    $email = $st['contact_email'] ?? 'info@iden-tix.com';
+    $phone = $st['contact_phone'] ?? '081389890092';
+    $address = $st['address'] ?? 'VHEDORA RESIDENCE, PESAWARAN, LAMPUNG.';
+    $appLogo = $st['app_logo'] ?? null;
+    $metaDescription = $st['meta_description'] ?? 'Layanan Pelanggan & Info Usaha ' . $appName;
+
+    $waPhone = preg_replace('/[^0-9]/', '', $phone);
+    if (str_starts_with($waPhone, '0')) {
+        $waPhone = '62' . substr($waPhone, 1);
+    }
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kontak Usaha - IdenTix</title>
+    <title>Kontak Usaha - {{ $appName }}</title>
+    <meta name="description" content="Layanan kontak dan informasi resmi {{ $appName }}">
     
     <!-- Scripts & Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -66,20 +81,25 @@
         [x-cloak] { display: none !important; }
         ::selection { background: rgba(249, 115, 22, 0.3); color: #ffffff; }
     </style>
+    <meta name="wago-verification" content="WAGO-1BE5FB2B">
 </head>
 <body class="bg-[#111118] text-[#e8e4df] antialiased flex flex-col min-h-screen bg-gradient-main selection:bg-orange-500/30">
 
-    <!-- Header / Navbar (Sticky so it NEVER overlaps header content) -->
+    <!-- Header / Navbar -->
     <header class="sticky top-0 z-50 w-full glass border-b border-white/10 shadow-lg shadow-black/20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
                 <a href="/" class="flex items-center gap-3 group">
-                    <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:scale-105 transition-transform">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                        </svg>
-                    </div>
-                    <span class="text-2xl font-black tracking-tight font-outfit uppercase text-white">Iden<span class="text-orange-400">Tix</span></span>
+                    @if(!empty($appLogo) && file_exists(public_path('storage/' . $appLogo)))
+                        <img src="{{ asset('storage/' . $appLogo) }}" alt="{{ $appName }}" class="h-10 w-auto object-contain">
+                    @else
+                        <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:scale-105 transition-transform">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                            </svg>
+                        </div>
+                        <span class="text-2xl font-black tracking-tight font-outfit uppercase text-white">Iden<span class="text-orange-400">Tix</span></span>
+                    @endif
                 </a>
                 <div class="flex items-center gap-4">
                     <a href="/" class="text-sm font-medium text-stone-200 hover:text-orange-400 transition flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-orange-500/30 hover:bg-white/10">
@@ -91,7 +111,7 @@
         </div>
     </header>
 
-    <!-- Hero Banner (Properly spaced and styled) -->
+    <!-- Hero Banner -->
     <section class="pt-12 pb-12 relative overflow-hidden">
         <div class="absolute inset-0 bg-orange-500/10 blur-[130px] pointer-events-none"></div>
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
@@ -100,7 +120,7 @@
                 Layanan Pelanggan & Info Usaha
             </span>
             <h1 class="text-4xl md:text-5xl font-black font-outfit mb-4 text-white tracking-tight">Hubungi Kami</h1>
-            <p class="text-stone-300 max-w-2xl mx-auto text-base leading-relaxed font-normal">Kami senang dapat membantu Anda. Silakan hubungi tim IdenTix melalui saluran kontak resmi di bawah ini.</p>
+            <p class="text-stone-300 max-w-2xl mx-auto text-base leading-relaxed font-normal">Kami senang dapat membantu Anda. Silakan hubungi tim {{ $appName }} melalui saluran kontak resmi di bawah ini.</p>
         </div>
     </section>
 
@@ -117,9 +137,9 @@
                         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                     </div>
                     <h3 class="text-xs uppercase tracking-wider text-stone-400 font-bold mb-1">Email Support / Bisnis</h3>
-                    <p class="text-xl font-bold text-white mb-2 font-outfit">virtusunity@gmail.com</p>
+                    <p class="text-lg sm:text-xl font-bold text-white mb-2 font-outfit break-all">{{ $email }}</p>
                     <p class="text-stone-300 text-xs mb-4 leading-relaxed">Kirimkan email untuk dukungan tiket, kemitraan event, atau pertanyaan umum.</p>
-                    <a href="mailto:virtusunity@gmail.com" class="inline-flex items-center gap-2 text-xs font-bold text-orange-400 hover:text-orange-300">
+                    <a href="mailto:{{ $email }}" class="inline-flex items-center gap-2 text-xs font-bold text-orange-400 hover:text-orange-300">
                         Kirim Email &rarr;
                     </a>
                 </div>
@@ -130,9 +150,9 @@
                         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                     </div>
                     <h3 class="text-xs uppercase tracking-wider text-stone-400 font-bold mb-1">Telepon / WhatsApp</h3>
-                    <p class="text-xl font-bold text-white mb-2 font-outfit">083878537818</p>
+                    <p class="text-lg sm:text-xl font-bold text-white mb-2 font-outfit">{{ $phone }}</p>
                     <p class="text-stone-300 text-xs mb-4 leading-relaxed">Layanan respon cepat melalui pesan WhatsApp atau panggilan telepon.</p>
-                    <a href="https://wa.me/6283878537818" target="_blank" class="inline-flex items-center gap-2 text-xs font-bold text-orange-400 hover:text-orange-300">
+                    <a href="https://wa.me/{{ $waPhone }}" target="_blank" class="inline-flex items-center gap-2 text-xs font-bold text-orange-400 hover:text-orange-300">
                         Chat WhatsApp &rarr;
                     </a>
                 </div>
@@ -142,13 +162,13 @@
                     <div class="w-14 h-14 rounded-2xl bg-orange-500/15 text-orange-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     </div>
-                    <h3 class="text-xs uppercase tracking-wider text-stone-400 font-bold mb-1">Alamat Bisnis / Usaha</h3>
-                    <p class="text-base font-bold text-white mb-2 font-outfit">IdenTix</p>
-                    <p class="text-stone-300 text-xs leading-relaxed mb-4">DUSUN MANDAH INDUK 00/001 MANDAH, NATAR, LAMPUNG SELATAN, LAMPUNG 35362</p>
-                    <span class="inline-flex items-center gap-1 text-xs text-orange-400 font-semibold">
+                    <h3 class="text-xs uppercase tracking-wider text-stone-400 font-bold mb-1">Alamat Bisnis / Kantor</h3>
+                    <p class="text-base font-bold text-white mb-2 font-outfit">{{ $appName }}</p>
+                    <p class="text-stone-300 text-xs leading-relaxed mb-4">{{ $address }}</p>
+                    <a href="https://maps.google.com/?q={{ urlencode($address) }}" target="_blank" class="inline-flex items-center gap-1 text-xs text-orange-400 hover:text-orange-300 font-semibold">
                         <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></path></svg>
-                        Lampung Selatan, Indonesia
-                    </span>
+                        Buka di Maps &rarr;
+                    </a>
                 </div>
 
             </div>
@@ -159,11 +179,11 @@
                 <!-- Contact Form -->
                 <div class="glass bg-[#16151e]/85 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-[2.5rem] shadow-2xl shadow-black/40">
                     <h3 class="text-2xl font-bold text-white font-outfit mb-2">Kirim Pesan Langsung</h3>
-                    <p class="text-stone-300 text-sm mb-6 leading-relaxed">Isi formulir di bawah ini dan tim IdenTix akan merespons pesan Anda secepatnya.</p>
+                    <p class="text-stone-300 text-sm mb-6 leading-relaxed">Isi formulir di bawah ini dan tim {{ $appName }} akan merespons pesan Anda secepatnya.</p>
                     
                     <div x-show="sent" class="p-6 bg-emerald-500/15 border border-emerald-500/30 rounded-2xl mb-6 text-emerald-300 text-sm flex items-center gap-3">
                         <svg class="w-6 h-6 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span>Terima kasih! Pesan Anda telah terkirim ke tim IdenTix. Kami akan segera menghubungi Anda melalui email.</span>
+                        <span>Terima kasih! Pesan Anda telah terkirim ke tim {{ $appName }}. Kami akan segera menghubungi Anda melalui email.</span>
                     </div>
 
                     <form @submit.prevent="sent = true" x-show="!sent" class="space-y-4">
@@ -199,16 +219,19 @@
                         <h3 class="text-xl font-bold text-white font-outfit mb-4">Profil Usaha Resmi</h3>
                         <dl class="space-y-4 text-sm">
                             <div class="border-b border-white/10 pb-3">
-                                <dt class="text-xs text-stone-400 uppercase font-semibold">Nama Bisnis / Perusahaan</dt>
-                                <dd class="text-white font-bold text-base mt-0.5">IdenTix</dd>
+                                <dt class="text-xs text-stone-400 uppercase font-semibold">Nama Bisnis / Platform</dt>
+                                <dd class="text-white font-bold text-base mt-0.5">{{ $appName }}</dd>
                             </div>
                             <div class="border-b border-white/10 pb-3">
                                 <dt class="text-xs text-stone-400 uppercase font-semibold">Alamat Lengkap</dt>
-                                <dd class="text-stone-200 leading-relaxed mt-0.5">DUSUN MANDAH INDUK 00/001 MANDAH, NATAR, LAMPUNG SELATAN, LAMPUNG 35362</dd>
+                                <dd class="text-stone-200 leading-relaxed mt-0.5">{{ $address }}</dd>
                             </div>
                             <div class="border-b border-white/10 pb-3">
                                 <dt class="text-xs text-stone-400 uppercase font-semibold">Kontak Utama</dt>
-                                <dd class="text-stone-200 mt-0.5">Email: <a href="mailto:virtusunity@gmail.com" class="text-orange-400 hover:underline">virtusunity@gmail.com</a> | WA: <a href="https://wa.me/6283878537818" class="text-orange-400 hover:underline">083878537818</a></dd>
+                                <dd class="text-stone-200 mt-0.5">
+                                    Email: <a href="mailto:{{ $email }}" class="text-orange-400 hover:underline">{{ $email }}</a> 
+                                    | WA: <a href="https://wa.me/{{ $waPhone }}" target="_blank" class="text-orange-400 hover:underline">{{ $phone }}</a>
+                                </dd>
                             </div>
                             <div>
                                 <dt class="text-xs text-stone-400 uppercase font-semibold">Jam Operasional Layanan Support</dt>
@@ -217,16 +240,16 @@
                         </dl>
                     </div>
 
-                    <!-- Location Visual Card / Embed -->
+                    <!-- Location Visual Card -->
                     <div class="glass-card p-6 rounded-[2rem] border border-white/10 bg-gradient-to-br from-white/5 to-transparent">
                         <div class="flex items-center gap-3 mb-3">
                             <div class="w-8 h-8 rounded-lg bg-orange-500/20 text-orange-400 flex items-center justify-center shrink-0">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
                             </div>
-                            <h4 class="font-bold text-white">Lokasi Usaha (Lampung Selatan)</h4>
+                            <h4 class="font-bold text-white">Lokasi Kantor / Usaha</h4>
                         </div>
-                        <p class="text-xs text-stone-300 leading-relaxed mb-4">Alamat usaha tercantum dan resmi terdaftar di Mandah, Natar, Kabupaten Lampung Selatan, Provinsi Lampung 35362.</p>
-                        <a href="https://maps.google.com/?q=Mandah+Natar+Lampung+Selatan" target="_blank" class="w-full py-2.5 glass border border-white/10 hover:border-orange-500/40 text-stone-200 hover:text-orange-400 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition bg-white/5">
+                        <p class="text-xs text-stone-300 leading-relaxed mb-4">{{ $address }}</p>
+                        <a href="https://maps.google.com/?q={{ urlencode($address) }}" target="_blank" class="w-full py-2.5 glass border border-white/10 hover:border-orange-500/40 text-stone-200 hover:text-orange-400 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition bg-white/5">
                             Buka di Google Maps &rarr;
                         </a>
                     </div>

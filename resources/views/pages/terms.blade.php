@@ -1,3 +1,16 @@
+@php
+    $st = $settings ?? $global_settings ?? \App\Models\Setting::pluck('value', 'key')->all();
+    $appName = $st['app_name'] ?? 'IdenTix';
+    $email = $st['contact_email'] ?? 'info@iden-tix.com';
+    $phone = $st['contact_phone'] ?? '081389890092';
+    $address = $st['address'] ?? 'VHEDORA RESIDENCE, PESAWARAN, LAMPUNG.';
+    $appLogo = $st['app_logo'] ?? null;
+
+    $waPhone = preg_replace('/[^0-9]/', '', $phone);
+    if (str_starts_with($waPhone, '0')) {
+        $waPhone = '62' . substr($waPhone, 1);
+    }
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -55,6 +68,7 @@
         }
         ::selection { background: rgba(249, 115, 22, 0.3); color: #ffffff; }
     </style>
+    <meta name="wago-verification" content="WAGO-1BE5FB2B">
 </head>
 <body class="bg-[#111118] text-[#e8e4df] antialiased flex flex-col min-h-screen bg-gradient-main selection:bg-orange-500/30">
 
@@ -202,11 +216,11 @@
                         Layanan Legal & Kontak Resmi
                     </h2>
                     <div class="p-6 md:p-8 rounded-3xl bg-gradient-to-br from-white/5 to-transparent border border-orange-500/30 shadow-lg">
-                        <h4 class="text-lg font-black text-white font-outfit mb-3">IdenTix &ndash; Legal Department</h4>
+                        <h4 class="text-lg font-black text-white font-outfit mb-3">{{ $appName }} &ndash; Legal Department</h4>
                         <div class="space-y-2.5 text-sm">
-                            <p class="text-stone-300"><span class="text-stone-400 font-medium">Email Official:</span> <a href="mailto:virtusunity@gmail.com" class="text-orange-400 font-bold hover:underline ml-1">virtusunity@gmail.com</a></p>
-                            <p class="text-stone-300"><span class="text-stone-400 font-medium">Telepon / WhatsApp:</span> <a href="https://wa.me/6283878537818" target="_blank" class="text-orange-400 font-bold hover:underline ml-1">083878537818</a></p>
-                            <p class="text-stone-300"><span class="text-stone-400 font-medium">Alamat Kantor:</span> <span class="text-stone-200 ml-1">DUSUN MANDAH INDUK 00/001 MANDAH, NATAR, LAMPUNG SELATAN, LAMPUNG 35362</span></p>
+                            <p class="text-stone-300"><span class="text-stone-400 font-medium">Email Official:</span> <a href="mailto:{{ $email }}" class="text-orange-400 font-bold hover:underline ml-1">{{ $email }}</a></p>
+                            <p class="text-stone-300"><span class="text-stone-400 font-medium">Telepon / WhatsApp:</span> <a href="https://wa.me/{{ $waPhone }}" target="_blank" class="text-orange-400 font-bold hover:underline ml-1">{{ $phone }}</a></p>
+                            <p class="text-stone-300"><span class="text-stone-400 font-medium">Alamat Kantor:</span> <span class="text-stone-200 ml-1">{{ $address }}</span></p>
                         </div>
                     </div>
                 </div>

@@ -1,3 +1,11 @@
+@php
+    $st = $settings ?? $global_settings ?? \App\Models\Setting::pluck('value', 'key')->all();
+    $appName = $st['app_name'] ?? 'IdenTix';
+    $email = $st['contact_email'] ?? 'info@iden-tix.com';
+    $phone = $st['contact_phone'] ?? '081389890092';
+    $address = $st['address'] ?? 'VHEDORA RESIDENCE, PESAWARAN, LAMPUNG.';
+    $appLogo = $st['app_logo'] ?? null;
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -66,6 +74,7 @@
         [x-cloak] { display: none !important; }
         ::selection { background: rgba(249, 115, 22, 0.3); color: #ffffff; }
     </style>
+    <meta name="wago-verification" content="WAGO-1BE5FB2B">
 </head>
 <body class="bg-[#111118] text-[#e8e4df] antialiased flex flex-col min-h-screen bg-gradient-main selection:bg-orange-500/30">
 
