@@ -279,10 +279,10 @@
                 <span
                     class="text-xs font-semibold tracking-wider uppercase text-orange-300/80">{{ __('Live your best moments') }}</span>
             </div>
-            <h3 class="text-5xl lg:text-8xl font-extrabold font-outfit mb-8 leading-tight text-white">
+            <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold font-outfit mb-6 leading-tight md:leading-snug text-white max-w-5xl mx-auto">
                 {{ __($settings['hero_title'] ?? 'IdenTix: Connecting Generations Through Every Gate.') }}
-            </h3>
-            <p class="text-xl lg:text-2xl text-stone-300 max-w-2xl mx-auto mb-10 leading-relaxed font-light">
+            </h1>
+            <p class="text-base sm:text-lg lg:text-xl text-stone-300 max-w-2xl mx-auto mb-10 leading-relaxed font-light">
                 {{ __($settings['hero_subtitle'] ?? 'Bridging the gap between Identity and Tickets.') }}
             </p>
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
