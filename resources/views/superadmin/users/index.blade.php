@@ -486,7 +486,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1">Email Akun <span class="text-rose-500">*</span></label>
-                            <input type="email" name="email" required placeholder="petugas@gentix.id" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-orange-500 focus:bg-white focus:outline-none transition">
+                            <input type="email" name="email" required placeholder="petugas@iden-tix.com" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-orange-500 focus:bg-white focus:outline-none transition">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1">No. WhatsApp / HP</label>

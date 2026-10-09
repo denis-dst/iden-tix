@@ -21,17 +21,17 @@ class DatabaseSeeder extends Seeder
 
         // 2. Create Initial Tenant (System Central)
         $centralTenant = Tenant::create([
-            'name' => 'Gentix Central',
-            'slug' => 'gentix-central',
-            'email' => 'admin@gentix.id',
+            'name' => 'IdenTix Central',
+            'slug' => 'identix-central',
+            'email' => 'admin@iden-tix.com',
             'status' => 'active'
         ]);
 
         // 3. Create Superadmin User
         $superadmin = User::create([
-            'name' => 'Super Admin Gentix',
-            'email' => 'superadmin@gentix.id',
-            'password' => Hash::make('gentix123'),
+            'name' => 'Super Admin IdenTix',
+            'email' => 'superadmin@iden-tix.com',
+            'password' => Hash::make('identix123'),
             'tenant_id' => $centralTenant->id,
             'is_active' => true
         ]);

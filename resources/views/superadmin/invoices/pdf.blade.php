@@ -215,8 +215,8 @@
     <div class="header">
         <div>
             @php
-                $nameParts = explode(' ', $settings['app_name'] ?? 'GenTix');
-                $firstPart = $nameParts[0] ?? 'Gen';
+                $nameParts = explode(' ', $settings['app_name'] ?? 'IdenTix');
+                $firstPart = $nameParts[0] ?? 'Iden';
                 $restPart  = implode(' ', array_slice($nameParts, 1));
             @endphp
             <div class="company-name">{{ $firstPart }}<span>{{ $restPart ?: 'Tix' }}</span></div>
@@ -235,7 +235,7 @@
     <div class="parties">
         <div class="party">
             <div class="party-label">Dari</div>
-            <div class="party-name">{{ $settings['app_name'] ?? 'GenTix' }}</div>
+            <div class="party-name">{{ $settings['app_name'] ?? 'IdenTix' }}</div>
             <div class="party-detail">Platform Manajemen Event</div>
             <div class="party-detail">Diterbitkan oleh: {{ $invoice->issuer->name }}</div>
         </div>
@@ -333,7 +333,7 @@
     {{-- Footer --}}
     <div class="footer">
         <div class="footer-left">
-            <strong>{{ $settings['app_name'] ?? 'GenTix' }}</strong><br>
+            <strong>{{ $settings['app_name'] ?? 'IdenTix' }}</strong><br>
             Dokumen ini diterbitkan secara elektronik dan sah tanpa tanda tangan basah.
         </div>
         <div class="footer-right">

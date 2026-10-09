@@ -22,7 +22,7 @@
             <h3 class="text-lg font-black text-slate-800">Model Gelang Tiket (Wristband)</h3>
         </div>
         <p class="text-xs text-slate-500">
-            Pilih model desain gelang tiket: gunakan template sistem bawaan Gentix atau mode kustom dengan unggahan background sendiri.
+            Pilih model desain gelang tiket: gunakan template sistem bawaan IdenTix atau mode kustom dengan unggahan background sendiri.
         </p>
     </div>
 
@@ -44,7 +44,7 @@
                         <span class="text-sm font-black text-slate-800">Mode Default (Sistem)</span>
                     </div>
                     <p class="text-xs text-slate-500 mt-1 leading-relaxed">
-                        Layout standar Gentix dengan Logo Penyelenggara/Liga, Logo Tim, dan Grid Sponsor.
+                        Layout standar IdenTix dengan Logo Penyelenggara/Liga, Logo Tim, dan Grid Sponsor.
                     </p>
                 </div>
             </div>
@@ -99,7 +99,7 @@
         <div class="flex items-center justify-between pb-3 border-b border-slate-200">
             <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-100">Template Sistem Aktif</span>
-                <p class="text-xs text-slate-500 mt-1">Menggunakan tata letak standar Gentix dengan Logo Liga, Klub Tuan Rumah/Tamu, dan Grid Sponsor.</p>
+                <p class="text-xs text-slate-500 mt-1">Menggunakan tata letak standar IdenTix dengan Logo Liga, Klub Tuan Rumah/Tamu, dan Grid Sponsor.</p>
             </div>
         </div>
 

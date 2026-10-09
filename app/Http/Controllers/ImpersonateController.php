@@ -101,7 +101,7 @@ class ImpersonateController extends Controller
             if (!$targetUser) {
                 $targetUser = User::create([
                     'name' => 'Petugas Gate - ' . $tenant->name,
-                    'email' => 'gate_tenant_' . $tenant->id . '_' . time() . '@gentix.id',
+                    'email' => 'gate_tenant_' . $tenant->id . '_' . time() . '@iden-tix.com',
                     'password' => bcrypt('password123'),
                     'tenant_id' => $tenant->id,
                     'is_active' => true,
@@ -115,7 +115,7 @@ class ImpersonateController extends Controller
             if (!$targetUser) {
                 $targetUser = User::create([
                     'name' => 'Petugas Checkin - ' . $tenant->name,
-                    'email' => 'checkin_tenant_' . $tenant->id . '_' . time() . '@gentix.id',
+                    'email' => 'checkin_tenant_' . $tenant->id . '_' . time() . '@iden-tix.com',
                     'password' => bcrypt('password123'),
                     'tenant_id' => $tenant->id,
                     'is_active' => true,

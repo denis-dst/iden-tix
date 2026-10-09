@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Refund Policy (Kebijakan Pengembalian Dana) - Gentix Apps</title>
+    <title>Refund Policy (Kebijakan Pengembalian Dana) - IdenTix</title>
     
     <!-- Scripts & Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,7 +16,7 @@
                         outfit: ['Outfit', 'sans-serif'],
                     },
                     colors: {
-                        gentix: {
+                        identix: {
                             50: '#fff7ed',
                             100: '#ffedd5',
                             200: '#fed7aa',
@@ -68,7 +68,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                         </svg>
                     </div>
-                    <span class="text-2xl font-black tracking-tight font-outfit uppercase text-white">Gentix<span class="text-orange-400">Apps</span></span>
+                    <span class="text-2xl font-black tracking-tight font-outfit uppercase text-white">Iden<span class="text-orange-400">Tix</span></span>
                 </a>
                 <div class="flex items-center gap-4">
                     <a href="/" class="text-sm font-medium text-stone-200 hover:text-orange-400 transition flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-orange-500/30 hover:bg-white/10">
@@ -89,7 +89,7 @@
                 Jaminan Transaksi Aman
             </span>
             <h1 class="text-4xl md:text-5xl font-black font-outfit mb-4 text-white tracking-tight">Refund Policy</h1>
-            <p class="text-stone-300 max-w-2xl mx-auto text-base leading-relaxed font-normal">Panduan dan kebijakan resmi mengenai pengembalian dana (refund) untuk tiket event di Gentix Apps.</p>
+            <p class="text-stone-300 max-w-2xl mx-auto text-base leading-relaxed font-normal">Panduan dan kebijakan resmi mengenai pengembalian dana (refund) untuk tiket event di IdenTix.</p>
         </div>
     </section>
 
@@ -100,7 +100,7 @@
 
                 <!-- Introduction -->
                 <div class="p-6 rounded-2xl bg-orange-500/10 border border-orange-500/25">
-                    <p class="text-stone-200 leading-relaxed text-base">Gentix Apps selalu berupaya menjamin kepuasan, transparansi, dan keamanan bagi seluruh pengguna platform kami. Kebijakan Pengembalian Dana (<strong class="text-white">Refund Policy</strong>) ini mengatur syarat dan tata cara resmi pengajuan pengembalian dana transaksi tiket.</p>
+                    <p class="text-stone-200 leading-relaxed text-base">IdenTix selalu berupaya menjamin kepuasan, transparansi, dan keamanan bagi seluruh pengguna platform kami. Kebijakan Pengembalian Dana (<strong class="text-white">Refund Policy</strong>) ini mengatur syarat dan tata cara resmi pengajuan pengembalian dana transaksi tiket.</p>
                 </div>
 
                 <!-- Section 1 -->
@@ -124,7 +124,7 @@
                         <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-emerald-500/30 transition">
                             <div class="flex items-start gap-3">
                                 <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                    <svg class="w-4 h-4 fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                 </div>
                                 <div>
                                     <h3 class="text-base font-bold text-white mb-1">Pembatalan Resmi Event oleh Penyelenggara (Organizer)</h3>
@@ -136,7 +136,7 @@
                         <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-emerald-500/30 transition">
                             <div class="flex items-start gap-3">
                                 <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                    <svg class="w-4 h-4 fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                 </div>
                                 <div>
                                     <h3 class="text-base font-bold text-white mb-1">Pembayaran Ganda (Overpayment / Double Charge)</h3>
@@ -182,7 +182,7 @@
                     <div class="space-y-3 mt-4">
                         <div class="flex items-start gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/10">
                             <div class="w-7 h-7 rounded-lg bg-orange-500/20 text-orange-400 font-bold text-xs flex items-center justify-center shrink-0">1</div>
-                            <p class="text-stone-200 text-sm leading-relaxed">Kirimkan permohonan ke email resmi <a href="mailto:virtusunity@gmail.com" class="text-orange-400 font-bold hover:underline">virtusunity@gmail.com</a> atau melalui WhatsApp Helpdesk di <a href="https://wa.me/6283878537818" target="_blank" class="text-orange-400 font-bold hover:underline">083878537818</a>.</p>
+                            <p class="text-stone-200 text-sm leading-relaxed">Kirimkan permohonan ke email resmi <a href="mailto:virtusunity@gmail.com" class="text-orange-400 font-bold hover:underline ml-1">virtusunity@gmail.com</a> atau melalui WhatsApp Helpdesk di <a href="https://wa.me/6283878537818" target="_blank" class="text-orange-400 font-bold hover:underline ml-1">083878537818</a>.</p>
                         </div>
                         <div class="flex items-start gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/10">
                             <div class="w-7 h-7 rounded-lg bg-orange-500/20 text-orange-400 font-bold text-xs flex items-center justify-center shrink-0">2</div>
@@ -194,7 +194,7 @@
                         </div>
                         <div class="flex items-start gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/10">
                             <div class="w-7 h-7 rounded-lg bg-orange-500/20 text-orange-400 font-bold text-xs flex items-center justify-center shrink-0">4</div>
-                            <p class="text-stone-200 text-sm leading-relaxed">Tim verifikasi Gentix Apps akan memeriksa keabsahan transaksi dalam kurun waktu <strong class="text-white">2 x 24 jam kerja</strong>.</p>
+                            <p class="text-stone-200 text-sm leading-relaxed">Tim verifikasi IdenTix akan memeriksa keabsahan transaksi dalam kurun waktu <strong class="text-white">2 x 24 jam kerja</strong>.</p>
                         </div>
                         <div class="flex items-start gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/10">
                             <div class="w-7 h-7 rounded-lg bg-orange-500/20 text-orange-400 font-bold text-xs flex items-center justify-center shrink-0">5</div>
@@ -210,7 +210,7 @@
                         Layanan Bantuan & Customer Support
                     </h2>
                     <div class="p-6 md:p-8 rounded-3xl bg-gradient-to-br from-white/5 to-transparent border border-orange-500/30 shadow-lg">
-                        <h4 class="text-lg font-black text-white font-outfit mb-3">Customer Support Refund &ndash; Gentix Apps</h4>
+                        <h4 class="text-lg font-black text-white font-outfit mb-3">Customer Support Refund &ndash; IdenTix</h4>
                         <div class="space-y-2.5 text-sm">
                             <p class="text-stone-300"><span class="text-stone-400 font-medium">Email Bantuan:</span> <a href="mailto:virtusunity@gmail.com" class="text-orange-400 font-bold hover:underline ml-1">virtusunity@gmail.com</a></p>
                             <p class="text-stone-300"><span class="text-stone-400 font-medium">WhatsApp Support:</span> <a href="https://wa.me/6283878537818" target="_blank" class="text-orange-400 font-bold hover:underline ml-1">083878537818</a></p>

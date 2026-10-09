@@ -1,6 +1,6 @@
 {
-    "name": "GenTix Platform",
-    "short_name": "GenTix",
+    "name": "IdenTix Platform",
+    "short_name": "IdenTix",
     "description": "Premium Ticketing Platform for Events and Venues",
     "start_url": "/",
     "display": "standalone",

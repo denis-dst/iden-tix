@@ -26,8 +26,8 @@
                     <div class="rounded-2xl p-6 shadow-xl border border-slate-700 relative overflow-hidden" style="background: linear-gradient(145deg, #090d16 0%, #0f172a 60%, #1e293b 100%); color: #ffffff;">
                         <div class="flex items-center justify-between mb-6">
                             <div class="flex items-center gap-2">
-                                <div class="w-7 h-7 bg-orange-600 rounded-lg flex items-center justify-center font-black text-xs text-white">G</div>
-                                <span class="font-outfit font-black tracking-wider text-sm text-white uppercase">{{ $member->tenant->name ?? 'GENTIX CLUB' }}</span>
+                                <div class="w-7 h-7 bg-orange-600 rounded-lg flex items-center justify-center font-black text-xs text-white">I</div>
+                                <span class="font-outfit font-black tracking-wider text-sm text-white uppercase">{{ $member->tenant->name ?? 'IDENTIX CLUB' }}</span>
                             </div>
                             <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-sm" style="background-color: {{ $member->tier->badge_color ?? '#ea580c' }}; color: #ffffff;">
                                 {{ $member->tier->name ?? 'Free Fan' }}

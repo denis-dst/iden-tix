@@ -12,10 +12,10 @@ class EventSeeder extends Seeder
     public function run(): void
     {
         $tenant = Tenant::updateOrCreate(
-            ['slug' => 'gentix-org'],
+            ['slug' => 'identix-org'],
             [
-                'name' => 'Gentix Organization',
-                'email' => 'contact@gentix.test',
+                'name' => 'IdenTix Organization',
+                'email' => 'contact@iden-tix.com',
                 'status' => 'active',
             ]
         );

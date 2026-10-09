@@ -100,7 +100,7 @@
             <a href="{{ $evoucherUrl }}" class="button">Lihat E-Voucher</a>
         </div>
         <div class="footer">
-            &copy; {{ date('Y') }} GenTix Platform. Semua Hak Dilindungi.<br>
+            &copy; {{ date('Y') }} IdenTix Platform. Semua Hak Dilindungi.<br>
             Email ini dikirim otomatis, mohon tidak membalas email ini.
         </div>
     </div>

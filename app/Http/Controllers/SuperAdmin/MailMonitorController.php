@@ -22,21 +22,21 @@ class MailMonitorController extends Controller
     {
         // Outgoing SMTP Config
         $smtpConfig = [
-            'host'       => config('mail.mailers.smtp.host', 'mail.gentix-apps.com'),
+            'host'       => config('mail.mailers.smtp.host', 'mail.iden-tix.com'),
             'port'       => config('mail.mailers.smtp.port', 465),
             'scheme'     => config('mail.mailers.smtp.scheme', 'smtps'),
-            'username'   => config('mail.mailers.smtp.username', 'no-reply@gentix-apps.com'),
-            'from_email' => config('mail.from.address', 'no-reply@gentix-apps.com'),
-            'from_name'  => config('mail.from.name', 'GenTix Apps'),
+            'username'   => config('mail.mailers.smtp.username', 'no-reply@iden-tix.com'),
+            'from_email' => config('mail.from.address', 'no-reply@iden-tix.com'),
+            'from_name'  => config('mail.from.name', 'IdenTix'),
             'has_password' => !empty(config('mail.mailers.smtp.password')),
         ];
 
         // Incoming IMAP/POP3 Config
         $incomingConfig = [
-            'host'      => 'mail.gentix-apps.com',
+            'host'      => 'mail.iden-tix.com',
             'imap_port' => 993,
             'pop3_port' => 995,
-            'username'  => config('mail.mailers.smtp.username', 'no-reply@gentix-apps.com'),
+            'username'  => config('mail.mailers.smtp.username', 'no-reply@iden-tix.com'),
         ];
 
         $search = $request->input('search');
@@ -76,9 +76,9 @@ class MailMonitorController extends Controller
     public function testIncoming(Request $request)
     {
         $protocol = $request->input('protocol', 'imap');
-        $host     = $request->input('host', 'mail.gentix-apps.com');
+        $host     = $request->input('host', 'mail.iden-tix.com');
         $port     = (int) $request->input('port', $protocol === 'pop3' ? 995 : 993);
-        $username = $request->input('username', config('mail.mailers.smtp.username', 'no-reply@gentix-apps.com'));
+        $username = $request->input('username', config('mail.mailers.smtp.username', 'no-reply@iden-tix.com'));
         $password = $request->input('password') ?: config('mail.mailers.smtp.password', '');
 
         if (empty($password)) {
@@ -98,9 +98,9 @@ class MailMonitorController extends Controller
      */
     public function fetchInbox(Request $request)
     {
-        $host     = $request->input('host', 'mail.gentix-apps.com');
+        $host     = $request->input('host', 'mail.iden-tix.com');
         $port     = (int) $request->input('port', 993);
-        $username = $request->input('username', config('mail.mailers.smtp.username', 'no-reply@gentix-apps.com'));
+        $username = $request->input('username', config('mail.mailers.smtp.username', 'no-reply@iden-tix.com'));
         $password = $request->input('password') ?: config('mail.mailers.smtp.password', '');
         $limit    = (int) $request->input('limit', 20);
 
@@ -122,9 +122,9 @@ class MailMonitorController extends Controller
      */
     public function readMessage(Request $request, $id)
     {
-        $host     = $request->input('host', 'mail.gentix-apps.com');
+        $host     = $request->input('host', 'mail.iden-tix.com');
         $port     = (int) $request->input('port', 993);
-        $username = $request->input('username', config('mail.mailers.smtp.username', 'no-reply@gentix-apps.com'));
+        $username = $request->input('username', config('mail.mailers.smtp.username', 'no-reply@iden-tix.com'));
         $password = $request->input('password') ?: config('mail.mailers.smtp.password', '');
 
         $result = $this->mailboxService->getMessageDetail($host, $port, $username, $password, (int) $id);
@@ -144,8 +144,8 @@ class MailMonitorController extends Controller
         ]);
 
         $toEmail = $request->input('to_email');
-        $subject = $request->input('subject') ?: 'Uji Coba Pengiriman Email GenTix Apps (' . date('d M Y H:i:s') . ')';
-        $body    = $request->input('body') ?: "Halo,\n\nIni adalah email uji coba dari server GenTix Apps untuk memverifikasi bahwa konfigurasi SMTP cPanel (Port 465 SSL) telah aktif dan berfungsi dengan sempurna.\n\nWaktu Kirim: " . date('Y-m-d H:i:s');
+        $subject = $request->input('subject') ?: 'Uji Coba Pengiriman Email IdenTix (' . date('d M Y H:i:s') . ')';
+        $body    = $request->input('body') ?: "Halo,\n\nIni adalah email uji coba dari server IdenTix untuk memverifikasi bahwa konfigurasi SMTP cPanel (Port 465 SSL) telah aktif dan berfungsi dengan sempurna.\n\nWaktu Kirim: " . date('Y-m-d H:i:s');
 
         try {
             Mail::raw($body, function ($message) use ($toEmail, $subject) {

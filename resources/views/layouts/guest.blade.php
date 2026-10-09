@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'GenTix') }} - Authentication</title>
+        <title>{{ config('app.name', 'IdenTix') }} - Authentication</title>
 
         <!-- Fonts (High Performance Non-Blocking Loading) -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,9 +21,9 @@
 
         <style>
             :root {
-            --gentix-50: #fff7ed;
-                --gentix-600: #ea580c;
-                --gentix-700: #c2410c;
+            --identix-50: #fff7ed;
+                --identix-600: #ea580c;
+                --identix-700: #c2410c;
             }
             [x-cloak] { display: none !important; }
             body {
@@ -88,7 +88,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                             </svg>
                         </div>
-                        <span class="text-3xl font-bold tracking-tight font-outfit uppercase">Gen<span class="text-orange-400">Tix</span></span>
+                        <span class="text-3xl font-bold tracking-tight font-outfit uppercase">Iden<span class="text-orange-400">Tix</span></span>
                     </a>
                 </div>
 
@@ -97,7 +97,7 @@
                 </div>
                 
                 <p class="mt-8 text-center text-slate-400 text-sm">
-                    &copy; {{ date('Y') }} GenTix Inc. Connecting Generations.
+                    &copy; {{ date('Y') }} IdenTix. All rights reserved.
                 </p>
             </div>
         </div>

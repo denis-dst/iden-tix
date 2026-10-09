@@ -4,7 +4,7 @@
         <label for="name" class="block font-medium text-sm text-gray-700 mb-1">Organizer Name <span class="text-red-500">*</span></label>
         <input type="text" name="name" id="name" value="{{ old('name', $tenant->name ?? '') }}" 
                class="w-full border-gray-300 focus:border-orange-500 focus:ring-orange-500 rounded-lg shadow-sm text-gray-900" 
-               required placeholder="e.g. Gentix Organization">
+               required placeholder="e.g. IdenTix Organization">
         @error('name')
             <p class="mt-1 text-sm text-red-600 font-medium">{{ $message }}</p>
         @enderror

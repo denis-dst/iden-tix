@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $global_settings['app_name'] ?? 'GenTix' }} SuperAdmin - {{ $title ?? 'Dashboard' }}</title>
+    <title>{{ $global_settings['app_name'] ?? 'IdenTix' }} SuperAdmin - {{ $title ?? 'Dashboard' }}</title>
     <!-- Fonts (High Performance Non-Blocking Loading) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,7 +20,7 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="{{ $global_settings['app_name'] ?? 'GenTix' }}">
+    <meta name="apple-mobile-web-app-title" content="{{ $global_settings['app_name'] ?? 'IdenTix' }}">
     <link rel="apple-touch-icon" href="{{ isset($global_settings['app_icon']) ? asset('storage/' . $global_settings['app_icon']) : '/icons/icon-192x192.png' }}">
     <link rel="icon" type="image/x-icon" href="{{ isset($global_settings['app_favicon']) ? asset('storage/' . $global_settings['app_favicon']) : '/favicon.ico' }}">
     <meta name="theme-color" content="#f97316">

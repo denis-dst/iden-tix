@@ -110,10 +110,10 @@
                     <div class="flex items-center justify-between mb-6">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center font-black text-base text-white shadow-md">
-                                {{ strtoupper(substr($member->tenant->name ?? 'G', 0, 1)) }}
+                                {{ strtoupper(substr($member->tenant->name ?? 'I', 0, 1)) }}
                             </div>
                             <div>
-                                <h4 class="font-outfit font-black tracking-wider text-sm text-white uppercase">{{ $member->tenant->name ?? 'GENTIX CLUB' }}</h4>
+                                <h4 class="font-outfit font-black tracking-wider text-sm text-white uppercase">{{ $member->tenant->name ?? 'IDENTIX CLUB' }}</h4>
                                 <p class="text-[10px] uppercase tracking-widest text-slate-400 font-mono">OFFICIAL MEMBER CARD</p>
                             </div>
                         </div>

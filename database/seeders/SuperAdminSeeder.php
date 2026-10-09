@@ -11,7 +11,7 @@ class SuperAdminSeeder extends Seeder
     public function run(): void
     {
         $user = User::updateOrCreate(
-            ['email' => 'admin@gentix.test'],
+            ['email' => 'admin@iden-tix.com'],
             [
                 'name' => 'Super Admin',
                 'password' => Hash::make('Ngehek599!'),

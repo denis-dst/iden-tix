@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alur Proses Bisnis & Integrasi Pembayaran WAGO Payment ID - Gentix Apps</title>
-    <meta name="description" content="Dokumentasi resmi alur proses bisnis platform ticketing Gentix Apps dan penjelasan integrasi gerbang pembayaran WAGO Payment ID." />
+    <title>Alur Proses Bisnis & Integrasi Pembayaran WAGO Payment ID - IdenTix</title>
+    <meta name="description" content="Dokumentasi resmi alur proses bisnis platform ticketing IdenTix dan penjelasan integrasi gerbang pembayaran WAGO Payment ID." />
 
     <!-- Scripts & Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,7 +18,7 @@
                         outfit: ['Outfit', 'sans-serif'],
                     },
                     colors: {
-                        gentix: {
+                        identix: {
                             50: '#fff7ed',
                             100: '#ffedd5',
                             200: '#fed7aa',
@@ -100,7 +100,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                         </svg>
                     </div>
-                    <span class="text-2xl font-black tracking-tight font-outfit uppercase text-white">Gentix<span class="text-orange-400">Apps</span></span>
+                    <span class="text-2xl font-black tracking-tight font-outfit uppercase text-white">Iden<span class="text-orange-400">Tix</span></span>
                 </a>
                 <div class="flex items-center gap-3 sm:gap-4">
                     <a href="/#events" class="hidden sm:flex text-sm font-medium text-stone-300 hover:text-white transition items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-orange-500/30">
@@ -127,7 +127,7 @@
                 Alur Transaksi & Integrasi <span class="text-orange-400">WAGO Payment ID</span>
             </h1>
             <p class="text-stone-300 max-w-3xl mx-auto text-base sm:text-lg leading-relaxed font-normal">
-                Transparansi alur proses pemesanan tiket digital (E-Voucher) pada platform <strong>Gentix Apps</strong>, peran gerbang pembayaran <strong>WAGO Payment ID (Pay-Engine)</strong>, serta jaminan pengiriman produk digital secara instan dan aman.
+                Transparansi alur proses pemesanan tiket digital (E-Voucher) pada platform <strong>IdenTix</strong>, peran gerbang pembayaran <strong>WAGO Payment ID (Pay-Engine)</strong>, serta jaminan pengiriman produk digital secara instan dan aman.
             </p>
 
             <!-- Quick Badges -->
@@ -152,7 +152,7 @@
     <main class="py-6 pb-24 flex-1">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
 
-            <!-- Section: Profil Model Bisnis Gentix Apps -->
+            <!-- Section: Profil Model Bisnis IdenTix -->
             <div class="glass bg-[#16151e]/90 backdrop-blur-xl border border-white/10 p-6 sm:p-10 rounded-[2.5rem] shadow-2xl shadow-black/40">
                 <div class="flex items-center gap-3 border-b border-white/10 pb-4 mb-6">
                     <div class="w-10 h-10 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center font-black border border-orange-500/30">
@@ -170,10 +170,10 @@
                     <div class="p-5 rounded-2xl bg-white/[0.02] border border-white/5">
                         <h3 class="text-base font-bold text-orange-400 mb-2 flex items-center gap-2">
                             <span class="w-2 h-2 rounded-full bg-orange-400"></span>
-                            Tentang Gentix Apps
+                            Tentang IdenTix
                         </h3>
                         <p class="text-stone-300 text-sm leading-relaxed">
-                            <strong>Gentix Apps</strong> (beroperasi di bawah manajemen DnD Tech Solutions / Virtus Unity) adalah platform digital penyelenggaraan dan penjualan tiket online resmi (<em>e-ticketing</em>) serta penyedia sistem manajemen akses gerbang (<em>event gate management</em>) untuk berbagai acara seperti konser musik, turnamen sepak bola (termasuk Bhayangkara FC), seminar, festival budaya, dan pameran.
+                            <strong>IdenTix</strong> (beroperasi di bawah manajemen DnD Tech Solutions / Virtus Unity) adalah platform digital penyelenggaraan dan penjualan tiket online resmi (<em>e-ticketing</em>) serta penyedia sistem manajemen akses gerbang (<em>event gate management</em>) untuk berbagai acara seperti konser musik, turnamen sepak bola (termasuk Bhayangkara FC), seminar, festival budaya, dan pameran.
                         </p>
                     </div>
 
@@ -212,7 +212,7 @@
                         Di Bagian Flow Bisnis Mana <span class="text-orange-400 underline decoration-orange-400/50">WAGO Digunakan?</span>
                     </h2>
                     <p class="text-stone-300 text-sm sm:text-base leading-relaxed mb-6">
-                        Gentix Apps menggunakan <strong>WAGO Payment ID (Pay-Engine)</strong> sebagai <strong>gerbang pemrosesan pembayaran online resmi</strong> untuk memfasilitasi transaksi aman antara Pembeli dan Penyelenggara Event. WAGO aktif bekerja pada <strong>Tahap 3, 4, dan 5</strong> dalam siklus transaksi:
+                        IdenTix menggunakan <strong>WAGO Payment ID (Pay-Engine)</strong> sebagai <strong>gerbang pemrosesan pembayaran online resmi</strong> untuk memfasilitasi transaksi aman antara Pembeli dan Penyelenggara Event. WAGO aktif bekerja pada <strong>Tahap 3, 4, dan 5</strong> dalam siklus transaksi:
                     </p>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -224,7 +224,7 @@
                             </div>
                             <h4 class="text-sm font-bold text-white mb-2">Pembuatan Sesi Bayar</h4>
                             <p class="text-xs text-stone-300 leading-relaxed">
-                                Saat pembeli klik <em>"Bayar Sekarang"</em>, backend Gentix Apps memanggil API WAGO (<code class="text-orange-300">/api/order</code>) menggunakan APP ID & API Key resmi untuk menghasilkan Order Token dan link Checkout aman.
+                                Saat pembeli klik <em>"Bayar Sekarang"</em>, backend IdenTix memanggil API WAGO (<code class="text-orange-300">/api/order</code>) menggunakan APP ID & API Key resmi untuk menghasilkan Order Token dan link Checkout aman.
                             </p>
                         </div>
 
@@ -248,7 +248,7 @@
                             </div>
                             <h4 class="text-sm font-bold text-white mb-2">Verifikasi Instan 24/7</h4>
                             <p class="text-xs text-stone-300 leading-relaxed">
-                                Sesaat setelah dana diterima, server WAGO mengirim HTTP POST Webhook ke <code class="text-orange-300">/wago/notification</code> dengan signature HMAC-SHA256. Sistem Gentix otomatis mengubah status transaksi menjadi <strong>PAID</strong> tanpa konfirmasi manual.
+                                Sesaat setelah dana diterima, server WAGO mengirim HTTP POST Webhook ke <code class="text-orange-300">/wago/notification</code> dengan signature HMAC-SHA256. Sistem IdenTix otomatis mengubah status transaksi menjadi <strong>PAID</strong> tanpa konfirmasi manual.
                             </p>
                         </div>
                     </div>
@@ -257,7 +257,7 @@
                     <div class="p-4 rounded-2xl bg-white/[0.04] border border-white/10 text-xs text-stone-300 leading-relaxed flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div class="flex items-center gap-2.5">
                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0"></span>
-                            <span><strong>Kepatuhan Transaksi:</strong> Gentix Apps tidak menyimpan data kartu atau kredensial perbankan pelanggan. Semua pemrosesan data keuangan ditangani di lingkungan terenkripsi dan aman milik WAGO Payment ID.</span>
+                            <span><strong>Kepatuhan Transaksi:</strong> IdenTix tidak menyimpan data kartu atau kredensial perbankan pelanggan. Semua pemrosesan data keuangan ditangani di lingkungan terenkripsi dan aman milik WAGO Payment ID.</span>
                         </div>
                         <span class="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-orange-500/15 text-orange-400 border border-orange-500/30 whitespace-nowrap self-start sm:self-auto">
                             Endpoint: /wago/notification
@@ -294,7 +294,7 @@
                                 <span class="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-stone-300 text-xs">Di Sisi Pengguna</span>
                             </div>
                             <p class="text-stone-300 text-sm leading-relaxed">
-                                Calon pembeli menjelajahi katalog acara pada website <strong>gentix-apps.com</strong>. Pengguna memilih event yang diinginkan, melihat deskripsi, jadwal, syarat & ketentuan khusus event, serta memilih kategori tiket (misal: VIP, Regular, Festival, Presale) beserta kuantitas jumlah tiket yang akan dibeli.
+                                Calon pembeli menjelajahi katalog acara pada website <strong>iden-tix.com</strong>. Pengguna memilih event yang diinginkan, melihat deskripsi, jadwal, syarat & ketentuan khusus event, serta memilih kategori tiket (misal: VIP, Regular, Festival, Presale) beserta kuantitas jumlah tiket yang akan dibeli.
                             </p>
                         </div>
                     </div>
@@ -332,8 +332,8 @@
                                 Saat tombol <strong>"Lanjutkan ke Pembayaran"</strong> diklik:
                             </p>
                             <ul class="space-y-1.5 text-xs text-stone-300 list-disc list-inside">
-                                <li>Sistem Gentix Apps membuat invoice transaksi unik dengan format referensi <code class="text-orange-300">TX-XXXXXX</code> dengan status awal <span class="text-amber-400 font-bold">UNPAID / PENDING</span>.</li>
-                                <li>Backend Gentix Apps mengirim payload API ke endpoint <code class="text-orange-300">https://api.wago-id.web.id/api/order</code> berisi order_id, nominal, data pembeli, serta parameter callback_url (<code class="text-orange-300">notifyUrl</code>).</li>
+                                <li>Sistem IdenTix membuat invoice transaksi unik dengan format referensi <code class="text-orange-300">TX-XXXXXX</code> dengan status awal <span class="text-amber-400 font-bold">UNPAID / PENDING</span>.</li>
+                                <li>Backend IdenTix mengirim payload API ke endpoint <code class="text-orange-300">https://api.wago-id.web.id/api/order</code> berisi order_id, nominal, data pembeli, serta parameter callback_url (<code class="text-orange-300">notifyUrl</code>).</li>
                                 <li>WAGO merespons dengan Order Token resmi, dan browser pengguna langsung dialihkan ke portal pembayaran checkout WAGO (<code class="text-orange-300">https://pay.wago-id.web.id/checkout/...</code>).</li>
                             </ul>
                         </div>
@@ -392,9 +392,9 @@
                                 Begitu pembeli berhasil menyelesaikan transfer/pembayaran:
                             </p>
                             <ul class="space-y-1.5 text-xs text-stone-300 list-disc list-inside">
-                                <li>Server WAGO mengirimkan HTTP POST Callback ke webhook endpoint Gentix Apps: <code class="text-orange-300">https://gentix-apps.com/wago/notification</code>.</li>
-                                <li>Sistem Gentix memvalidasi signature HMAC-SHA256 data transaksi dan status pembayaran (<code class="text-orange-300">status: SUCCESS / PAID</code>).</li>
-                                <li>Status transaksi dalam database Gentix Apps seketika diperbarui menjadi <span class="text-emerald-400 font-bold">PAID</span> secara otomatis tanpa perlu intervensi atau upload bukti transfer manual.</li>
+                                <li>Server WAGO mengirimkan HTTP POST Callback ke webhook endpoint IdenTix: <code class="text-orange-300">https://iden-tix.com/wago/notification</code>.</li>
+                                <li>Sistem IdenTix memvalidasi signature HMAC-SHA256 data transaksi dan status pembayaran (<code class="text-orange-300">status: SUCCESS / PAID</code>).</li>
+                                <li>Status transaksi dalam database IdenTix seketika diperbarui menjadi <span class="text-emerald-400 font-bold">PAID</span> secara otomatis tanpa perlu intervensi atau upload bukti transfer manual.</li>
                             </ul>
                         </div>
                     </div>
@@ -442,7 +442,7 @@
                                 <span class="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-stone-300 text-xs">Di Lokasi Acara</span>
                             </div>
                             <p class="text-stone-300 text-sm leading-relaxed">
-                                Pada hari H pelaksanaan acara, pengunjung cukup menunjukkan QR Code tiket pada smartphone mereka kepada petugas tiket (<em>Ranger Gentix</em>) di pintu masuk gate. Petugas memindai QR Code menggunakan sistem scanner Gentix Apps. Tiket langsung tervalidasi secara real-time untuk mencegah duplikasi (1 tiket hanya dapat dipindai 1 kali).
+                                Pada hari H pelaksanaan acara, pengunjung cukup menunjukkan QR Code tiket pada smartphone mereka kepada petugas tiket (<em>Ranger IdenTix</em>) di pintu masuk gate. Petugas memindai QR Code menggunakan sistem scanner IdenTix. Tiket langsung tervalidasi secara real-time untuk mencegah duplikasi (1 tiket hanya dapat dipindai 1 kali).
                             </p>
                         </div>
                     </div>
@@ -491,7 +491,7 @@
                             Bantuan Transaksi
                         </h4>
                         <p class="text-stone-300 text-xs leading-relaxed">
-                            Jika pembeli mengalami kendala seperti email tidak masuk atau salah ketik nomor WhatsApp, tim helpdesk Gentix Apps siap melakukan verifikasi data dan pengiriman ulang E-Voucher dalam 1x24 jam.
+                            Jika pembeli mengalami kendala seperti email tidak masuk atau salah ketik nomor WhatsApp, tim helpdesk IdenTix siap melakukan verifikasi data dan pengiriman ulang E-Voucher dalam 1x24 jam.
                         </p>
                     </div>
                 </div>
@@ -508,7 +508,7 @@
                     </div>
                     <div>
                         <h2 class="text-xl sm:text-2xl font-bold font-outfit text-white">4. Informasi Legalitas Merchant & Layanan Kontak Resmi</h2>
-                        <p class="text-xs sm:text-sm text-stone-400">Data entitas pemilik platform Gentix Apps untuk verifikasi merchant WAGO Payment ID</p>
+                        <p class="text-xs sm:text-sm text-stone-400">Data entitas pemilik platform IdenTix untuk verifikasi merchant WAGO Payment ID</p>
                     </div>
                 </div>
 
@@ -516,7 +516,7 @@
                     <div class="space-y-3.5 text-sm">
                         <div class="flex items-start gap-3">
                             <span class="text-stone-400 font-medium w-36 shrink-0">Nama Platform:</span>
-                            <span class="text-white font-bold">Gentix Apps (GenTix)</span>
+                            <span class="text-white font-bold">IdenTix</span>
                         </div>
                         <div class="flex items-start gap-3">
                             <span class="text-stone-400 font-medium w-36 shrink-0">Pengelola / Developer:</span>
@@ -524,7 +524,7 @@
                         </div>
                         <div class="flex items-start gap-3">
                             <span class="text-stone-400 font-medium w-36 shrink-0">Domain Resmi:</span>
-                            <span class="text-orange-400 font-mono font-bold">gentix-apps.com</span>
+                            <span class="text-orange-400 font-mono font-bold">iden-tix.com</span>
                         </div>
                         <div class="flex items-start gap-3">
                             <span class="text-stone-400 font-medium w-36 shrink-0">Mitra Gateway:</span>

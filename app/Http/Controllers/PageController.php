@@ -70,7 +70,7 @@ class PageController extends Controller
                 'title' => $titles[$slug] ?? ucfirst(str_replace('-', ' ', $slug)),
                 'content' => '
                     <div class="prose prose-invert max-w-none prose-orange">
-                        <p class="text-stone-400 leading-relaxed mb-6">Selamat datang di halaman ' . ($titles[$slug] ?? ucfirst(str_replace('-', ' ', $slug))) . ' Gentix Apps.</p>
+                        <p class="text-stone-400 leading-relaxed mb-6">Selamat datang di halaman ' . ($titles[$slug] ?? ucfirst(str_replace('-', ' ', $slug))) . ' IdenTix.</p>
                     </div>
                 '
             ]

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gentix-cache-v2';
+const CACHE_NAME = 'identix-cache-v2';
 const urlsToCache = [
   '/',
   '/manifest.json',

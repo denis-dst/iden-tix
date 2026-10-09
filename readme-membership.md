@@ -1,12 +1,12 @@
-# Panduan Fitur Membership Klub, Season Pass & Fan CRM Gentix-Apps
+# Panduan Fitur Membership Klub, Season Pass & Fan CRM IdenTix
 
-Dokumentasi lengkap mengenai modul keanggotaan klub sepakbola (multi-tenant), pengelolaan basis suporter (Fan CRM), tiket terusan (Season Pass), sistem poin loyalitas, serta alokasi kuota komunitas (Korwil) pada platform Gentix-Apps.
+Dokumentasi lengkap mengenai modul keanggotaan klub sepakbola (multi-tenant), pengelolaan basis suporter (Fan CRM), tiket terusan (Season Pass), sistem poin loyalitas, serta alokasi kuota komunitas (Korwil) pada platform IdenTix.
 
 ---
 
 ## 1. Ikhtisar & Standar Regulasi
 
-Modul ini mentransformasi platform tiket Gentix-Apps agar dapat digunakan oleh klub sepakbola profesional (tenant) sebagai database suporter terintegrasi, media pemasaran tiket musiman, dan pusat interaksi suporter.
+Modul ini mentransformasi platform tiket IdenTix agar dapat digunakan oleh klub sepakbola profesional (tenant) sebagai database suporter terintegrasi, media pemasaran tiket musiman, dan pusat interaksi suporter.
 
 ### Standar Kepatuhan Single Fan Identity (PSSI / Liga)
 Sistem ini dirancang sesuai prinsip identitas tunggal suporter:

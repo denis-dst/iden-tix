@@ -187,7 +187,7 @@ class GateController extends Controller
                                     'event_id' => $category->event_id,
                                     'ticket_category_id' => $category->id,
                                     'customer_name' => 'Gelang Fisik #' . $wristbandIndex . ' (' . $category->name . ')',
-                                    'customer_email' => 'wristband@gentix-apps.com',
+                                    'customer_email' => 'wristband@iden-tix.com',
                                     'customer_phone' => '-',
                                     'quantity' => 1,
                                     'total_amount' => $category->price ?? 0,

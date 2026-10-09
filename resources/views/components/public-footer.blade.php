@@ -1,10 +1,10 @@
 @php
     $st = $settings ?? $global_settings ?? [];
-    $appName = $st['app_name'] ?? 'Gentix Apps';
+    $appName = $st['app_name'] ?? 'IdenTix';
     $email = $st['contact_email'] ?? 'virtusunity@gmail.com';
     $phone = $st['contact_phone'] ?? '083878537818';
     $address = $st['address'] ?? 'DUSUN MANDAH INDUK 00/001 MANDAH, NATAR, LAMPUNG SELATAN, LAMPUNG 35362';
-    $footerText = $st['footer_text'] ?? '&copy; ' . date('Y') . ' Gentix Apps. All rights reserved.';
+    $footerText = $st['footer_text'] ?? '&copy; ' . date('Y') . ' IdenTix. All rights reserved.';
 
     // Formatting Phone for WhatsApp Link
     $waPhone = preg_replace('/[^0-9]/', '', $phone);
@@ -30,7 +30,7 @@
                             </svg>
                         </div>
                         <span class="text-2xl font-black tracking-tight font-outfit uppercase text-white">
-                            Gentix<span class="text-orange-400">Apps</span>
+                            Iden<span class="text-orange-400">Tix</span>
                         </span>
                     </div>
                 @endif

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kontak Usaha - Gentix Apps</title>
+    <title>Kontak Usaha - IdenTix</title>
     
     <!-- Scripts & Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,7 +17,7 @@
                         outfit: ['Outfit', 'sans-serif'],
                     },
                     colors: {
-                        gentix: {
+                        identix: {
                             50: '#fff7ed',
                             100: '#ffedd5',
                             200: '#fed7aa',
@@ -79,7 +79,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                         </svg>
                     </div>
-                    <span class="text-2xl font-black tracking-tight font-outfit uppercase text-white">Gentix<span class="text-orange-400">Apps</span></span>
+                    <span class="text-2xl font-black tracking-tight font-outfit uppercase text-white">Iden<span class="text-orange-400">Tix</span></span>
                 </a>
                 <div class="flex items-center gap-4">
                     <a href="/" class="text-sm font-medium text-stone-200 hover:text-orange-400 transition flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-orange-500/30 hover:bg-white/10">
@@ -100,7 +100,7 @@
                 Layanan Pelanggan & Info Usaha
             </span>
             <h1 class="text-4xl md:text-5xl font-black font-outfit mb-4 text-white tracking-tight">Hubungi Kami</h1>
-            <p class="text-stone-300 max-w-2xl mx-auto text-base leading-relaxed font-normal">Kami senang dapat membantu Anda. Silakan hubungi tim Gentix Apps melalui saluran kontak resmi di bawah ini.</p>
+            <p class="text-stone-300 max-w-2xl mx-auto text-base leading-relaxed font-normal">Kami senang dapat membantu Anda. Silakan hubungi tim IdenTix melalui saluran kontak resmi di bawah ini.</p>
         </div>
     </section>
 
@@ -143,7 +143,7 @@
                         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     </div>
                     <h3 class="text-xs uppercase tracking-wider text-stone-400 font-bold mb-1">Alamat Bisnis / Usaha</h3>
-                    <p class="text-base font-bold text-white mb-2 font-outfit">Gentix Apps</p>
+                    <p class="text-base font-bold text-white mb-2 font-outfit">IdenTix</p>
                     <p class="text-stone-300 text-xs leading-relaxed mb-4">DUSUN MANDAH INDUK 00/001 MANDAH, NATAR, LAMPUNG SELATAN, LAMPUNG 35362</p>
                     <span class="inline-flex items-center gap-1 text-xs text-orange-400 font-semibold">
                         <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></path></svg>
@@ -159,11 +159,11 @@
                 <!-- Contact Form -->
                 <div class="glass bg-[#16151e]/85 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-[2.5rem] shadow-2xl shadow-black/40">
                     <h3 class="text-2xl font-bold text-white font-outfit mb-2">Kirim Pesan Langsung</h3>
-                    <p class="text-stone-300 text-sm mb-6 leading-relaxed">Isi formulir di bawah ini dan tim Gentix Apps akan merespons pesan Anda secepatnya.</p>
+                    <p class="text-stone-300 text-sm mb-6 leading-relaxed">Isi formulir di bawah ini dan tim IdenTix akan merespons pesan Anda secepatnya.</p>
                     
                     <div x-show="sent" class="p-6 bg-emerald-500/15 border border-emerald-500/30 rounded-2xl mb-6 text-emerald-300 text-sm flex items-center gap-3">
                         <svg class="w-6 h-6 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span>Terima kasih! Pesan Anda telah terkirim ke tim Gentix Apps. Kami akan segera menghubungi Anda melalui email.</span>
+                        <span>Terima kasih! Pesan Anda telah terkirim ke tim IdenTix. Kami akan segera menghubungi Anda melalui email.</span>
                     </div>
 
                     <form @submit.prevent="sent = true" x-show="!sent" class="space-y-4">
@@ -200,7 +200,7 @@
                         <dl class="space-y-4 text-sm">
                             <div class="border-b border-white/10 pb-3">
                                 <dt class="text-xs text-stone-400 uppercase font-semibold">Nama Bisnis / Perusahaan</dt>
-                                <dd class="text-white font-bold text-base mt-0.5">Gentix Apps</dd>
+                                <dd class="text-white font-bold text-base mt-0.5">IdenTix</dd>
                             </div>
                             <div class="border-b border-white/10 pb-3">
                                 <dt class="text-xs text-stone-400 uppercase font-semibold">Alamat Lengkap</dt>

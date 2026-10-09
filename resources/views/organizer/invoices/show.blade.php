@@ -94,7 +94,7 @@
                 <div class="grid grid-cols-2 gap-6">
                     <div>
                         <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Dari</p>
-                        <p class="font-black text-slate-800">{{ $global_settings['app_name'] ?? 'GenTix' }}</p>
+                        <p class="font-black text-slate-800">{{ $global_settings['app_name'] ?? 'IdenTix' }}</p>
                         <p class="text-xs text-slate-500 mt-0.5">Platform Manajemen Event</p>
                     </div>
                     <div>

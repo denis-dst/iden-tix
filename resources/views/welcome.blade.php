@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $settings['app_name'] ?? 'GenTix' }} - {{ $settings['app_tagline'] ?? 'Connecting Generations' }}</title>
+    <title>{{ $settings['app_name'] ?? 'IdenTix' }} - {{ $settings['app_tagline'] ?? 'Connecting Generations' }}</title>
     <meta name="description" content="{{ $settings['meta_description'] ?? '' }}">
 
     <!-- Fonts (High Performance Non-Render-Blocking Loading) -->
@@ -47,7 +47,7 @@
                             outfit: ['"Outfit"', '"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
                         },
                         colors: {
-                            gentix: {
+                            identix: {
                                 50: '#fff7ed',
                                 100: '#ffedd5',
                                 200: '#fed7aa',
@@ -161,11 +161,14 @@
                         </div>
                         <span class="text-2xl font-bold tracking-tight font-outfit uppercase text-white">
                             @php
-                                $appName = $settings['app_name'] ?? 'GenTix';
+                                $appName = $settings['app_name'] ?? 'IdenTix';
                                 if (str_contains($appName, ' ')) {
                                     $parts = explode(' ', $appName, 2);
                                     $first = $parts[0];
                                     $second = $parts[1];
+                                } elseif (str_starts_with(strtolower($appName), 'iden') && strlen($appName) > 4) {
+                                    $first = substr($appName, 0, 4);
+                                    $second = substr($appName, 4);
                                 } elseif (str_starts_with(strtolower($appName), 'gen') && strlen($appName) > 3) {
                                     $first = substr($appName, 0, 3);
                                     $second = substr($appName, 3);
@@ -229,10 +232,10 @@
                 <span class="text-xs font-semibold tracking-wider uppercase text-orange-300/80">{{ __('Live your best moments') }}</span>
             </div>
             <h1 class="text-5xl lg:text-8xl font-extrabold font-outfit mb-8 leading-tight text-white">
-                {{ __($settings['hero_title'] ?? 'GenTix: Connecting Generations Through Every Gate.') }}
+                {{ __($settings['hero_title'] ?? 'IdenTix: Connecting Generations Through Every Gate.') }}
             </h1>
             <p class="text-xl lg:text-2xl text-stone-300 max-w-2xl mx-auto mb-10 leading-relaxed font-light">
-                {{ __($settings['hero_subtitle'] ?? 'Bridging the gap between Generation and Tickets.') }}
+                {{ __($settings['hero_subtitle'] ?? 'Bridging the gap between Identity and Tickets.') }}
             </p>
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <a href="#events" class="w-full sm:w-auto px-10 py-4 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-lg transition-all shadow-xl shadow-orange-500/25">
@@ -367,7 +370,7 @@
                         <span class="text-2xl font-bold font-outfit">04</span>
                     </div>
                     <h3 class="text-xl font-bold mb-3 text-white">{{ __('Get E-Ticket') }}</h3>
-                    <p class="text-stone-400 text-sm font-light">{{ __('Your ticket will be sent to your email and Gentix wallet.') }}</p>
+                    <p class="text-stone-400 text-sm font-light">{{ __('Your ticket will be sent to your email and IdenTix wallet.') }}</p>
                 </div>
             </div>
 
@@ -392,7 +395,7 @@
                         {{ __('Bridging the Generation Gap') }}
                     </h2>
                     <p class="text-stone-400 text-xl font-light leading-relaxed mb-8">
-                        GenTix is a fusion of <span class="text-white font-semibold">Generation</span> and <span class="text-white font-semibold">Tickets</span>. We believe that every event is an opportunity to bring people of all ages together through the power of seamless technology.
+                        IdenTix is a fusion of <span class="text-white font-semibold">Identity</span> and <span class="text-white font-semibold">Tickets</span>. We believe that every event is an opportunity to bring people of all ages together through the power of seamless technology.
                     </p>
                     
                     <div class="space-y-8">
@@ -419,7 +422,7 @@
                             <div>
                                 <h3 class="text-xl font-bold mb-2 text-white">{{ __('Universal Accessibility') }}</h3>
                                 <p class="text-stone-400 text-sm leading-relaxed">
-                                     Whether it's a massive rock concert, a prestigious corporate seminar, or a local cultural festival, GenTix adapts to any event scale and audience, ensuring every gate is a gateway to a new memory.
+                                     Whether it's a massive rock concert, a prestigious corporate seminar, or a local cultural festival, IdenTix adapts to any event scale and audience, ensuring every gate is a gateway to a new memory.
                                 </p>
                             </div>
                         </div>
@@ -431,11 +434,11 @@
                     <div class="glass p-2 rounded-[2.5rem] relative overflow-hidden border border-white/10">
                         <picture>
                             <source srcset="/images/hero.webp" type="image/webp">
-                            <img src="/images/hero.png" alt="GenTix Vision" loading="lazy" decoding="async" width="600" height="400" class="rounded-[2.2rem] w-full h-full object-cover opacity-80 mix-blend-lighten">
+                            <img src="/images/hero.png" alt="IdenTix Vision" loading="lazy" decoding="async" width="600" height="400" class="rounded-[2.2rem] w-full h-full object-cover opacity-80 mix-blend-lighten">
                         </picture>
                         <div class="absolute inset-0 bg-gradient-to-t from-[#13131b] via-transparent to-transparent"></div>
                         <div class="absolute bottom-10 left-10 right-10">
-                            <div class="text-4xl font-bold font-outfit mb-2">GenTix</div>
+                            <div class="text-4xl font-bold font-outfit mb-2">IdenTix</div>
                             <div class="text-orange-400 font-medium italic">"Connecting Generations Through Every Gate"</div>
                         </div>
                     </div>
@@ -474,9 +477,9 @@
                 </div>
                 
                 <div>
-                    <h2 class="text-4xl font-bold font-outfit mb-8 leading-tight text-white">About <span class="text-orange-400">GenTix</span></h2>
+                    <h2 class="text-4xl font-bold font-outfit mb-8 leading-tight text-white">About <span class="text-orange-400">IdenTix</span></h2>
                     <p class="text-lg text-stone-300 font-light mb-8 leading-relaxed">
-                        GenTix is more than just a ticketing platform. We are a bridge between passionate event-goers and the most extraordinary experiences. Founded in 2024, our mission is to make event access seamless, secure, and purely delightful.
+                        IdenTix is more than just a ticketing platform. We are a bridge between passionate event-goers and the most extraordinary experiences. Founded in 2024, our mission is to make event access seamless, secure, and purely delightful.
                     </p>
                     <ul class="space-y-6 mb-10">
                         <li class="flex items-start gap-4">

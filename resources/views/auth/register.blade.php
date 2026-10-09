@@ -26,7 +26,7 @@
 @else
     <div class="mb-8">
         <h2 class="text-3xl font-bold font-outfit text-white mb-2">Create Account</h2>
-        <p class="text-slate-400 font-light">Join the GenTix network as an Event Provider.</p>
+        <p class="text-slate-400 font-light">Join the IdenTix network as an Event Provider.</p>
     </div>
 
     <form method="POST" action="{{ route('register') }}" class="space-y-6">
@@ -81,7 +81,7 @@
         <div class="text-center mt-6">
             <p class="text-sm text-slate-400">
                 Already registered? 
-                <a class="font-bold text-gentix-400 hover:text-gentix-300 transition underline decoration-2 underline-offset-4" href="{{ route('login') }}">
+                <a class="font-bold text-orange-400 hover:text-orange-300 transition underline decoration-2 underline-offset-4" href="{{ route('login') }}">
                     {{ __('Log in here') }}
                 </a>
             </p>

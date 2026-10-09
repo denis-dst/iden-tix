@@ -115,7 +115,7 @@
 
                 <div id="inbox-loading" class="hidden py-12 text-center">
                     <div class="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-                    <p class="text-xs font-black text-slate-800">Menghubungi server IMAP mail.gentix-apps.com:993...</p>
+                    <p class="text-xs font-black text-slate-800">Menghubungi server IMAP mail.iden-tix.com:993...</p>
                 </div>
 
                 <div id="inbox-error" class="hidden p-6 bg-rose-50 border-2 border-rose-200 rounded-2xl text-center space-y-2 mb-6">
@@ -277,12 +277,12 @@
 
                         <div>
                             <label class="block text-xs font-black uppercase text-slate-900 tracking-wider mb-2">Subjek Email</label>
-                            <input type="text" name="subject" value="Tes Koneksi SMTP GenTix Apps" class="w-full text-xs rounded-xl border-2 border-slate-300 text-slate-950 font-bold bg-white px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <input type="text" name="subject" value="Tes Koneksi SMTP IdenTix" class="w-full text-xs rounded-xl border-2 border-slate-300 text-slate-950 font-bold bg-white px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
 
                         <div>
                             <label class="block text-xs font-black uppercase text-slate-900 tracking-wider mb-2">Isi Pesan</label>
-                            <textarea name="body" rows="3" class="w-full text-xs rounded-xl border-2 border-slate-300 text-slate-950 font-bold bg-white px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">Halo, ini adalah pesan uji coba dari sistem GenTix Apps untuk memverifikasi fungsionalitas pengiriman email SMTP cPanel.</textarea>
+                            <textarea name="body" rows="3" class="w-full text-xs rounded-xl border-2 border-slate-300 text-slate-950 font-bold bg-white px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">Halo, ini adalah pesan uji coba dari sistem IdenTix untuk memverifikasi fungsionalitas pengiriman email SMTP cPanel.</textarea>
                         </div>
 
                         <div id="smtp-test-result" class="hidden p-4 rounded-xl text-xs font-black"></div>
@@ -315,13 +315,13 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-black uppercase text-slate-900 tracking-wider mb-2">Host Server</label>
-                                <input type="text" name="host" value="mail.gentix-apps.com" class="w-full text-xs rounded-xl border-2 border-slate-300 text-slate-950 font-bold bg-white px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 font-mono">
+                                <input type="text" name="host" value="mail.iden-tix.com" class="w-full text-xs rounded-xl border-2 border-slate-300 text-slate-950 font-bold bg-white px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 font-mono">
                             </div>
                         </div>
 
                         <div>
                             <label class="block text-xs font-black uppercase text-slate-900 tracking-wider mb-2">Username / Email</label>
-                            <input type="text" name="username" value="no-reply@gentix-apps.com" class="w-full text-xs rounded-xl border-2 border-slate-300 text-slate-950 font-bold bg-white px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 font-mono">
+                            <input type="text" name="username" value="no-reply@iden-tix.com" class="w-full text-xs rounded-xl border-2 border-slate-300 text-slate-950 font-bold bg-white px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 font-mono">
                         </div>
 
                         <div>
@@ -347,17 +347,17 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 text-xs text-slate-900">
                     <div class="bg-white rounded-2xl p-5 sm:p-6 space-y-2.5 border border-slate-300 font-mono shadow-sm">
                         <p class="text-orange-600 font-black uppercase tracking-widest text-xs">Server Masuk (Incoming)</p>
-                        <p><strong class="text-slate-600">Server:</strong> <span class="text-slate-950 font-bold">mail.gentix-apps.com</span></p>
+                        <p><strong class="text-slate-600">Server:</strong> <span class="text-slate-950 font-bold">mail.iden-tix.com</span></p>
                         <p><strong class="text-slate-600">IMAP Port:</strong> <span class="text-slate-950 font-bold">993 (SSL)</span></p>
                         <p><strong class="text-slate-600">POP3 Port:</strong> <span class="text-slate-950 font-bold">995 (SSL)</span></p>
-                        <p><strong class="text-slate-600">Username:</strong> <span class="text-slate-950 font-bold">no-reply@gentix-apps.com</span></p>
+                        <p><strong class="text-slate-600">Username:</strong> <span class="text-slate-950 font-bold">no-reply@iden-tix.com</span></p>
                     </div>
                     <div class="bg-white rounded-2xl p-5 sm:p-6 space-y-2.5 border border-slate-300 font-mono shadow-sm">
                         <p class="text-blue-600 font-black uppercase tracking-widest text-xs">Server Keluar (Outgoing)</p>
-                        <p><strong class="text-slate-600">Server:</strong> <span class="text-slate-950 font-bold">mail.gentix-apps.com</span></p>
+                        <p><strong class="text-slate-600">Server:</strong> <span class="text-slate-950 font-bold">mail.iden-tix.com</span></p>
                         <p><strong class="text-slate-600">SMTP Port:</strong> <span class="text-slate-950 font-bold">465 (SSL / SMTPS)</span></p>
                         <p><strong class="text-slate-600">Alternatif Port:</strong> <span class="text-slate-950 font-bold">587 (TLS / STARTTLS)</span></p>
-                        <p><strong class="text-slate-600">Username:</strong> <span class="text-slate-950 font-bold">no-reply@gentix-apps.com</span></p>
+                        <p><strong class="text-slate-600">Username:</strong> <span class="text-slate-950 font-bold">no-reply@iden-tix.com</span></p>
                     </div>
                 </div>
             </div>

@@ -461,7 +461,7 @@
         $homeLogo = $assetUrl($eventMeta['wristband_home_club_logo'] ?? $tenant?->logo ?? null);
         $awayLogo = $assetUrl($eventMeta['wristband_away_club_logo'] ?? null);
         $sponsorLogos = $eventMeta['wristband_sponsor_logos'] ?? $tenantMeta['wristband_sponsor_logos'] ?? [];
-        $sponsorNames = $eventMeta['wristband_sponsor_names'] ?? $tenantMeta['wristband_sponsor_names'] ?? ['GenTix', 'BRI', 'Super Soccer', 'Adidas', 'Coca Cola', 'Vidio', 'DRX', 'AFG'];
+        $sponsorNames = $eventMeta['wristband_sponsor_names'] ?? $tenantMeta['wristband_sponsor_names'] ?? ['IdenTix', 'BRI', 'Super Soccer', 'Adidas', 'Coca Cola', 'Vidio', 'DRX', 'AFG'];
     @endphp
 
     @foreach($tickets->chunk(15) as $chunk)
@@ -532,7 +532,7 @@
                 @endforeach
             </div>
         @else
-            {{-- Default Mode: Standard Gentix Wristband Layout --}}
+            {{-- Default Mode: Standard IdenTix Wristband Layout --}}
             <div class="wristband">
                 <div class="blank-space"></div>
 

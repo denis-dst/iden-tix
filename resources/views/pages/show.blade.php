@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $page->title }} - Gentix Apps</title>
+    <title>{{ $page->title }} - IdenTix</title>
     
     <!-- Scripts & Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,7 +16,7 @@
                         outfit: ['Outfit', 'sans-serif'],
                     },
                     colors: {
-                        gentix: {
+                        identix: {
                             50: '#fff7ed',
                             100: '#ffedd5',
                             200: '#fed7aa',
@@ -75,7 +75,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                         </svg>
                     </div>
-                    <span class="text-2xl font-black tracking-tight font-outfit uppercase text-white">Gentix<span class="text-orange-400">Apps</span></span>
+                    <span class="text-2xl font-black tracking-tight font-outfit uppercase text-white">Iden<span class="text-orange-400">Tix</span></span>
                 </a>
                 <div class="flex items-center gap-4">
                     <a href="/" class="text-sm font-medium text-stone-200 hover:text-orange-400 transition flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-orange-500/30 hover:bg-white/10">

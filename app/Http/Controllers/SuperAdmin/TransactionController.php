@@ -71,7 +71,7 @@ class TransactionController extends Controller
                 ], 500);
             }
 
-            return back()->with('error', 'Gagal mengirim e-voucher ke ' . $transaction->customer_email . ': Autentikasi SMTP cPanel gagal (535). Pastikan password akun email no-reply@gentix-apps.com di .env/cPanel sudah sesuai.');
+            return back()->with('error', 'Gagal mengirim e-voucher ke ' . $transaction->customer_email . ': Autentikasi SMTP cPanel gagal (535). Pastikan password akun email no-reply@iden-tix.com di .env/cPanel sudah sesuai.');
         }
 
         if (request()->ajax() || request()->wantsJson()) {

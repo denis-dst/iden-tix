@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pertanyaan Umum (FAQ) - Gentix Apps</title>
+    <title>Pertanyaan Umum (FAQ) - IdenTix</title>
     
     <!-- Scripts & Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,7 +17,7 @@
                         outfit: ['Outfit', 'sans-serif'],
                     },
                     colors: {
-                        gentix: {
+                        identix: {
                             50: '#fff7ed',
                             100: '#ffedd5',
                             200: '#fed7aa',
@@ -79,7 +79,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                         </svg>
                     </div>
-                    <span class="text-2xl font-black tracking-tight font-outfit uppercase text-white">Gentix<span class="text-orange-400">Apps</span></span>
+                    <span class="text-2xl font-black tracking-tight font-outfit uppercase text-white">Iden<span class="text-orange-400">Tix</span></span>
                 </a>
                 <div class="flex items-center gap-4">
                     <a href="/" class="text-sm font-medium text-stone-200 hover:text-orange-400 transition flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-orange-500/30 hover:bg-white/10">
@@ -100,7 +100,7 @@
                 Pusat Bantuan & Layanan
             </span>
             <h1 class="text-4xl md:text-5xl font-black font-outfit mb-4 text-white tracking-tight">Pertanyaan Umum (FAQ)</h1>
-            <p class="text-stone-300 max-w-2xl mx-auto text-base leading-relaxed font-normal">Temukan jawaban lengkap dan cepat seputar pemesanan tiket, sistem e-voucher, metode pembayaran, hingga panduan masuk gate event di Gentix Apps.</p>
+            <p class="text-stone-300 max-w-2xl mx-auto text-base leading-relaxed font-normal">Temukan jawaban lengkap dan cepat seputar pemesanan tiket, sistem e-voucher, metode pembayaran, hingga panduan masuk gate event di IdenTix.</p>
         </div>
     </section>
 
@@ -122,16 +122,16 @@
                 <!-- Item 1 -->
                 <div x-show="activeTab === 'all' || activeTab === 'pemesanan'" :class="openFaq === 1 ? 'border-orange-500/50 bg-[#1d1c25]' : 'border-white/10 bg-[#16151e]'" class="glass-card rounded-2xl overflow-hidden transition-all duration-200">
                     <button @click="openFaq = (openFaq === 1 ? null : 1)" class="w-full p-6 text-left flex justify-between items-center gap-4 hover:bg-white/[0.04] transition">
-                        <span class="font-bold text-white text-lg font-outfit">Bagaimana cara membeli tiket di Gentix Apps?</span>
+                        <span class="font-bold text-white text-lg font-outfit">Bagaimana cara membeli tiket di IdenTix?</span>
                         <div :class="openFaq === 1 ? 'bg-orange-500 text-black' : 'bg-orange-500/15 text-orange-400'" class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors">
                             <svg x-show="openFaq !== 1" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                             <svg x-show="openFaq === 1" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"/></svg>
                         </div>
                     </button>
                     <div x-show="openFaq === 1" x-collapse class="px-6 pb-6 text-stone-200 text-sm leading-relaxed border-t border-white/10 pt-4">
-                        <p class="mb-3 text-stone-300">Untuk membeli tiket event di platform Gentix Apps, ikuti langkah-langkah mudah berikut:</p>
+                        <p class="mb-3 text-stone-300">Untuk membeli tiket event di platform IdenTix, ikuti langkah-langkah mudah berikut:</p>
                         <ol class="list-decimal list-inside space-y-2 text-stone-200">
-                            <li>Pilih event yang ingin Anda hadiri dari daftar event di beranda Gentix Apps.</li>
+                            <li>Pilih event yang ingin Anda hadiri dari daftar event di beranda IdenTix.</li>
                             <li>Tentukan jenis kategori tiket dan jumlah tiket yang Anda inginkan.</li>
                             <li>Isi data pemesan (<strong class="text-white">Nama Lengkap, Email, dan No. WhatsApp</strong>).</li>
                             <li>Pilih metode pembayaran yang tersedia (<strong class="text-white">Virtual Account, QRIS, E-Wallet, atau Kartu Kredit</strong>).</li>
@@ -150,7 +150,7 @@
                         </div>
                     </button>
                     <div x-show="openFaq === 2" x-collapse class="px-6 pb-6 text-stone-200 text-sm leading-relaxed border-t border-white/10 pt-4">
-                        <p class="mb-3 text-stone-300">Gentix Apps bekerjasama dengan payment gateway resmi untuk menyediakan pilihan metode pembayaran yang instan, aman, dan terverifikasi otomatis:</p>
+                        <p class="mb-3 text-stone-300">IdenTix bekerjasama dengan payment gateway resmi untuk menyediakan pilihan metode pembayaran yang instan, aman, dan terverifikasi otomatis:</p>
                         <ul class="list-disc list-inside space-y-2 text-stone-200">
                             <li><strong class="text-white">QRIS:</strong> Scan real-time menggunakan GoPay, OVO, DANA, ShopeePay, LinkAja, BCA Mobile, Livin Mandiri, BRImo, atau semua aplikasi perbankan berstandar QRIS.</li>
                             <li><strong class="text-white">Virtual Account Bank:</strong> BCA, Bank Mandiri, BNI, BRI, Permata Bank, dan jaringan transfer antarbank.</li>
@@ -183,7 +183,7 @@
                         </div>
                     </button>
                     <div x-show="openFaq === 4" x-collapse class="px-6 pb-6 text-stone-200 text-sm leading-relaxed border-t border-white/10 pt-4">
-                        <p><strong class="text-orange-400">Tidak perlu dicetak!</strong> Gentix Apps sepenuhnya mendukung sistem paperless yang ramah lingkungan. Cukup tunjukkan layar QR Code pada smartphone Anda kepada kru gate/petugas check-in di venue event untuk dipindai.</p>
+                        <p><strong class="text-orange-400">Tidak perlu dicetak!</strong> IdenTix sepenuhnya mendukung sistem paperless yang ramah lingkungan. Cukup tunjukkan layar QR Code pada smartphone Anda kepada kru gate/petugas check-in di venue event untuk dipindai.</p>
                     </div>
                 </div>
 
@@ -208,7 +208,7 @@
                 <div>
                     <span class="px-3 py-1 rounded-lg text-[11px] font-extrabold uppercase tracking-wider bg-orange-500/20 text-orange-300 border border-orange-500/30 inline-block mb-2">Pusat Layanan</span>
                     <h3 class="text-2xl font-extrabold text-white font-outfit mb-2">Masih memiliki pertanyaan lain?</h3>
-                    <p class="text-stone-300 text-sm max-w-lg leading-relaxed">Tim dukungan Gentix Apps siap membantu Anda menjawab segala kendala dan pertanyaan melalui saluran resmi kami.</p>
+                    <p class="text-stone-300 text-sm max-w-lg leading-relaxed">Tim dukungan IdenTix siap membantu Anda menjawab segala kendala dan pertanyaan melalui saluran resmi kami.</p>
                 </div>
                 <a href="{{ route('contact') }}" class="px-7 py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-black font-black uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-orange-500/25 whitespace-nowrap hover:scale-105">Hubungi Kami &rarr;</a>
             </div>

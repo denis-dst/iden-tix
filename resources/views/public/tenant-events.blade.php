@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $tenant->name }} - Daftar Tiket & Event Resmi | {{ $settings['app_name'] ?? 'GenTix' }}</title>
-    <meta name="description" content="Temukan dan beli tiket resmi untuk berbagai event, pertunjukan, dan pertandingan yang diselenggarakan oleh {{ $tenant->name }} di {{ $settings['app_name'] ?? 'GenTix' }}.">
+    <title>{{ $tenant->name }} - Daftar Tiket & Event Resmi | {{ $settings['app_name'] ?? 'IdenTix' }}</title>
+    <meta name="description" content="Temukan dan beli tiket resmi untuk berbagai event, pertunjukan, dan pertandingan yang diselenggarakan oleh {{ $tenant->name }} di {{ $settings['app_name'] ?? 'IdenTix' }}.">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -46,7 +46,7 @@
                             outfit: ['"Outfit"', '"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
                         },
                         colors: {
-                            gentix: {
+                            identix: {
                                 50: '#fff7ed',
                                 100: '#ffedd5',
                                 200: '#fed7aa',
@@ -154,7 +154,7 @@
               if (navigator.share) {
                   navigator.share({
                       title: '{{ addslashes($tenant->name) }} - Event & Tiket Resmi',
-                      text: 'Daftar tiket resmi yang dijual oleh {{ addslashes($tenant->name) }} di GenTix',
+                      text: 'Daftar tiket resmi yang dijual oleh {{ addslashes($tenant->name) }} di IdenTix',
                       url: window.location.href,
                   }).catch(() => {});
               } else {
@@ -189,7 +189,7 @@
                             $webpLogo = preg_replace('/\.(png|jpe?g)$/i', '.webp', $logoPath);
                             $finalLogo = file_exists(public_path('storage/' . $webpLogo)) ? asset('storage/' . $webpLogo) : asset('storage/' . $logoPath);
                         @endphp
-                        <img src="{{ $finalLogo }}" alt="{{ $settings['app_name'] ?? 'GenTix' }}" width="140" height="36" class="h-9 w-auto object-contain">
+                        <img src="{{ $finalLogo }}" alt="{{ $settings['app_name'] ?? 'IdenTix' }}" width="140" height="36" class="h-9 w-auto object-contain">
                     @else
                         <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:scale-105 transition-transform">
                             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,7 +197,7 @@
                             </svg>
                         </div>
                         <span class="text-xl font-bold tracking-tight font-outfit uppercase text-white">
-                            {{ $settings['app_name'] ?? 'GenTix' }}
+                            {{ $settings['app_name'] ?? 'IdenTix' }}
                         </span>
                     @endif
                 </a>
@@ -597,7 +597,7 @@
                             @endif
                             <a href="{{ url('/') }}" 
                                class="min-h-[44px] px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs uppercase tracking-wider transition flex items-center">
-                                Jelajahi Event Lainnya di GenTix
+                                Jelajahi Event Lainnya di IdenTix
                             </a>
                         </div>
                     @else
@@ -622,7 +622,7 @@
     <footer class="mt-auto border-t border-white/5 bg-[#080c14] py-10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-slate-400">
             <div class="flex items-center gap-3">
-                <span class="font-bold text-white uppercase tracking-wider font-outfit">{{ $settings['app_name'] ?? 'GenTix' }}</span>
+                <span class="font-bold text-white uppercase tracking-wider font-outfit">{{ $settings['app_name'] ?? 'IdenTix' }}</span>
                 <span>&bull;</span>
                 <span>Halaman Resmi Event {{ $tenant->name }}</span>
             </div>
@@ -634,7 +634,7 @@
             </div>
 
             <div class="text-slate-400">
-                &copy; {{ date('Y') }} {{ $settings['app_name'] ?? 'GenTix' }}. All rights reserved.
+                &copy; {{ date('Y') }} {{ $settings['app_name'] ?? 'IdenTix' }}. All rights reserved.
             </div>
         </div>
     </footer>

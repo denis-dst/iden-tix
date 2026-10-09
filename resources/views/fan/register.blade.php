@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pendaftaran Keanggotaan Suporter {{ $tenant->name }} - GenTix</title>
+    <title>Pendaftaran Keanggotaan Suporter {{ $tenant->name }} - IdenTix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -134,7 +134,7 @@
 
         <!-- Footer Notice -->
         <p class="text-xs text-slate-500 text-center font-medium">
-            Platform Manajemen Tiket & Komunitas Klub Sepakbola GenTix Apps
+            Platform Manajemen Tiket & Komunitas Klub Sepakbola IdenTix
         </p>
     </div>
 

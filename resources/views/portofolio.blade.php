@@ -659,20 +659,20 @@
                         <div class="tag">SaaS Pendidikan</div>
                         <h3>SekolahKu Apps</h3>
                         <p>Platform manajemen sekolah terpadu: E-Rapor, Keuangan BOSP, Presensi, SPP, dan pelaporan.</p>
-                        <a class="link" href="https://gentix-apps.com/sekolahku" target="_blank" rel="noopener">Lihat Demo &rarr;</a>
+                        <a class="link" href="https://iden-tix.com/sekolahku" target="_blank" rel="noopener">Lihat Demo &rarr;</a>
                     </div>
                 </div>
 
                 <!-- Card 6 -->
                 <div class="card">
                     <div class="thumb">
-                        <img src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=600&q=75" alt="Gentix" width="600" height="375" loading="lazy" decoding="async">
+                        <img src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=600&q=75" alt="IdenTix" width="600" height="375" loading="lazy" decoding="async">
                     </div>
                     <div class="card-body">
                         <div class="tag">Event Ticketing</div>
                         <h3>Portal Ticketing Event</h3>
                         <p>Sistem ticketing event online dengan QR Code, manajemen event, pembayaran, dan laporan penjualan.</p>
-                        <a class="link" href="https://gentix-apps.com/" target="_blank" rel="noopener">gentix-apps.com &rarr;</a>
+                        <a class="link" href="https://iden-tix.com/" target="_blank" rel="noopener">iden-tix.com &rarr;</a>
                     </div>
                 </div>
             </div>
@@ -703,7 +703,7 @@
                 </ul>
 
                 <div style="margin-top:28px">
-                    <a href="https://gentix-apps.com/sekolahku" target="_blank" rel="noopener" class="btn btn-primary">Lihat Project</a>
+                    <a href="https://iden-tix.com/sekolahku" target="_blank" rel="noopener" class="btn btn-primary">Lihat Project</a>
                 </div>
             </div>
         </div>
