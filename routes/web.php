@@ -8,17 +8,22 @@ use App\Models\Setting;
 use App\Http\Controllers\PublicEventController;
 
 Route::get('/', function () {
-    $events = Event::with('ticketCategories')
+    $activeTheme = \App\Models\Setting::get('active_theme', 'default');
+
+    $events = Event::with(['ticketCategories', 'tenant'])
         ->where('status', 'published')
         ->orderBy('event_start_date', 'asc')
-        ->take(6)
         ->get();
     
     $settings = \Illuminate\Support\Facades\Cache::remember('public_settings_map', 3600, function () {
         return \App\Models\Setting::pluck('value', 'key')->toArray();
     });
 
-    return view('welcome', compact('events', 'settings'));
+    if ($activeTheme === 'new-thema') {
+        return view('themes.new-thema.welcome', compact('events', 'settings', 'activeTheme'));
+    }
+
+    return view('welcome', compact('events', 'settings', 'activeTheme'));
 });
 
 Route::get('/event/{slug}', [PublicEventController::class, 'show'])->name('events.show');
@@ -111,6 +116,7 @@ Route::middleware(['auth', 'role:Superadmin'])->prefix('superadmin')->name('supe
     Route::get('reports/export-excel', [App\Http\Controllers\SuperAdmin\ReportController::class, 'exportExcel'])->name('reports.export-excel');
     Route::get('settings', [App\Http\Controllers\SuperAdmin\SettingController::class, 'index'])->name('settings.index');
     Route::post('settings', [App\Http\Controllers\SuperAdmin\SettingController::class, 'update'])->name('settings.update');
+    Route::post('settings/theme-switch', [App\Http\Controllers\SuperAdmin\SettingController::class, 'switchTheme'])->name('settings.theme-switch');
 
     // Mail Monitor (Incoming IMAP/POP3 & Outgoing SMTP)
     Route::get('mail', [App\Http\Controllers\SuperAdmin\MailMonitorController::class, 'index'])->name('mail.index');

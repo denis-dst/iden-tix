@@ -31,6 +31,7 @@ class SettingSeeder extends Seeder
             ['key' => 'app_favicon', 'value' => null, 'group' => 'appearance'],
             ['key' => 'app_icon', 'value' => null, 'group' => 'appearance'],
             ['key' => 'wristband_league_logo', 'value' => null, 'group' => 'appearance'],
+            ['key' => 'active_theme', 'value' => 'default', 'group' => 'appearance'],
             ['key' => 'footer_text', 'value' => '&copy; 2026 IdenTix. All rights reserved.', 'group' => 'general'],
         ];
 

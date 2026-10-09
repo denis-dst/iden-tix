@@ -156,7 +156,7 @@
 
         <!-- Content Area -->
         <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
-            @if(!$shouldHideNav && !auth()->user()->hasRole('Petugas Gate'))
+            @if(!$shouldHideNav && !auth()->user()?->hasRole('Petugas Gate'))
                 <!-- Desktop Header -->
                 <header class="hidden lg:flex h-16 bg-white border-b border-slate-200 items-center justify-between px-8 shrink-0">
                     <h1 class="text-lg font-black text-slate-800 font-outfit">{{ $title ?? 'Dashboard' }}</h1>
@@ -177,11 +177,11 @@
                             @endphp
                             {{ $firstPart }}<span class="text-orange-500">{{ $secondPart }}</span>
                         @else
-                            Gen<span class="text-orange-500">Tix</span>
+                            Iden<span class="text-orange-500">Tix</span>
                         @endif
                     </span>
                     <div class="w-10 h-10 rounded-lg bg-orange-500 text-white flex items-center justify-center font-bold">
-                        {{ substr(Auth::user()->name, 0, 1) }}
+                        {{ substr(Auth::user()?->name ?? 'U', 0, 1) }}
                     </div>
                 </header>
             @endif

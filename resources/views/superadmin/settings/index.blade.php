@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="title">Pengaturan Sistem</x-slot>
 
-    <div class="max-w-6xl mx-auto" x-data="{ activeTab: 'general' }">
+    <div class="max-w-6xl mx-auto" x-data="{ activeTab: new URLSearchParams(window.location.search).get('tab') || 'theme' }">
         @if(session('success'))
             <div class="mb-6 flex items-center gap-3 px-4 py-3 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-2xl text-sm font-bold shadow-sm animate-fade-in-down">
                 <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
@@ -9,8 +9,14 @@
             </div>
         @endif
 
-        <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/60 overflow-hidden border border-slate-100">
+        <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/60 overflow-hidden border border-slate-100 mb-8">
             <div class="flex border-b border-slate-100 overflow-x-auto custom-scrollbar">
+                <button @click="activeTab = 'theme'" :class="activeTab === 'theme' ? 'border-blue-600 text-blue-600 bg-blue-50/40' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'" class="flex-1 min-w-[140px] px-6 py-4 text-sm font-bold border-b-2 transition-all duration-200">
+                    <div class="flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>
+                        Tema Frontend
+                    </div>
+                </button>
                 <button @click="activeTab = 'general'" :class="activeTab === 'general' ? 'border-orange-500 text-orange-600 bg-orange-50/30' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'" class="flex-1 min-w-[120px] px-6 py-4 text-sm font-bold border-b-2 transition-all duration-200">
                     <div class="flex items-center justify-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -20,7 +26,7 @@
                 <button @click="activeTab = 'appearance'" :class="activeTab === 'appearance' ? 'border-orange-500 text-orange-600 bg-orange-50/30' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'" class="flex-1 min-w-[120px] px-6 py-4 text-sm font-bold border-b-2 transition-all duration-200">
                     <div class="flex items-center justify-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
-                        Tampilan
+                        Identitas & Logo
                     </div>
                 </button>
                 <button @click="activeTab = 'social'" :class="activeTab === 'social' ? 'border-orange-500 text-orange-600 bg-orange-50/30' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'" class="flex-1 min-w-[120px] px-6 py-4 text-sm font-bold border-b-2 transition-all duration-200">
@@ -31,7 +37,174 @@
                 </button>
             </div>
 
-            <form action="{{ route('superadmin.settings.update') }}" method="POST" enctype="multipart/form-data">
+            <!-- TAB 1: THEME SELECTOR & SWITCHER -->
+            <div x-show="activeTab === 'theme'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-100 transform translate-y-0" class="p-8">
+                <div class="mb-8">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-base font-black text-slate-900 uppercase tracking-wider">Pilih Tema Frontend Aktif</h3>
+                            <p class="text-xs text-slate-500 mt-1">Tentukan desain tampilan halaman beranda (landing page) yang aktif untuk seluruh pengunjung website.</p>
+                        </div>
+                        <a href="{{ url('/') }}" target="_blank" class="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
+                            <span>Buka Frontend</span>
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    
+                    <!-- THEME 1: DEFAULT / TEMA UTAMA -->
+                    <div class="rounded-3xl border-2 {{ ($activeTheme ?? 'default') === 'default' ? 'border-orange-500 bg-orange-50/20 shadow-xl shadow-orange-500/10 ring-4 ring-orange-500/10' : 'border-slate-200 bg-white hover:border-slate-300' }} p-6 flex flex-col justify-between transition-all">
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full {{ ($activeTheme ?? 'default') === 'default' ? 'bg-orange-500 animate-pulse' : 'bg-slate-300' }}"></span>
+                                    <h4 class="text-base font-black text-slate-900">Tema Utama (Default Classic)</h4>
+                                </div>
+                                @if(($activeTheme ?? 'default') === 'default')
+                                    <span class="bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border border-emerald-300 flex items-center gap-1">
+                                        <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        SEDANG AKTIF
+                                    </span>
+                                @else
+                                    <span class="bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+                                        TIDAK AKTIF
+                                    </span>
+                                @endif
+                            </div>
+
+                            <!-- Visual Mockup Card -->
+                            <div class="w-full h-44 rounded-2xl bg-[#111118] border border-white/10 p-4 mb-4 flex flex-col justify-between overflow-hidden relative shadow-inner">
+                                <div class="flex items-center justify-between border-b border-white/10 pb-2">
+                                    <span class="text-xs font-black text-white font-mono">Iden<span class="text-orange-400">Tix</span></span>
+                                    <div class="flex gap-2">
+                                        <span class="w-8 h-2 bg-white/20 rounded"></span>
+                                        <span class="w-8 h-2 bg-white/20 rounded"></span>
+                                    </div>
+                                </div>
+                                <div class="space-y-1.5 my-auto">
+                                    <span class="text-[9px] font-bold text-orange-400 uppercase tracking-widest block">Live Moments</span>
+                                    <span class="text-xs font-black text-white block leading-tight">Connecting Generations Through Every Gate</span>
+                                    <div class="flex gap-2 pt-1">
+                                        <span class="px-2 py-0.5 rounded bg-orange-500 text-[8px] font-bold text-white">Explore Events</span>
+                                        <span class="px-2 py-0.5 rounded bg-white/10 text-[8px] font-bold text-slate-300">How it Works</span>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div class="bg-white/5 border border-white/5 rounded p-1.5 text-[8px] text-slate-400">Concert Fest</div>
+                                    <div class="bg-white/5 border border-white/5 rounded p-1.5 text-[8px] text-slate-400">Match Day</div>
+                                    <div class="bg-white/5 border border-white/5 rounded p-1.5 text-[8px] text-slate-400">Seminar</div>
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-slate-600 leading-relaxed mb-4">
+                                Tampilan dark-glassmorphism khas IdenTix dengan aksen oranye cyber, hero background sinematik, diagram alur 4 langkah interaktif, dan kartu event bernuansa modern dark mode.
+                            </p>
+
+                            <div class="flex flex-wrap gap-1.5 mb-6">
+                                <span class="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-[10px] font-bold">Dark Glassmorphism</span>
+                                <span class="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-[10px] font-bold">Aksen Cyber Orange</span>
+                                <span class="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-[10px] font-bold">Original IdenTix</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            @if(($activeTheme ?? 'default') === 'default')
+                                <button type="button" disabled class="w-full py-3.5 px-4 bg-emerald-600 text-white font-black text-xs uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 cursor-default shadow-md shadow-emerald-600/20">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    Tema Ini Sedang Digunakan
+                                </button>
+                            @else
+                                <form action="{{ route('superadmin.settings.theme-switch') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="theme" value="default">
+                                    <button type="submit" class="w-full py-3.5 px-4 bg-slate-900 hover:bg-black text-white font-black text-xs uppercase tracking-wider rounded-2xl transition shadow-lg hover:-translate-y-0.5">
+                                        Aktifkan Tema Utama (Default)
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- THEME 2: NEW-THEMA / TIKETMART STYLE -->
+                    <div class="rounded-3xl border-2 {{ ($activeTheme ?? 'default') === 'new-thema' ? 'border-blue-600 bg-blue-50/20 shadow-xl shadow-blue-500/10 ring-4 ring-blue-500/10' : 'border-slate-200 bg-white hover:border-slate-300' }} p-6 flex flex-col justify-between transition-all">
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full {{ ($activeTheme ?? 'default') === 'new-thema' ? 'bg-blue-600 animate-pulse' : 'bg-slate-300' }}"></span>
+                                    <h4 class="text-base font-black text-slate-900">New Thema (TiketMart Style)</h4>
+                                </div>
+                                @if(($activeTheme ?? 'default') === 'new-thema')
+                                    <span class="bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border border-emerald-300 flex items-center gap-1">
+                                        <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        SEDANG AKTIF
+                                    </span>
+                                @else
+                                    <span class="bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+                                        TIDAK AKTIF
+                                    </span>
+                                @endif
+                            </div>
+
+                            <!-- Visual Mockup Card -->
+                            <div class="w-full h-44 rounded-2xl bg-slate-50 border border-slate-200 p-4 mb-4 flex flex-col justify-between overflow-hidden relative shadow-inner">
+                                <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                                    <span class="text-xs font-black text-slate-900">Iden<span class="text-blue-600">Tix</span></span>
+                                    <div class="flex gap-1.5 items-center">
+                                        <span class="w-16 h-4 bg-slate-200 rounded-full"></span>
+                                        <span class="w-10 h-4 bg-blue-600 rounded-lg"></span>
+                                    </div>
+                                </div>
+                                <div class="bg-blue-900 rounded-xl p-2.5 text-white my-auto flex justify-between items-center shadow-xs">
+                                    <div>
+                                        <span class="text-[8px] bg-orange-500 px-1.5 py-0.5 rounded font-bold uppercase">Unggulan</span>
+                                        <span class="text-[10px] font-black block mt-0.5">Konser Musik & Festival Akbar</span>
+                                    </div>
+                                    <span class="px-2 py-1 bg-white/20 rounded text-[8px] font-bold">Beli Tiket</span>
+                                </div>
+                                <div class="flex gap-1.5">
+                                    <span class="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[8px] font-bold">Semua</span>
+                                    <span class="px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600 text-[8px] font-bold">Musik</span>
+                                    <span class="px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600 text-[8px] font-bold">Olahraga</span>
+                                    <span class="px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600 text-[8px] font-bold">Festival</span>
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-slate-600 leading-relaxed mb-4">
+                                Tampilan modern clean & bright terinspirasi dari portal tiket TiketMart.com. Menampilkan banner slider interaktif, pill filter kategori instan, kartu event informatif, dan bagian keunggulan bisnis.
+                            </p>
+
+                            <div class="flex flex-wrap gap-1.5 mb-6">
+                                <span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-bold">Clean Light Mode</span>
+                                <span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-bold">TiketMart Style</span>
+                                <span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-bold">Banner Carousel</span>
+                                <span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-bold">Pills Filter</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            @if(($activeTheme ?? 'default') === 'new-thema')
+                                <button type="button" disabled class="w-full py-3.5 px-4 bg-emerald-600 text-white font-black text-xs uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 cursor-default shadow-md shadow-emerald-600/20">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    Tema Ini Sedang Digunakan
+                                </button>
+                            @else
+                                <form action="{{ route('superadmin.settings.theme-switch') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="theme" value="new-thema">
+                                    <button type="submit" class="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition shadow-lg shadow-blue-600/20 hover:-translate-y-0.5">
+                                        Aktifkan New Thema (TiketMart Style)
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <form x-show="activeTab !== 'theme'" action="{{ route('superadmin.settings.update') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="p-8">
                     <!-- General & Feature Settings -->

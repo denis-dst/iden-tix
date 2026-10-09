@@ -1,6 +1,6 @@
-@if(!$shouldHideNav && !auth()->user()->hasRole('Petugas Gate'))
+@if(!$shouldHideNav && !auth()->user()?->hasRole('Petugas Gate'))
 @php
-    $roleName = auth()->user()->hasRole('Superadmin') ? 'Superadmin' : (auth()->user()->hasRole('Penyedia Event') ? 'Organizer' : (auth()->user()->hasRole('Petugas Loket') ? 'Petugas Loket' : 'Fan Zone'));
+    $roleName = auth()->user()?->hasRole('Superadmin') ? 'Superadmin' : (auth()->user()?->hasRole('Penyedia Event') ? 'Organizer' : (auth()->user()?->hasRole('Petugas Loket') ? 'Petugas Loket' : 'Fan Zone'));
     $pageTitle = is_string($header ?? null) ? $header : (is_string($title ?? null) ? $title : 'Dashboard');
 @endphp
 <div class="px-6 py-6 md:px-8 md:py-8 bg-white border-b border-slate-200 mb-6">

@@ -16,8 +16,27 @@ class SettingController extends Controller
             'wa_notifications_enabled' => Setting::where('key', 'global_wa_notifications_enabled')->value('value') ?? true,
         ];
         $tenantRegistrationEnabled = (bool) (Setting::where('key', 'tenant_registration_enabled')->value('value') ?? true);
+        $activeTheme = Setting::get('active_theme', 'default');
 
-        return view('superadmin.settings.index', compact('settings', 'globalNotifications', 'tenantRegistrationEnabled'));
+        return view('superadmin.settings.index', compact('settings', 'globalNotifications', 'tenantRegistrationEnabled', 'activeTheme'));
+    }
+
+    public function switchTheme(Request $request)
+    {
+        $theme = $request->input('theme', 'default');
+        if (!in_array($theme, ['default', 'new-thema'])) {
+            $theme = 'default';
+        }
+
+        Setting::updateOrCreate(
+            ['key' => 'active_theme'],
+            ['value' => $theme, 'group' => 'appearance']
+        );
+
+        \Illuminate\Support\Facades\Cache::forget('public_settings_map');
+
+        $themeLabel = ($theme === 'new-thema') ? 'New Thema (TiketMart Style)' : 'Tema Utama (Default Classic)';
+        return back()->with('success', "Tema frontend berhasil diubah ke {$themeLabel}!");
     }
 
     public function update(Request $request)
