@@ -24,6 +24,11 @@ class SettingSeeder extends Seeder
             ['key' => 'social_instagram', 'value' => 'https://instagram.com/identix', 'group' => 'social'],
             ['key' => 'social_youtube', 'value' => 'https://youtube.com/identix', 'group' => 'social'],
             
+            // Features & Notifications
+            ['key' => 'tenant_registration_enabled', 'value' => '1', 'group' => 'features'],
+            ['key' => 'global_email_notifications_enabled', 'value' => '1', 'group' => 'notifications'],
+            ['key' => 'global_wa_notifications_enabled', 'value' => '1', 'group' => 'notifications'],
+            
             // Appearance
             ['key' => 'hero_title', 'value' => 'Connecting Generations Through Every Gate.', 'group' => 'appearance'],
             ['key' => 'hero_subtitle', 'value' => 'Bridging the gap between Identity and Tickets. Experience high-tech event management that\'s simple enough for everyone.', 'group' => 'appearance'],
