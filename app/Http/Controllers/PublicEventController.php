@@ -157,12 +157,8 @@ class PublicEventController extends Controller
                         }
                     }
 
-                    // If not paid (e.g. cancelled, back to merchant, expired)
-                    $dbTransaction->update(['payment_status' => 'failed']);
-                    if ($eventSlug) {
-                        return redirect()->route('events.show', $eventSlug)
-                            ->with('error', 'Pembayaran dibatalkan atau belum selesai. Silakan ulangi pemesanan tiket Anda.');
-                    }
+                    // If still pending, redirect to checkout.success to allow ongoing polling/waiting
+                    return redirect()->route('checkout.success', $dbTransaction->reference_no);
                 }
             }
 
@@ -197,13 +193,13 @@ class PublicEventController extends Controller
         }
 
         $wagoService = new \App\Services\WagoService();
+        $isSignatureVerified = true;
 
         // Verify HMAC-SHA256 signature if callback secret is configured (strictly on POST webhook)
         if ($request->isMethod('POST') && !empty(config('services.wago.callback_secret')) && !empty($signature)) {
-            $isValid = $wagoService->verifyWebhookSignature($body, $signature, $timestamp);
-            if (!$isValid) {
-                \Log::warning("WAGO notification signature mismatch for order_id: {$orderId}");
-                return response()->json(['status' => 'error', 'message' => 'Invalid signature'], 403);
+            $isSignatureVerified = $wagoService->verifyWebhookSignature($body, $signature, $timestamp);
+            if (!$isSignatureVerified) {
+                \Log::warning("WAGO notification signature mismatch for order_id: {$orderId}. Falling back to server API verification.");
             }
         }
 
@@ -222,9 +218,26 @@ class PublicEventController extends Controller
             ], 200);
         }
 
-        $paymentMethod = 'WAGO (QRIS / Payment Gateway)';
+        // If signature was not verified, verify directly with WAGO API using private API key
+        if (!$isSignatureVerified) {
+            $checkResult = $wagoService->checkTransactionStatus($dbTransaction->reference_no);
+            if (!$checkResult['success'] || (!$checkResult['is_paid'] && !$checkResult['is_failed'])) {
+                \Log::warning("WAGO signature mismatch and API check failed for order_id: {$orderId}");
+                return response()->json(['status' => 'error', 'message' => 'Invalid signature and status unverified'], 403);
+            }
+            if ($checkResult['is_paid']) {
+                $status = 'PAID';
+            } elseif ($checkResult['is_failed']) {
+                $status = 'FAILED';
+            }
+        }
 
-        if ($status === 'SUCCESS' || $status === 'PAID') {
+        $paymentMethod = 'WAGO (QRIS / Payment Gateway)';
+        $isPaidStatus = in_array($status, ['SUCCESS', 'PAID', 'SETTLEMENT', 'COMPLETED', 'LUNAS', 'BERHASIL', 'CAPTURED'], true);
+        $isFailedStatus = in_array($status, ['FAILED', 'CANCELED', 'CANCELLED', 'DENY', 'REJECTED'], true);
+        $isExpiredStatus = ($status === 'EXPIRED');
+
+        if ($isPaidStatus) {
             if ($dbTransaction->payment_status !== 'paid') {
                 $dbTransaction->update([
                     'payment_status' => 'paid',
@@ -237,13 +250,13 @@ class PublicEventController extends Controller
 
                 \Log::info("WAGO transaction {$orderId} marked as PAID. Tickets generated & Evoucher sent.");
             }
-        } elseif ($status === 'FAILED' || $status === 'CANCELED' || $status === 'CANCELLED') {
+        } elseif ($isFailedStatus) {
             $dbTransaction->update([
                 'payment_status' => 'failed',
                 'payment_method' => $paymentMethod,
             ]);
             \Log::info("WAGO transaction {$orderId} marked as FAILED.");
-        } elseif ($status === 'EXPIRED') {
+        } elseif ($isExpiredStatus) {
             $dbTransaction->update([
                 'payment_status' => 'expired',
                 'payment_method' => $paymentMethod,
@@ -912,16 +925,16 @@ class PublicEventController extends Controller
     {
         $transaction = Transaction::where('reference_no', $reference)->with('tickets.category', 'event')->firstOrFail();
 
-        $statusParam = strtoupper(trim((string) request()->query('status', '')));
+        $statusParam = strtoupper(trim((string) (request()->query('status') ?? request()->query('payment_status') ?? '')));
         $actionParam = strtolower(trim((string) request()->query('action', '')));
 
-        // If user returned from a cancelled transaction attempt
-        if (in_array($statusParam, ['CANCEL', 'CANCELED', 'CANCELLED', 'FAILED', 'EXPIRED']) || $actionParam === 'cancel') {
+        // If user explicitly cancelled
+        if (in_array($statusParam, ['CANCEL', 'CANCELED', 'CANCELLED'], true) || $actionParam === 'cancel') {
             if ($transaction->payment_status !== 'paid') {
                 $transaction->update(['payment_status' => 'failed']);
                 if ($transaction->event) {
                     return redirect()->route('events.show', $transaction->event->slug)
-                        ->with('error', 'Pembayaran dibatalkan atau belum selesai. Silakan ulangi pemesanan tiket Anda.');
+                        ->with('error', 'Pembayaran dibatalkan. Silakan ulangi pemesanan tiket Anda.');
                 }
             }
         }
@@ -936,9 +949,11 @@ class PublicEventController extends Controller
             return view('checkout.success', compact('transaction'));
         }
 
-        // If tickets are not generated yet, check status
-        if ($transaction->tickets->isEmpty()) {
-            if ($transaction->payment_status === 'paid' || $statusParam === 'SUCCESS' || $statusParam === 'PAID') {
+        // If transaction is not yet marked paid or tickets are not generated yet, verify status
+        if ($transaction->payment_status !== 'paid' || $transaction->tickets->isEmpty()) {
+            $isPaidParam = in_array($statusParam, ['SUCCESS', 'PAID', 'SETTLEMENT', 'COMPLETED', 'LUNAS', 'BERHASIL'], true);
+
+            if ($transaction->payment_status === 'paid' || $isPaidParam) {
                 $transaction->update([
                     'payment_status' => 'paid',
                     'payment_method' => 'WAGO (QRIS / Payment Gateway)',
@@ -981,6 +996,61 @@ class PublicEventController extends Controller
         }
 
         return view('checkout.success', compact('transaction'));
+    }
+
+    public function checkStatus($reference)
+    {
+        $transaction = Transaction::where('reference_no', $reference)->with('tickets.category', 'event')->first();
+
+        if (!$transaction) {
+            return response()->json(['status' => 'not_found', 'is_paid' => false], 404);
+        }
+
+        if ($transaction->payment_status === 'paid') {
+            if ($transaction->tickets->isEmpty()) {
+                $this->finalizeTransaction($transaction);
+                $transaction->refresh();
+            }
+            return response()->json([
+                'status'        => 'paid',
+                'is_paid'       => true,
+                'tickets_count' => $transaction->tickets()->count(),
+            ]);
+        }
+
+        // Query status directly from WAGO API
+        if (!empty(config('services.wago.api_key'))) {
+            $wagoService = new \App\Services\WagoService();
+            $checkResult = $wagoService->checkTransactionStatus($reference);
+            if ($checkResult['success'] && $checkResult['is_paid']) {
+                $transaction->update([
+                    'payment_status' => 'paid',
+                    'payment_method' => 'WAGO (QRIS / Payment Gateway)',
+                    'paid_at'        => $transaction->paid_at ?: now(),
+                ]);
+                $this->finalizeTransaction($transaction);
+                $transaction->refresh();
+
+                return response()->json([
+                    'status'        => 'paid',
+                    'is_paid'       => true,
+                    'tickets_count' => $transaction->tickets()->count(),
+                ]);
+            }
+
+            if ($checkResult['success'] && $checkResult['is_failed']) {
+                $transaction->update(['payment_status' => $checkResult['internal_status']]);
+                return response()->json([
+                    'status'  => $checkResult['internal_status'],
+                    'is_paid' => false,
+                ]);
+            }
+        }
+
+        return response()->json([
+            'status'  => $transaction->payment_status,
+            'is_paid' => false,
+        ]);
     }
 
     public function evoucher($reference)

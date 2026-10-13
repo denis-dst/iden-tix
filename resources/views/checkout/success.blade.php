@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="wago-verification" content="WAGO-1BE5FB2B">
     <title>
         @if($transaction->payment_method === 'free')
             Registrasi Berhasil
@@ -359,22 +360,67 @@
                             Jika Anda telah menyelesaikan pembayaran, sistem akan memverifikasi status pembayaran Anda secara otomatis. E-Voucher akan otomatis dikirim ke Email & WhatsApp Anda setelah pembayaran dikonfirmasi lunas.
                         </p>
                     </div>
-                    <button onclick="window.location.reload()" class="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl text-xs font-black transition shadow-lg shadow-amber-500/20 active:scale-95">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                        Segarkan Status Pembayaran
+                    <button id="btnCheckStatus" onclick="manualCheckStatus()" class="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl text-xs font-black transition shadow-lg shadow-amber-500/20 active:scale-95 cursor-pointer">
+                        <svg id="iconRefresh" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <span id="textCheckStatus">Segarkan Status Pembayaran</span>
                     </button>
                     <script>
-                        // Auto-refresh setiap 3.5 detik untuk mengecek status pembayaran secara realtime
                         let pollAttempt = 0;
-                        const maxPoll = 40;
-                        const pollTimer = setInterval(() => {
+                        const maxPoll = 60;
+                        const statusUrl = "{{ route('checkout.status', $transaction->reference_no) }}";
+
+                        async function checkPaymentStatus() {
+                            try {
+                                const res = await fetch(statusUrl, {
+                                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                                });
+                                if (res.ok) {
+                                    const data = await res.json();
+                                    if (data.is_paid || data.status === 'paid') {
+                                        window.location.reload();
+                                        return true;
+                                    }
+                                    if (data.status === 'failed' || data.status === 'expired' || data.status === 'cancelled') {
+                                        window.location.reload();
+                                        return true;
+                                    }
+                                }
+                            } catch (e) {
+                                console.error('Status check error:', e);
+                            }
+                            return false;
+                        }
+
+                        async function manualCheckStatus() {
+                            const btn = document.getElementById('btnCheckStatus');
+                            const icon = document.getElementById('iconRefresh');
+                            const txt = document.getElementById('textCheckStatus');
+                            if (btn) btn.disabled = true;
+                            if (icon) icon.classList.add('animate-spin');
+                            if (txt) txt.innerText = 'Memeriksa ke server WAGO...';
+
+                            const isFinished = await checkPaymentStatus();
+                            if (!isFinished) {
+                                setTimeout(() => {
+                                    if (btn) btn.disabled = false;
+                                    if (icon) icon.classList.remove('animate-spin');
+                                    if (txt) txt.innerText = 'Segarkan Status Pembayaran';
+                                }, 1200);
+                            }
+                        }
+
+                        // Auto-check status setiap 2.5 detik untuk verifikasi instan
+                        const pollTimer = setInterval(async () => {
                             pollAttempt++;
                             if (pollAttempt > maxPoll) {
                                 clearInterval(pollTimer);
                                 return;
                             }
-                            window.location.reload();
-                        }, 3500);
+                            const done = await checkPaymentStatus();
+                            if (done) {
+                                clearInterval(pollTimer);
+                            }
+                        }, 2500);
                     </script>
                 </div>
             @else

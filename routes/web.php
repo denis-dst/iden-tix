@@ -34,6 +34,7 @@ Route::match(['get', 'post'], '/api/wago-webhook', [PublicEventController::class
 Route::match(['get', 'post'], '/wago/webhook', [PublicEventController::class, 'handleWagoNotification'])->name('wago.webhook');
 Route::post('/ipaymu/notification', [PublicEventController::class, 'handleIPaymuNotification'])->name('ipaymu.notification');
 Route::get('/checkout/success/{reference}', [App\Http\Controllers\PublicEventController::class, 'success'])->name('checkout.success');
+Route::get('/checkout/status/{reference}', [App\Http\Controllers\PublicEventController::class, 'checkStatus'])->name('checkout.status');
 Route::get('/evoucher/{reference}', [App\Http\Controllers\PublicEventController::class, 'evoucher'])->name('evoucher.public');
 
 Route::get('/tickets/view/{code}', [App\Http\Controllers\TicketViewController::class, 'show'])->name('tickets.view');
@@ -107,6 +108,7 @@ Route::middleware(['auth', 'role:Superadmin'])->prefix('superadmin')->name('supe
     
     Route::resource('transactions', App\Http\Controllers\SuperAdmin\TransactionController::class);
     Route::post('transactions/{transaction}/mark-as-paid', [App\Http\Controllers\SuperAdmin\TransactionController::class, 'markAsPaid'])->name('transactions.mark-as-paid');
+    Route::post('transactions/{transaction}/sync-wago', [App\Http\Controllers\SuperAdmin\TransactionController::class, 'syncWagoStatus'])->name('transactions.sync-wago');
     Route::post('transactions/{transaction}/resend-evoucher', [App\Http\Controllers\SuperAdmin\TransactionController::class, 'resendEvoucher'])->name('transactions.resend-evoucher');
     Route::get('transactions/{transaction}/print-evoucher', [App\Http\Controllers\SuperAdmin\TransactionController::class, 'printEvoucher'])->name('transactions.print-evoucher');
     Route::post('tickets/{ticket}/cancel', [App\Http\Controllers\SuperAdmin\TransactionController::class, 'cancelTicket'])->name('tickets.cancel');
@@ -211,6 +213,7 @@ Route::middleware(['auth', 'role:Superadmin|Penyedia Event|Petugas Loket|Petugas
     });
     Route::get('transactions', [App\Http\Controllers\Organizer\TransactionController::class, 'index'])->name('transactions.index');
     Route::post('transactions/{transaction}/mark-as-paid', [App\Http\Controllers\Organizer\TransactionController::class, 'markAsPaid'])->name('transactions.mark-as-paid');
+    Route::post('transactions/{transaction}/sync-wago', [App\Http\Controllers\Organizer\TransactionController::class, 'syncWagoStatus'])->name('transactions.sync-wago');
     Route::post('transactions/{transaction}/resend-evoucher', [App\Http\Controllers\Organizer\TransactionController::class, 'resendEvoucher'])->name('transactions.resend-evoucher');
     Route::get('transactions/{transaction}/print-evoucher', [App\Http\Controllers\Organizer\TransactionController::class, 'printEvoucher'])->name('transactions.print-evoucher');
     Route::post('transactions/{transaction}/send-whatsapp', [App\Http\Controllers\Organizer\TransactionController::class, 'sendWhatsApp'])->name('transactions.send-whatsapp');

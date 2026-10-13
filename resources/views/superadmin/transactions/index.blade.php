@@ -138,6 +138,12 @@
                                 <td class="px-8 py-5">
                                     <div class="flex items-center gap-2">
                                         @if($tx->payment_status !== 'paid' && $tx->payment_status !== 'refunded')
+                                            <form method="POST" action="{{ route('superadmin.transactions.sync-wago', $tx) }}" class="inline">
+                                                @csrf
+                                                <button type="submit" title="Cek Status Pembayaran ke Gateway WAGO" class="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition shadow-sm border border-blue-200">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                                </button>
+                                            </form>
                                             <form method="POST" action="{{ route('superadmin.transactions.mark-as-paid', $tx) }}" onsubmit="return confirm('KONFIRMASI SUPERADMIN: Anda akan menandai transaksi ini sebagai LUNAS secara manual. Tindakan ini tidak dapat dibatalkan. Lanjutkan?')">
                                                 @csrf
                                                 <button type="submit" title="Konfirmasi Lunas (SuperAdmin)" class="p-2.5 bg-orange-500 text-black rounded-xl hover:bg-orange-600 transition shadow-sm border border-orange-200">

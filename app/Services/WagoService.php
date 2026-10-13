@@ -98,26 +98,34 @@ class WagoService
             'payment_method' => $paymentMethod,
         ];
 
-        if (!empty($transactionDetails['callback_url'])) {
-            $payload['callback_url'] = $transactionDetails['callback_url'];
-        } elseif (function_exists('route')) {
-            $payload['callback_url'] = route('wago.notification');
+        $callbackUrl = $transactionDetails['callback_url']
+            ?? (function_exists('route') ? route('wago.notification') : null);
+
+        if (!empty($callbackUrl)) {
+            $payload['callback_url'] = $callbackUrl;
+            $payload['callbackUrl']  = $callbackUrl;
+            $payload['notifyUrl']    = $callbackUrl;
+            $payload['notify_url']   = $callbackUrl;
         }
 
         if (!empty($transactionDetails['return_url'])) {
             $payload['return_url'] = $transactionDetails['return_url'];
+            $payload['returnUrl']  = $transactionDetails['return_url'];
         }
 
         if (!empty($transactionDetails['redirect_url'])) {
             $payload['redirect_url'] = $transactionDetails['redirect_url'];
+            $payload['redirectUrl']  = $transactionDetails['redirect_url'];
         }
 
         if (!empty($transactionDetails['cancel_url'])) {
             $payload['cancel_url'] = $transactionDetails['cancel_url'];
+            $payload['cancelUrl']  = $transactionDetails['cancel_url'];
         }
 
         if (!empty($transactionDetails['back_url'])) {
             $payload['back_url'] = $transactionDetails['back_url'];
+            $payload['backUrl']  = $transactionDetails['back_url'];
         }
 
         if (!empty($paymentChannel)) {
@@ -214,22 +222,51 @@ class WagoService
         try {
             $data = null;
             if ($this->wagoSdk) {
-                $data = $this->wagoSdk->getTransactionStatus($orderId);
-            } else {
+                try {
+                    $data = $this->wagoSdk->getTransactionStatus($orderId);
+                } catch (\Throwable $sdkError) {
+                    Log::warning('WagoService: SDK getTransactionStatus failed, falling back to direct HTTP: ' . $sdkError->getMessage());
+                    $data = null;
+                }
+            }
+            
+            if ($data === null) {
                 $res = Http::withHeaders([
                     'x-api-key' => $this->apiKey,
                 ])->get(rtrim($this->apiBaseUrl, '/') . '/api/order', [
-                            'id' => $orderId,
-                        ]);
+                    'id' => $orderId,
+                ]);
                 $data = $res->json();
             }
 
             Log::info('WagoService: getTransactionStatus response', ['order_id' => $orderId, 'data' => $data]);
 
-            if (!empty($data)) {
-                $statusText = strtoupper(trim((string) ($data['status'] ?? '')));
-                $isPaid = ($statusText === 'SUCCESS' || $statusText === 'PAID');
-                $isFailed = in_array($statusText, ['FAILED', 'EXPIRED', 'CANCELLED']);
+            if (!empty($data) && is_array($data)) {
+                $statusText = strtoupper(trim((string) (
+                    $data['status']
+                    ?? $data['data']['status']
+                    ?? $data['payment_status']
+                    ?? $data['data']['payment_status']
+                    ?? $data['transaction_status']
+                    ?? $data['data']['transaction_status']
+                    ?? ''
+                )));
+
+                // If wrapper status is 'SUCCESS' but nested data has specific transaction status
+                if ($statusText === 'SUCCESS' && !empty($data['data']['status'])) {
+                    $nested = strtoupper(trim((string) $data['data']['status']));
+                    if (!empty($nested)) {
+                        $statusText = $nested;
+                    }
+                }
+
+                $isPaid = in_array($statusText, [
+                    'SUCCESS', 'PAID', 'SETTLEMENT', 'COMPLETED', 'LUNAS', 'BERHASIL', 'CAPTURED'
+                ], true);
+
+                $isFailed = in_array($statusText, [
+                    'FAILED', 'EXPIRED', 'CANCELLED', 'CANCELED', 'DENY', 'REJECTED'
+                ], true);
 
                 $internalStatus = 'pending';
                 if ($isPaid) {
@@ -242,15 +279,15 @@ class WagoService
 
                 return [
                     'success' => true,
-                    'order_id' => $data['order_id'] ?? $orderId,
+                    'order_id' => $data['order_id'] ?? $data['data']['order_id'] ?? $data['data']['id'] ?? $data['id'] ?? $orderId,
                     'status' => $statusText,
                     'internal_status' => $internalStatus,
                     'is_paid' => $isPaid,
                     'is_failed' => $isFailed,
                     'is_pending' => ($internalStatus === 'pending'),
-                    'nominal_unik' => $data['nominal_unik'] ?? null,
-                    'sn' => $data['sn'] ?? null,
-                    'paid_at' => $data['paidAt'] ?? null,
+                    'nominal_unik' => $data['nominal_unik'] ?? $data['data']['nominal_unik'] ?? null,
+                    'sn' => $data['sn'] ?? $data['data']['sn'] ?? null,
+                    'paid_at' => $data['paidAt'] ?? $data['paid_at'] ?? $data['data']['paidAt'] ?? $data['data']['paid_at'] ?? null,
                     'raw' => $data,
                 ];
             }
@@ -291,7 +328,13 @@ class WagoService
 
         try {
             if ($this->wagoSdk) {
-                return $this->wagoSdk->verifyWebhook($body, $signature, $timestamp);
+                try {
+                    if ($this->wagoSdk->verifyWebhook($body, $signature, $timestamp)) {
+                        return true;
+                    }
+                } catch (\Throwable $sdkEx) {
+                    Log::info('WagoService: SDK verifyWebhook check exception: ' . $sdkEx->getMessage());
+                }
             }
 
             $orderId = $body['order_id'] ?? $body['data']['order_id'] ?? $body['data']['id'] ?? $body['id'] ?? '';
@@ -299,10 +342,25 @@ class WagoService
             $nominalUnik = $body['nominal_unik'] ?? $body['data']['nominal_unik'] ?? '';
             $sn = $body['sn'] ?? $body['data']['sn'] ?? '';
 
-            $rawPayload = "{$orderId}:{$status}:{$nominalUnik}:{$sn}:{$timestamp}";
-            $expectedSignature = hash_hmac('sha256', $rawPayload, $this->callbackSecret);
+            // Format 1: order_id:status:nominal_unik:sn:timestamp
+            $rawPayload1 = "{$orderId}:{$status}:{$nominalUnik}:{$sn}:{$timestamp}";
+            if (hash_equals(hash_hmac('sha256', $rawPayload1, $this->callbackSecret), $signature)) {
+                return true;
+            }
 
-            return hash_equals($expectedSignature, $signature);
+            // Format 2: without timestamp
+            $rawPayload2 = "{$orderId}:{$status}:{$nominalUnik}:{$sn}";
+            if (hash_equals(hash_hmac('sha256', $rawPayload2, $this->callbackSecret), $signature)) {
+                return true;
+            }
+
+            // Format 3: order_id:status:timestamp
+            $rawPayload3 = "{$orderId}:{$status}:{$timestamp}";
+            if (hash_equals(hash_hmac('sha256', $rawPayload3, $this->callbackSecret), $signature)) {
+                return true;
+            }
+
+            return false;
         } catch (Exception $e) {
             Log::error('WagoService: Webhook verification error: ' . $e->getMessage());
             return false;

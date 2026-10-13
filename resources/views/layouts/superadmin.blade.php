@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="wago-verification" content="WAGO-1BE5FB2B">
     <title>{{ $global_settings['app_name'] ?? 'IdenTix' }} SuperAdmin - {{ $title ?? 'Dashboard' }}</title>
     <!-- Fonts (High Performance Non-Blocking Loading) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

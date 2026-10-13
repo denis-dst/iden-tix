@@ -232,14 +232,122 @@ class TransactionController extends Controller
             return back()->with('error', 'Transaksi sudah berstatus PAID.');
         }
 
-        $transaction->update([
-            'payment_status' => 'paid',
-            'paid_at' => now(),
-            'processed_by' => auth()->id(),
-            'payment_method' => $transaction->payment_method ?? 'MANUAL_VERIFICATION_SUPERADMIN'
-        ]);
+        \Illuminate\Support\Facades\DB::transaction(function() use ($transaction) {
+            $transaction->update([
+                'payment_status' => 'paid',
+                'paid_at' => now(),
+                'processed_by' => auth()->id(),
+                'payment_method' => $transaction->payment_method ?? 'MANUAL_VERIFICATION_SUPERADMIN'
+            ]);
 
-        return back()->with('success', 'Transaksi #' . $transaction->reference_no . ' telah dikonfirmasi lunas oleh SuperAdmin.');
+            $category = $transaction->category;
+
+            if ($transaction->tickets()->count() === 0) {
+                $createdTickets = [];
+                for ($i = 0; $i < $transaction->quantity; $i++) {
+                    $ticket = \App\Models\Ticket::create([
+                        'tenant_id'          => $transaction->tenant_id,
+                        'event_id'           => $transaction->event_id,
+                        'transaction_id'     => $transaction->id,
+                        'ticket_category_id' => $transaction->ticket_category_id,
+                        'ticket_code'        => 'GTX-' . strtoupper(\Illuminate\Support\Str::random(10)),
+                        'status'             => 'sold',
+                        'visitor_data'       => [
+                            'name'  => $transaction->customer_name,
+                            'email' => $transaction->customer_email,
+                            'phone' => $transaction->customer_phone,
+                            'nik'   => $transaction->customer_nik,
+                        ],
+                    ]);
+                    $createdTickets[] = $ticket;
+                }
+
+                if ($category) {
+                    $category->increment('sold_count', $transaction->quantity);
+                }
+
+                if (!empty($createdTickets)) {
+                    try {
+                        $notificationService = new \App\Services\TicketNotificationService();
+                        $notificationService->sendEVoucher($createdTickets[0]);
+                    } catch (\Exception $e) {
+                        \Log::error('SuperAdmin markAsPaid notification error: ' . $e->getMessage());
+                    }
+                }
+            }
+        });
+
+        return back()->with('success', 'Transaksi #' . $transaction->reference_no . ' telah dikonfirmasi lunas dan E-Voucher diterbitkan.');
+    }
+
+    public function syncWagoStatus(Transaction $transaction)
+    {
+        if ($transaction->payment_status === 'paid' && $transaction->tickets()->count() >= $transaction->quantity) {
+            return back()->with('info', 'Transaksi #' . $transaction->reference_no . ' sudah berstatus LUNAS dan tiket telah diterbitkan.');
+        }
+
+        $wagoService = new \App\Services\WagoService();
+        $checkResult = $wagoService->checkTransactionStatus($transaction->reference_no);
+
+        if (!$checkResult['success']) {
+            return back()->with('error', 'Gagal menghubungi server WAGO: ' . ($checkResult['message'] ?? 'Respons tidak valid.'));
+        }
+
+        if ($checkResult['is_paid']) {
+            \Illuminate\Support\Facades\DB::transaction(function() use ($transaction, $checkResult) {
+                $transaction->update([
+                    'payment_status' => 'paid',
+                    'paid_at'        => $transaction->paid_at ?: now(),
+                    'payment_method' => $transaction->payment_method ?: 'WAGO (QRIS / Payment Gateway)',
+                    'processed_by'   => auth()->id(),
+                ]);
+
+                $category = $transaction->category;
+
+                if ($transaction->tickets()->count() === 0) {
+                    $createdTickets = [];
+                    for ($i = 0; $i < $transaction->quantity; $i++) {
+                        $ticket = \App\Models\Ticket::create([
+                            'tenant_id'          => $transaction->tenant_id,
+                            'event_id'           => $transaction->event_id,
+                            'transaction_id'     => $transaction->id,
+                            'ticket_category_id' => $transaction->ticket_category_id,
+                            'ticket_code'        => 'GTX-' . strtoupper(\Illuminate\Support\Str::random(10)),
+                            'status'             => 'sold',
+                            'visitor_data'       => [
+                                'name'  => $transaction->customer_name,
+                                'email' => $transaction->customer_email,
+                                'phone' => $transaction->customer_phone,
+                                'nik'   => $transaction->customer_nik,
+                            ],
+                        ]);
+                        $createdTickets[] = $ticket;
+                    }
+
+                    if ($category) {
+                        $category->increment('sold_count', $transaction->quantity);
+                    }
+
+                    if (!empty($createdTickets)) {
+                        try {
+                            $notificationService = new \App\Services\TicketNotificationService();
+                            $notificationService->sendEVoucher($createdTickets[0]);
+                        } catch (\Exception $e) {
+                            \Log::error('SuperAdmin syncWagoStatus notification error: ' . $e->getMessage());
+                        }
+                    }
+                }
+            });
+
+            return back()->with('success', '✅ Pembayaran terkonfirmasi dari WAGO! Status transaksi #' . $transaction->reference_no . ' diubah menjadi LUNAS dan E-Voucher telah dikirim.');
+        }
+
+        if ($checkResult['is_failed']) {
+            $transaction->update(['payment_status' => $checkResult['internal_status']]);
+            return back()->with('warning', 'Status transaksi di WAGO adalah: ' . strtoupper($checkResult['internal_status']));
+        }
+
+        return back()->with('info', 'Status transaksi #' . $transaction->reference_no . ' di server WAGO masih: ' . strtoupper($checkResult['status'] ?? 'PENDING') . ' (Menunggu Pembayaran).');
     }
 
     public function cancelTicket(Ticket $ticket)

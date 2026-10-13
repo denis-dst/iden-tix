@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="wago-verification" content="WAGO-1BE5FB2B">
     <title>{{ $tenant->name }} - Daftar Tiket & Event Resmi | {{ $settings['app_name'] ?? 'IdenTix' }}</title>
     <meta name="description" content="Temukan dan beli tiket resmi untuk berbagai event, pertunjukan, dan pertandingan yang diselenggarakan oleh {{ $tenant->name }} di {{ $settings['app_name'] ?? 'IdenTix' }}.">
 
