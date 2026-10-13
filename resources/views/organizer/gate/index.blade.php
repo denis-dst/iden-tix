@@ -4,9 +4,18 @@
 
     <div class="max-w-6xl mx-auto">
         <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
-            <div class="p-8 border-b border-slate-100 bg-slate-50/50">
-                <h3 class="text-xl font-black text-slate-900 font-outfit uppercase tracking-wider">Pilih Event Operasional</h3>
-                <p class="text-sm text-slate-500 mt-1">Silakan pilih event yang akan Anda kelola sistem gate-nya hari ini.</p>
+            <div class="p-8 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h3 class="text-xl font-black text-slate-900 font-outfit uppercase tracking-wider">Pilih Event Operasional</h3>
+                    <p class="text-sm text-slate-500 mt-1">Silakan pilih event yang akan Anda kelola sistem gate-nya hari ini.</p>
+                </div>
+                <form method="POST" action="{{ route('logout') }}" class="shrink-0">
+                    @csrf
+                    <button type="submit" class="flex items-center gap-2 px-4 py-2.5 bg-rose-50 border border-rose-100 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl transition text-xs font-black uppercase tracking-wider shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4-4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                        <span>Keluar Akun</span>
+                    </button>
+                </form>
             </div>
 
             <div class="p-8">

@@ -74,7 +74,7 @@
 
         <!-- Content Area -->
         <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
-            @if(!$shouldHideNav && !auth()->user()->hasRole('Petugas Gate'))
+            @if(!$shouldHideNav)
             <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
                 <h1 class="text-lg font-black text-slate-800 font-outfit">{{ $title ?? 'Dashboard' }}</h1>
                 @include('layouts.partials.header-profile')
@@ -92,7 +92,7 @@
 
     <!-- Mobile Layout -->
     <div class="lg:hidden flex flex-col flex-1 overflow-hidden">
-        @if(!$shouldHideNav && !auth()->user()->hasRole('Petugas Gate'))
+        @if(!$shouldHideNav)
         <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 shrink-0 z-30">
             <button @click="sidebarOpen = true" class="p-2 -ml-2 text-slate-500 hover:text-orange-600">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
@@ -109,8 +109,16 @@
                     Gen<span class="text-orange-500">Tix</span>
                 @endif
             </span>
-            <div class="w-10 h-10 rounded-lg bg-orange-500 text-white flex items-center justify-center font-bold">
-                {{ substr(Auth::user()->name, 0, 1) }}
+            <div class="flex items-center gap-2">
+                <div class="w-9 h-9 rounded-lg bg-orange-500 text-white flex items-center justify-center font-bold text-sm">
+                    {{ substr(Auth::user()->name, 0, 1) }}
+                </div>
+                <form method="POST" action="{{ route('logout') }}" class="inline">
+                    @csrf
+                    <button type="submit" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Keluar">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4-4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    </button>
+                </form>
             </div>
         </header>
         @endif

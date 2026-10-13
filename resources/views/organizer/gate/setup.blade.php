@@ -26,11 +26,18 @@
                 <p class="text-[10px] font-bold text-orange-600 tracking-widest uppercase mt-0.5">Konfigurasi Gate System</p>
             </div>
 
-            <div class="w-16 flex justify-end">
+            <div class="flex items-center gap-2 justify-end">
                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
                     Online
                 </span>
+                <form method="POST" action="{{ route('logout') }}" class="inline">
+                    @csrf
+                    <button type="submit" class="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl transition text-[10px] font-black uppercase tracking-wider" title="Logout">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4-4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                        <span>Keluar</span>
+                    </button>
+                </form>
             </div>
         </header>
 

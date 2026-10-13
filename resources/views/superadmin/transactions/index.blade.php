@@ -28,6 +28,16 @@
             </div>
         @endif
 
+        {{-- Global Sales Monitoring Dashboard Widget (Kuota, Terjual, Belum Terjual, Total Pendapatan, Sales Throughput, Kategori Tiket) --}}
+        <x-transactions.sales-dashboard-chart 
+            :total-quota="$totalQuota"
+            :total-sold="$totalSold"
+            :total-unsold="$totalUnsold"
+            :total-revenue="$totalRevenue"
+            :category-stats="$categoryStats"
+            :throughput-chart="$throughputChart"
+        />
+
         <form method="GET" action="{{ route('superadmin.transactions.index') }}" class="flex flex-col xl:flex-row gap-3 bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
             <div class="relative flex-1">
                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">

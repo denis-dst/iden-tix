@@ -53,11 +53,35 @@
                     </div>
                     <div>
                         <p class="text-sm font-medium text-slate-500">Total Event</p>
-                        <h4 class="text-2xl font-bold text-slate-900">{{ $events->total() }}</h4>
+                        <h4 class="text-2xl font-bold text-slate-900">{{ $statusCounts['all'] ?? $events->total() }}</h4>
                     </div>
                 </div>
             </div>
             
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Ringkasan Status</p>
+                        <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                            <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                                {{ $statusCounts['published'] ?? 0 }} Published
+                            </span>
+                            <span class="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                                {{ $statusCounts['draft'] ?? 0 }} Draft
+                            </span>
+                            @if(($statusCounts['cancelled'] ?? 0) > 0)
+                                <span class="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-100">
+                                    {{ $statusCounts['cancelled'] }} Cancelled
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
@@ -69,6 +93,66 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Filter & Search Section -->
+        <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <!-- Status Filter Tabs -->
+            <div class="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100/80 rounded-xl border border-slate-200/60">
+                <a href="{{ route('organizer.events.index', array_merge(request()->except('status', 'page'), ['status' => 'all'])) }}"
+                   class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 {{ empty($status) || $status === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900' }}">
+                    <span>Semua Status</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] {{ empty($status) || $status === 'all' ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-600' }}">
+                        {{ $statusCounts['all'] ?? 0 }}
+                    </span>
+                </a>
+                <a href="{{ route('organizer.events.index', array_merge(request()->except('status', 'page'), ['status' => 'published'])) }}"
+                   class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 {{ $status === 'published' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-600 hover:text-emerald-700' }}">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>Published</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] {{ $status === 'published' ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700' }}">
+                        {{ $statusCounts['published'] ?? 0 }}
+                    </span>
+                </a>
+                <a href="{{ route('organizer.events.index', array_merge(request()->except('status', 'page'), ['status' => 'draft'])) }}"
+                   class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 {{ $status === 'draft' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900' }}">
+                    <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                    <span>Draft</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] {{ $status === 'draft' ? 'bg-slate-700 text-white' : 'bg-slate-200 text-slate-600' }}">
+                        {{ $statusCounts['draft'] ?? 0 }}
+                    </span>
+                </a>
+                <a href="{{ route('organizer.events.index', array_merge(request()->except('status', 'page'), ['status' => 'cancelled'])) }}"
+                   class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 {{ $status === 'cancelled' ? 'bg-white text-rose-800 shadow-xs' : 'text-slate-600 hover:text-rose-700' }}">
+                    <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                    <span>Cancelled</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] {{ $status === 'cancelled' ? 'bg-rose-600 text-white' : 'bg-rose-100 text-rose-700' }}">
+                        {{ $statusCounts['cancelled'] ?? 0 }}
+                    </span>
+                </a>
+            </div>
+
+            <!-- Search Form -->
+            <form method="GET" action="{{ route('organizer.events.index') }}" class="flex items-center gap-2 flex-1 lg:max-w-md">
+                @if(!empty($status) && $status !== 'all')
+                    <input type="hidden" name="status" value="{{ $status }}">
+                @endif
+                <div class="relative flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </div>
+                    <input type="text" name="q" value="{{ $q ?? '' }}" placeholder="Cari nama event, venue, kota..." 
+                           class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 placeholder-slate-400 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition">
+                </div>
+                <button type="submit" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition shrink-0 shadow-xs">
+                    Cari
+                </button>
+                @if(request()->filled('q') || (request()->filled('status') && request('status') !== 'all'))
+                    <a href="{{ route('organizer.events.index') }}" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition shrink-0" title="Reset filter & pencarian">
+                        Reset
+                    </a>
+                @endif
+            </form>
         </div>
 
         <!-- Floating Bulk Selection Action Bar -->
@@ -230,8 +314,16 @@
                                     <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto text-slate-300 mb-3 border border-slate-100">
                                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                     </div>
-                                    <h4 class="font-bold text-slate-700">Belum ada event yang dibuat</h4>
-                                    <p class="text-xs text-slate-400 mt-1">Klik tombol &ldquo;Tambah Event Baru&rdquo; untuk mulai mempublikasikan tiket event Anda.</p>
+                                    @if(request()->filled('q') || (request()->filled('status') && request('status') !== 'all'))
+                                        <h4 class="font-bold text-slate-700">Tidak ada event yang sesuai filter</h4>
+                                        <p class="text-xs text-slate-400 mt-1 mb-4">Coba sesuaikan kata kunci pencarian atau status event yang dipilih.</p>
+                                        <a href="{{ route('organizer.events.index') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
+                                            Reset Filter
+                                        </a>
+                                    @else
+                                        <h4 class="font-bold text-slate-700">Belum ada event yang dibuat</h4>
+                                        <p class="text-xs text-slate-400 mt-1">Klik tombol &ldquo;Tambah Event Baru&rdquo; untuk mulai mempublikasikan tiket event Anda.</p>
+                                    @endif
                                 </td>
                             </tr>
                         @endforelse

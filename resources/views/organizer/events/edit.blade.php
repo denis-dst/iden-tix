@@ -627,10 +627,18 @@
                                             <a href="{{ route('organizer.categories.print-wristbands', $category) }}"
                                                 target="_blank"
                                                 class="p-2 bg-blue-50 rounded-lg border border-blue-200 text-blue-600 hover:text-blue-800 hover:border-blue-300 transition shadow-sm"
-                                                title="Cetak Gelang Penukaran (Wristbands)">
+                                                title="Cetak Gelang Penukaran (F4 & A3+)">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                         d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                                </svg>
+                                            </a>
+                                            <a href="{{ route('organizer.categories.export-wristbands-docx', ['category' => $category, 'paper' => 'f4']) }}"
+                                                class="p-2 bg-sky-50 rounded-lg border border-sky-200 text-sky-600 hover:text-sky-800 hover:border-sky-300 transition shadow-sm"
+                                                title="Export Gelang ke Word (.docx) F4 & A3+">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 </svg>
                                             </a>
                                             <a href="{{ route('organizer.events.categories.edit', [$event, $category]) }}"

@@ -28,6 +28,16 @@
             </div>
         @endif
 
+        {{-- Sales Monitoring Dashboard Widget (Kuota, Terjual, Belum Terjual, Total Pendapatan, Sales Throughput, Kategori Tiket) --}}
+        <x-transactions.sales-dashboard-chart 
+            :total-quota="$totalQuota"
+            :total-sold="$totalSold"
+            :total-unsold="$totalUnsold"
+            :total-revenue="$totalRevenue"
+            :category-stats="$categoryStats"
+            :throughput-chart="$throughputChart"
+        />
+
         <form method="GET" action="{{ route('organizer.transactions.index') }}" class="flex flex-col xl:flex-row gap-3 bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
             <div class="relative flex-1">
                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -50,9 +60,15 @@
                 @endforeach
             </select>
 
+            <select name="channel" class="rounded-xl border-slate-200 text-sm font-bold text-slate-600 focus:border-orange-500 focus:ring-orange-500 xl:w-56">
+                <option value="">Semua Saluran</option>
+                <option value="online" {{ request('channel') === 'online' ? 'selected' : '' }}>Penjualan Online</option>
+                <option value="pos" {{ request('channel') === 'pos' ? 'selected' : '' }}>Penjualan Langsung (POS)</option>
+            </select>
+
             <button type="submit" class="px-8 py-2.5 bg-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-orange-700 transition shadow-lg shadow-orange-200">Cari Transaksi</button>
             
-            @if(request()->anyFilled(['q', 'event_id', 'ticket_category_id']))
+            @if(request()->anyFilled(['q', 'event_id', 'ticket_category_id', 'channel']))
                 <a href="{{ route('organizer.transactions.index') }}" class="px-5 py-2.5 bg-slate-100 text-slate-500 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-slate-200 transition text-center">Reset</a>
             @endif
         </form>
@@ -105,7 +121,14 @@
                                     </button>
                                 </td>
                                 <td class="px-8 py-5">
-                                    <div class="text-xs font-black text-slate-600 font-mono">{{ $tx->reference_no }}</div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-black text-slate-600 font-mono">{{ $tx->reference_no }}</span>
+                                        @if($tx->channel === 'pos' || str_starts_with($tx->reference_no, 'POS-'))
+                                            <span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-[9px] font-black uppercase tracking-wider border border-amber-200/50">POS</span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[9px] font-black uppercase tracking-wider border border-blue-200/50">Online</span>
+                                        @endif
+                                    </div>
                                     <div class="text-[10px] font-bold text-slate-400 mt-1 uppercase">{{ $tx->created_at->format('d M Y H:i') }}</div>
                                 </td>
                                 <td class="px-8 py-5">

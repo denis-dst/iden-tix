@@ -183,6 +183,7 @@ Route::middleware(['auth', 'role:Superadmin|Penyedia Event|Petugas Loket|Petugas
     Route::resource('events', App\Http\Controllers\Organizer\EventController::class);
     Route::resource('events.categories', App\Http\Controllers\Organizer\TicketCategoryController::class);
     Route::get('categories/{category}/print-wristbands', [App\Http\Controllers\WristbandPrintController::class, 'print'])->name('categories.print-wristbands');
+    Route::get('categories/{category}/export-wristbands-docx', [App\Http\Controllers\WristbandPrintController::class, 'exportDocx'])->name('categories.export-wristbands-docx');
     Route::post('categories/{category}/reset-offline-stock', [App\Http\Controllers\WristbandPrintController::class, 'resetOfflineStock'])->name('categories.reset-offline-stock');
     
     // Voucher/Promo Management

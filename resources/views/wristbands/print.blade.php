@@ -1,14 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Print Wristbands - {{ $category->name }}</title>
+    <title>Print Wristbands - {{ $category->name }} ({{ strtoupper($paperSize ?? 'F4') }})</title>
     <style>
+        @if(($paperSize ?? 'f4') === 'a3')
+        @page {
+            size: 480mm 310mm;
+            margin: 0;
+        }
+        @else
         @page {
             size: 215mm 330mm;
             margin: 0;
         }
+        @endif
 
         * {
             box-sizing: border-box;
@@ -21,30 +28,59 @@
             margin: 0;
             padding: 0;
             font-family: Arial, Helvetica, sans-serif;
-            background: #f3f4f6;
+            background: #f1f5f9;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
             color-adjust: exact !important;
         }
 
-        .page {
+        /* F4 Page Setup */
+        .page, .page-f4 {
             width: 215mm;
             height: 330mm;
             background: #fff;
-            margin: 0 auto;
+            margin: 0 auto 20px auto;
             page-break-after: always;
             display: flex;
             flex-direction: column;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        /* A3+ Page Setup (31 cm x 48 cm Landscape: 480mm wide x 310mm high) */
+        .page-a3 {
+            width: 480mm;
+            height: 310mm;
+            background: #fff;
+            margin: 0 auto 25px auto;
+            page-break-after: always;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: stretch;
+            padding: 12mm 15mm;
+            box-sizing: border-box;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .column-a3 {
+            width: 215mm;
+            min-width: 215mm;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
 
         .wristband {
             width: 215mm;
             height: 22mm;
+            min-height: 22mm;
+            max-height: 22mm;
             border-bottom: 1px dashed #cfcfcf;
             display: flex;
             align-items: stretch;
             overflow: hidden;
             background: #fff;
+            box-sizing: border-box;
         }
 
         .blank-space {
@@ -255,41 +291,23 @@
 
         .empty-slot {
             height: 22mm;
+            min-height: 22mm;
+            max-height: 22mm;
             border-bottom: 1px dashed #eee;
             display: flex;
             align-items: center;
             padding-left: 10mm;
             font-size: 8pt;
             color: #cbd5e1;
-        }
-
-        @media print {
-            html, body { 
-                background: none !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            .page { 
-                margin: 0 !important; 
-                border: none !important; 
-                box-shadow: none !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            .wristband, .wristband-custom, .ticket-band, .league-logo, .qr-section, .event-section, .category-section, .club-logo, .sponsor-section {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            .no-print { display: none !important; }
+            box-sizing: border-box;
         }
 
         .wristband-custom {
             position: relative;
             width: 215mm;
             height: 22mm;
+            min-height: 22mm;
+            max-height: 22mm;
             border-bottom: 1px dashed #cfcfcf;
             overflow: hidden;
             background-color: #ffffff;
@@ -306,93 +324,234 @@
             transform-origin: top left;
         }
 
+        /* Controls Panel */
         .controls {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: #ffffff;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
             z-index: 1000;
+            width: 290px;
+            font-size: 12px;
         }
 
         .btn {
             background: #2563eb;
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
+            padding: 8px 14px;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
-            font-size: 13px;
+            font-weight: 700;
+            font-size: 12px;
             width: 100%;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            text-decoration: none;
         }
+
         .btn:hover {
             background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn-docx {
+            background: #0284c7;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 12px;
+            width: 100%;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+
+        .btn-docx:hover {
+            background: #0369a1;
+            transform: translateY(-1px);
+        }
+
+        @media print {
+            html, body { 
+                background: none !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            .page, .page-f4, .page-a3 { 
+                margin: 0 !important; 
+                border: none !important; 
+                box-shadow: none !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            .wristband, .wristband-custom, .ticket-band, .league-logo, .qr-section, .event-section, .category-section, .club-logo, .sponsor-section {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            .no-print { display: none !important; }
         }
     </style>
 </head>
 <body>
-    <div class="controls no-print" style="width: 260px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
-            <div style="font-size: 11px; font-weight: bold; color: #1e293b;">
-                {{ $category->name }}
+    <div class="controls no-print">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+            <div>
+                <div style="font-size: 12px; font-weight: 800; color: #0f172a; line-height: 1.2;">
+                    {{ $category->name }}
+                </div>
+                <div style="font-size: 10px; color: #64748b; margin-top: 2px;">
+                    {{ $event->name }}
+                </div>
             </div>
             @if(($activeMode ?? 'default') === 'custom')
-                <span style="font-size: 8px; font-weight: bold; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; padding: 2px 6px; border-radius: 9999px;">Mode Custom</span>
+                <span style="font-size: 8px; font-weight: 800; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; padding: 2px 6px; border-radius: 9999px; white-space: nowrap;">Mode Custom</span>
             @else
-                <span style="font-size: 8px; font-weight: bold; background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; padding: 2px 6px; border-radius: 9999px;">Mode Default</span>
+                <span style="font-size: 8px; font-weight: 800; background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; padding: 2px 6px; border-radius: 9999px; white-space: nowrap;">Mode Default</span>
             @endif
         </div>
-        <div style="font-size: 10px; color: #64748b; margin-bottom: 8px;">
-            Total Stok/Kuota: <strong>{{ $categoryQuota ?? $category->quota }}</strong> Gelang<br>
-            Menampilkan: <strong>{{ $startNumber ?? 1 }}</strong> s/d <strong>{{ ($startNumber ?? 1) + count($tickets) - 1 }}</strong> ({{ count($tickets) }} gelang)
+
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; font-size: 10px; color: #475569; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                <span>Total Stok/Kuota:</span>
+                <strong style="color: #0f172a;">{{ $categoryQuota ?? $category->quota }} Gelang</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                <span>Menampilkan:</span>
+                <strong style="color: #0f172a;">{{ $startNumber ?? 1 }} s/d {{ ($startNumber ?? 1) + count($tickets) - 1 }} ({{ count($tickets) }} gelang)</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>Kebutuhan Kertas:</span>
+                @if(($paperSize ?? 'f4') === 'a3')
+                    <strong style="color: #0284c7;">{{ ceil(count($tickets) / 26) }} Lembar A3+ (26/lembar)</strong>
+                @else
+                    <strong style="color: #4338ca;">{{ ceil(count($tickets) / 15) }} Lembar F4 (15/lembar)</strong>
+                @endif
+            </div>
+            @if(($categoryQuota ?? $category->quota) > count($tickets))
+                <div style="margin-top: 5px; padding-top: 5px; border-top: 1px dashed #cbd5e1; font-size: 8.5px; color: #0369a1; line-height: 1.3;">
+                    💡 Batch aktif: {{ count($tickets) }} gelang dari total {{ $categoryQuota ?? $category->quota }} kuota. Gunakan form batch di bawah untuk mencetak rentang lainnya.
+                </div>
+            @endif
+        </div>
+
+        <!-- Paper Size Switcher (F4 vs A3+) -->
+        <div style="margin-bottom: 10px;">
+            <div style="font-size: 9px; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                <span>Pilih Ukuran Kertas:</span>
+                @if(($paperSize ?? 'f4') === 'a3')
+                    <span style="font-size: 8px; background: #e0f2fe; color: #0369a1; padding: 1px 5px; border-radius: 4px; font-weight: 700;">Hemat Ruang (2 Kolom)</span>
+                @else
+                    <span style="font-size: 8px; background: #ede9fe; color: #6d28d9; padding: 1px 5px; border-radius: 4px; font-weight: 700;">1 Kolom Standar</span>
+                @endif
+            </div>
+            <div style="display: flex; gap: 4px; background: #f1f5f9; padding: 3px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <a href="{{ route('organizer.categories.print-wristbands', ['category' => $category, 'paper' => 'f4', 'mode' => $activeMode ?? 'default', 'start' => $startNumber ?? 1, 'count' => count($tickets)]) }}"
+                   style="flex: 1; text-align: center; padding: 6px 4px; font-size: 10px; font-weight: 800; border-radius: 6px; text-decoration: none; transition: all 0.2s; {{ ($paperSize ?? 'f4') !== 'a3' ? 'background: #ffffff; color: #4338ca; box-shadow: 0 1px 3px rgba(0,0,0,0.1);' : 'color: #64748b;' }}">
+                    📄 F4 (21.5 x 33 cm)
+                </a>
+                <a href="{{ route('organizer.categories.print-wristbands', ['category' => $category, 'paper' => 'a3', 'mode' => $activeMode ?? 'default', 'start' => $startNumber ?? 1, 'count' => count($tickets)]) }}"
+                   style="flex: 1; text-align: center; padding: 6px 4px; font-size: 10px; font-weight: 800; border-radius: 6px; text-decoration: none; transition: all 0.2s; {{ ($paperSize ?? 'f4') === 'a3' ? 'background: #ffffff; color: #0284c7; box-shadow: 0 1px 3px rgba(0,0,0,0.1);' : 'color: #64748b;' }}">
+                    📰 A3+ (31 x 48 cm)
+                </a>
+            </div>
         </div>
 
         <!-- Mode Switcher Tabs -->
-        <div style="display: flex; gap: 4px; margin-bottom: 10px; background: #f1f5f9; padding: 3px; border-radius: 8px; border: 1px solid #e2e8f0;">
-            <a href="{{ route('organizer.categories.print-wristbands', ['category' => $category, 'mode' => 'default', 'start' => $startNumber ?? 1, 'count' => count($tickets)]) }}"
-               style="flex: 1; text-align: center; padding: 6px 4px; font-size: 10px; font-weight: 800; border-radius: 6px; text-decoration: none; transition: all 0.2s; {{ ($activeMode ?? 'default') !== 'custom' ? 'background: #ffffff; color: #4338ca; box-shadow: 0 1px 3px rgba(0,0,0,0.1);' : 'color: #64748b;' }}">
-                Mode Default
+        <div style="margin-bottom: 12px;">
+            <div style="font-size: 9px; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px;">
+                Desain Gelang:
+            </div>
+            <div style="display: flex; gap: 4px; background: #f1f5f9; padding: 3px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <a href="{{ route('organizer.categories.print-wristbands', ['category' => $category, 'paper' => $paperSize ?? 'f4', 'mode' => 'default', 'start' => $startNumber ?? 1, 'count' => count($tickets)]) }}"
+                   style="flex: 1; text-align: center; padding: 5px 4px; font-size: 10px; font-weight: 800; border-radius: 6px; text-decoration: none; transition: all 0.2s; {{ ($activeMode ?? 'default') !== 'custom' ? 'background: #ffffff; color: #4338ca; box-shadow: 0 1px 3px rgba(0,0,0,0.1);' : 'color: #64748b;' }}">
+                    Mode Default
+                </a>
+                <a href="{{ route('organizer.categories.print-wristbands', ['category' => $category, 'paper' => $paperSize ?? 'f4', 'mode' => 'custom', 'start' => $startNumber ?? 1, 'count' => count($tickets)]) }}"
+                   style="flex: 1; text-align: center; padding: 5px 4px; font-size: 10px; font-weight: 800; border-radius: 6px; text-decoration: none; transition: all 0.2s; {{ ($activeMode ?? 'default') === 'custom' ? 'background: #ffffff; color: #15803d; box-shadow: 0 1px 3px rgba(0,0,0,0.1);' : 'color: #64748b;' }}">
+                    Mode Custom
+                </a>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;">
+            <button class="btn" onclick="window.print()">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                Cetak Browser Sekarang
+            </button>
+
+            <!-- Export DOCX -->
+            <a href="{{ route('organizer.categories.export-wristbands-docx', ['category' => $category, 'paper' => $paperSize ?? 'f4', 'mode' => $activeMode ?? 'default', 'start' => $startNumber ?? 1, 'count' => count($tickets)]) }}"
+               class="btn-docx">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                Export .docx ({{ strtoupper($paperSize ?? 'F4') }})
             </a>
-            <a href="{{ route('organizer.categories.print-wristbands', ['category' => $category, 'mode' => 'custom', 'start' => $startNumber ?? 1, 'count' => count($tickets)]) }}"
-               style="flex: 1; text-align: center; padding: 6px 4px; font-size: 10px; font-weight: 800; border-radius: 6px; text-decoration: none; transition: all 0.2s; {{ ($activeMode ?? 'default') === 'custom' ? 'background: #ffffff; color: #15803d; box-shadow: 0 1px 3px rgba(0,0,0,0.1);' : 'color: #64748b;' }}">
-                Mode Custom
+
+            <!-- Quick alternative docx download link -->
+            @php $altPaper = ($paperSize ?? 'f4') === 'a3' ? 'f4' : 'a3'; @endphp
+            <a href="{{ route('organizer.categories.export-wristbands-docx', ['category' => $category, 'paper' => $altPaper, 'mode' => $activeMode ?? 'default', 'start' => $startNumber ?? 1, 'count' => count($tickets)]) }}"
+               style="text-align: center; font-size: 9px; color: #0369a1; text-decoration: underline; font-weight: 600;">
+                Atau download .docx versi {{ strtoupper($altPaper) }} ({{ $altPaper === 'a3' ? '31x48cm 2 Kolom' : '21.5x33cm' }})
             </a>
         </div>
 
-        <button class="btn" onclick="window.print()">🖨️ Cetak {{ count($tickets) }} Gelang</button>
-
         @if(($activeMode ?? 'default') === 'custom' && (!$wristbandTemplate || !$wristbandTemplate->background_image))
-            <div style="margin-top: 8px; padding: 6px 8px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; font-size: 8.5px; color: #92400e; line-height: 1.3;">
+            <div style="margin-bottom: 8px; padding: 6px 8px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; font-size: 8.5px; color: #92400e; line-height: 1.3;">
                 ⚠️ <strong>Background belum ada:</strong> Gambar background belum diunggah atau belum tersimpan di event.
             </div>
         @endif
 
-        <div style="margin-top: 8px;">
-            <a href="{{ route('organizer.events.edit', $event) }}" target="_blank" style="display: block; text-align: center; font-size: 9px; color: #6b21a8; background: #faf5ff; border: 1px solid #e9d5ff; padding: 5px 8px; border-radius: 6px; font-weight: 700; text-decoration: none;">
+        <div style="margin-bottom: 10px;">
+            <a href="{{ route('organizer.events.edit', $event) }}" target="_blank" style="display: block; text-align: center; font-size: 9.5px; color: #6b21a8; background: #faf5ff; border: 1px solid #e9d5ff; padding: 5px 8px; border-radius: 6px; font-weight: 700; text-decoration: none;">
                 ✏️ Edit Desain & Background Gelang
             </a>
         </div>
 
-        <form method="GET" action="{{ route('organizer.categories.print-wristbands', $category) }}" style="margin-top: 10px; border-top: 1px solid #e2e8f0; padding-top: 8px;">
+        <!-- Batch Filtering Form -->
+        <form method="GET" action="{{ route('organizer.categories.print-wristbands', $category) }}" style="border-top: 1px solid #e2e8f0; padding-top: 8px;">
             <input type="hidden" name="mode" value="{{ $activeMode ?? 'default' }}">
+            <input type="hidden" name="paper" value="{{ $paperSize ?? 'f4' }}">
             <div style="font-size: 9px; font-weight: bold; color: #475569; margin-bottom: 4px;">Cetak Sebagian (Batch):</div>
             <div style="display: flex; gap: 4px; align-items: center; margin-bottom: 6px;">
                 <input type="number" name="start" value="{{ $startNumber ?? 1 }}" min="1" placeholder="Mulai" style="width: 50%; font-size: 10px; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px;">
                 <input type="number" name="count" value="{{ count($tickets) }}" min="1" max="5000" placeholder="Jumlah" style="width: 50%; font-size: 10px; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px;">
             </div>
-            <button type="submit" style="width: 100%; font-size: 9px; padding: 4px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; font-weight: bold;">Terapkan Batch</button>
+            <button type="submit" style="width: 100%; font-size: 9px; padding: 5px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; font-weight: bold; color: #334155;">Terapkan Batch</button>
         </form>
 
-        <p style="font-size: 8pt; color: #475569; margin-top: 10px; line-height: 1.4; border-top: 1px solid #e2e8f0; padding-top: 8px;">
-            <strong>Setting Cetak Browser:</strong><br>
-            • Ukuran Kertas: <strong>F4 / Folio</strong> (215 x 330 mm)<br>
+        <!-- Browser Print Guidelines -->
+        <div style="font-size: 8pt; color: #475569; margin-top: 10px; line-height: 1.4; border-top: 1px solid #e2e8f0; padding-top: 8px;">
+            <strong style="color: #1e293b;">Panduan Cetak Browser ({{ strtoupper($paperSize ?? 'F4') }}):</strong><br>
+            @if(($paperSize ?? 'f4') === 'a3')
+                • Kertas: <strong>A3+ / Super A3 (310 x 480 mm)</strong><br>
+                • Orientasi: <strong>Landscape (Mendatar)</strong><br>
+                • Tata Letak: <strong>2 Kolom (13 x 2 = 26 Gelang/Lembar)</strong><br>
+            @else
+                • Kertas: <strong>F4 / Folio (215 x 330 mm)</strong><br>
+                • Orientasi: <strong>Portrait (Tegak)</strong><br>
+                • Tata Letak: <strong>1 Kolom (15 Gelang/Lembar)</strong><br>
+            @endif
             • Margins: <strong>None / Minimum</strong><br>
             • Centang: <strong>Background graphics</strong><br>
             • Skala (Scale): <strong>100% / Default</strong>
-        </p>
+        </div>
     </div>
 
     @php
@@ -464,145 +623,49 @@
         $sponsorNames = $eventMeta['wristband_sponsor_names'] ?? $tenantMeta['wristband_sponsor_names'] ?? ['IdenTix', 'BRI', 'Super Soccer', 'Adidas', 'Coca Cola', 'Vidio', 'DRX', 'AFG'];
     @endphp
 
-    @foreach($tickets->chunk(15) as $chunk)
-    <div class="page">
-        @foreach($chunk as $ticket)
-        @php
-            $ticketCategoryName = $ticket->category?->name ?? $category->name;
-            $homeInitial = collect(explode(' ', $event->name))->filter()->map(fn($word) => strtoupper(substr($word, 0, 1)))->take(3)->join('');
-            $bandColor = $normalizeHex($ticket->category?->hex_color ?? $category->hex_color ?? '#d71920');
-            $bandPalette = $contrastPalette($bandColor);
-        @endphp
+    @if(($paperSize ?? 'f4') === 'a3')
+        {{-- A3+ Mode: 2 Columns of 13 wristbands (26 wristbands per sheet) --}}
+        @foreach($tickets->chunk(26) as $chunk)
+        <div class="page-a3">
+            @php
+                $leftChunk = $chunk->slice(0, 13);
+                $rightChunk = $chunk->slice(13, 13);
+            @endphp
 
-        @if(($activeMode ?? 'default') === 'custom' && isset($wristbandTemplate) && $wristbandTemplate)
-            {{-- Custom Mode: 15 tickets with custom uploaded background and dynamic columns --}}
-            <div class="wristband-custom" style="{{ $wristbandTemplate->getBackgroundImageUrl() ? "background-image: url('{$wristbandTemplate->getBackgroundImageUrl()}');" : "background-color: #ffffff;" }}">
-                @php $cols = $wristbandTemplate->getMergedColumnsConfig(); @endphp
-                @foreach($cols as $cKey => $col)
-                    @if(!empty($col['enabled']))
-                        @php
-                            $x = (float) str_replace(',', '.', (string)($col['x'] ?? 0));
-                            $y = (float) str_replace(',', '.', (string)($col['y'] ?? 0));
-                            $color = $col['color'] ?? '#111827';
-                            $fontSize = $col['font_size'] ?? '6pt';
-                            $fontWeight = $col['font_weight'] ?? '700';
-                            $align = $col['align'] ?? 'left';
-                        @endphp
-
-                        @if($cKey === 'qr_code')
-                            @php $qrSizeMm = (float) str_replace(',', '.', (string)($col['qr_size'] ?? 14)); @endphp
-                            <div class="wb-element" style="left: {{ $x }}mm; top: {{ $y }}mm; width: {{ $qrSizeMm }}mm; height: {{ $qrSizeMm }}mm; display: flex; align-items: center; justify-content: center; background: #ffffff; padding: 0.5mm; border-radius: 1px; box-shadow: 0 0 1px rgba(0,0,0,0.15);">
-                                {!! QrCode::size((int)($qrSizeMm * 3.78))->margin(0)->generate($ticket->ticket_code) !!}
-                            </div>
-                        @elseif($cKey === 'wristband_code')
-                            <div class="wb-element" style="left: {{ $x }}mm; top: {{ $y }}mm; font-size: {{ $fontSize }}; font-weight: {{ $fontWeight }}; color: {{ $color }}; text-align: {{ $align }}; white-space: nowrap; line-height: 1;">
-                                {{ $ticket->ticket_code }}
-                            </div>
-                        @elseif($cKey === 'category_name')
-                            <div class="wb-element" style="left: {{ $x }}mm; top: {{ $y }}mm; font-size: {{ $fontSize }}; font-weight: {{ $fontWeight }}; color: {{ $color }}; text-align: {{ $align }}; white-space: nowrap; text-transform: uppercase; line-height: 1;">
-                                {{ $ticketCategoryName }}
-                            </div>
-                        @elseif($cKey === 'event_name')
-                            <div class="wb-element" style="left: {{ $x }}mm; top: {{ $y }}mm; font-size: {{ $fontSize }}; font-weight: {{ $fontWeight }}; color: {{ $color }}; text-align: {{ $align }}; white-space: nowrap; text-transform: uppercase; line-height: 1; max-width: 90mm; overflow: hidden; text-overflow: ellipsis;">
-                                {{ $event->name }}
-                            </div>
-                        @elseif($cKey === 'event_date')
-                            <div class="wb-element" style="left: {{ $x }}mm; top: {{ $y }}mm; font-size: {{ $fontSize }}; font-weight: {{ $fontWeight }}; color: {{ $color }}; text-align: {{ $align }}; white-space: nowrap; text-transform: uppercase; line-height: 1;">
-                                {{ $event->event_start_date->format('d M Y') }}
-                                @if($event->gate_open_at) • {{ $event->gate_open_at->format('H.i') }} WIB @endif
-                            </div>
-                        @elseif($cKey === 'venue')
-                            <div class="wb-element" style="left: {{ $x }}mm; top: {{ $y }}mm; font-size: {{ $fontSize }}; font-weight: {{ $fontWeight }}; color: {{ $color }}; text-align: {{ $align }}; white-space: nowrap; text-transform: uppercase; line-height: 1; max-width: 90mm; overflow: hidden; text-overflow: ellipsis;">
-                                {{ $event->venue }}{{ $event->city ? ', ' . $event->city : '' }}
-                            </div>
-                        @elseif($cKey === 'seat_number')
-                            <div class="wb-element" style="left: {{ $x }}mm; top: {{ $y }}mm; font-size: {{ $fontSize }}; font-weight: {{ $fontWeight }}; color: {{ $color }}; text-align: {{ $align }}; white-space: nowrap; line-height: 1;">
-                                #{{ sprintf('%04d', $ticket->index ?? 1) }}
-                            </div>
-                        @elseif($cKey === 'price')
-                            <div class="wb-element" style="left: {{ $x }}mm; top: {{ $y }}mm; font-size: {{ $fontSize }}; font-weight: {{ $fontWeight }}; color: {{ $color }}; text-align: {{ $align }}; white-space: nowrap; line-height: 1;">
-                                {{ $category->price > 0 ? 'Rp ' . number_format($category->price, 0, ',', '.') : 'FREE' }}
-                            </div>
-                        @elseif($cKey === 'custom_text')
-                            <div class="wb-element" style="left: {{ $x }}mm; top: {{ $y }}mm; font-size: {{ $fontSize }}; font-weight: {{ $fontWeight }}; color: {{ $color }}; text-align: {{ $align }}; white-space: nowrap; line-height: 1;">
-                                {{ $col['custom_value'] ?? 'NON-REFUNDABLE' }}
-                            </div>
-                        @endif
-                    @endif
+            <!-- Left Column: 13 Wristbands -->
+            <div class="column-a3">
+                @foreach($leftChunk as $ticket)
+                    @include('wristbands.partials.single-wristband', ['ticket' => $ticket])
                 @endforeach
+                @for($i = count($leftChunk); $i < 13; $i++)
+                    <div class="empty-slot">Empty Wristband Slot</div>
+                @endfor
             </div>
-        @else
-            {{-- Default Mode: Standard IdenTix Wristband Layout --}}
-            <div class="wristband">
-                <div class="blank-space"></div>
 
-                <div class="league-logo">
-                    @if($leagueLogo)
-                        <img src="{{ $leagueLogo }}" alt="League Logo">
-                    @else
-                        <div>SUPER<br>LEAGUE</div>
-                    @endif
-                </div>
-
-                <div class="ticket-band" style="--band-primary: {{ $bandColor }}; --band-dark: {{ $bandPalette['dark'] }}; --band-light: {{ $bandPalette['light'] }}; --band-edge: {{ $bandPalette['edge'] }}; --band-panel: {{ $bandPalette['panel'] }}; --band-text: {{ $bandPalette['text'] }}; --band-accent-text: {{ $bandPalette['accentText'] }}; --band-text-shadow: {{ $bandPalette['shadow'] }};">
-                    <div class="qr-section">
-                        {!! QrCode::size(62)->margin(0)->generate($ticket->ticket_code) !!}
-                        <div class="code">{{ $ticket->ticket_code }}</div>
-                    </div>
-
-                    <div class="category-section">{{ $ticketCategoryName }}</div>
-
-                    <div class="club-logo">
-                        @if($homeLogo)
-                            <img src="{{ $homeLogo }}" alt="Home Club Logo">
-                        @else
-                            <div class="club-placeholder">{{ $homeInitial ?: 'HOME' }}</div>
-                        @endif
-                    </div>
-
-                    <div class="event-section">
-                        <div class="league-title">{{ $leagueName }}</div>
-                        <div class="event-name">{{ $event->name }}</div>
-                        <div class="event-details">
-                            {{ $event->event_start_date->format('l, d M Y') }}
-                            @if($event->gate_open_at)
-                                - KICK OFF {{ $event->gate_open_at->format('H.i') }} WIB
-                            @endif
-                            <br>{{ $event->venue }}{{ $event->city ? ', ' . $event->city : '' }}
-                        </div>
-                    </div>
-
-                    <div class="club-logo">
-                        @if($awayLogo)
-                            <img src="{{ $awayLogo }}" alt="Away Club Logo">
-                        @else
-                            <div class="club-placeholder">AWAY</div>
-                        @endif
-                    </div>
-
-                    <div class="sponsor-section">
-                        @forelse($sponsorLogos as $sponsorLogo)
-                            @php $sponsorLogoUrl = $assetUrl($sponsorLogo); @endphp
-                            @if($sponsorLogoUrl)
-                                <div class="sponsor-item"><img src="{{ $sponsorLogoUrl }}" alt="Sponsor Logo"></div>
-                            @endif
-                        @empty
-                            @foreach($sponsorNames as $sponsorName)
-                                <div class="sponsor-item">{{ $sponsorName }}</div>
-                            @endforeach
-                        @endforelse
-                    </div>
-                </div>
-
-                <div class="right-blank"></div>
+            <!-- Right Column: 13 Wristbands -->
+            <div class="column-a3">
+                @foreach($rightChunk as $ticket)
+                    @include('wristbands.partials.single-wristband', ['ticket' => $ticket])
+                @endforeach
+                @for($i = count($rightChunk); $i < 13; $i++)
+                    <div class="empty-slot">Empty Wristband Slot</div>
+                @endfor
             </div>
-        @endif
+        </div>
         @endforeach
+    @else
+        {{-- F4 Mode: 1 Column of 15 wristbands (15 wristbands per sheet) --}}
+        @foreach($tickets->chunk(15) as $chunk)
+        <div class="page page-f4">
+            @foreach($chunk as $ticket)
+                @include('wristbands.partials.single-wristband', ['ticket' => $ticket])
+            @endforeach
 
-        @for($i = count($chunk); $i < 15; $i++)
-            <div class="empty-slot">Empty Wristband Slot</div>
-        @endfor
-    </div>
-    @endforeach
+            @for($i = count($chunk); $i < 15; $i++)
+                <div class="empty-slot">Empty Wristband Slot</div>
+            @endfor
+        </div>
+        @endforeach
+    @endif
 </body>
 </html>

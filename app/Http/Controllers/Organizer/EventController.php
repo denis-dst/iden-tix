@@ -11,19 +11,50 @@ use Illuminate\Support\Facades\Storage;
 
 class EventController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $tenantId = auth()->user()->tenant_id;
-        $events = Event::where('tenant_id', $tenantId)
-            ->withCount(['ticketCategories', 'gates'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
+        $status = $request->get('status');
+        $q = $request->get('q');
 
-        $allEvents = Event::where('tenant_id', $tenantId)
-            ->orderBy('event_start_date', 'desc')
-            ->get(['id', 'name', 'event_start_date', 'venue', 'city', 'status']);
+        $query = Event::where('tenant_id', $tenantId)
+            ->withCount(['ticketCategories', 'gates']);
 
-        return view('organizer.events.index', compact('events', 'allEvents'));
+        if (!empty($status) && $status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        if (!empty($q)) {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('name', 'like', "%{$q}%")
+                    ->orWhere('venue', 'like', "%{$q}%")
+                    ->orWhere('city', 'like', "%{$q}%")
+                    ->orWhere('id', $q);
+            });
+        }
+
+        $events = $query->orderBy('created_at', 'desc')
+            ->paginate(15)
+            ->withQueryString();
+
+        $allEventsQuery = Event::where('tenant_id', $tenantId)
+            ->orderBy('event_start_date', 'desc');
+
+        if (!empty($status) && $status !== 'all') {
+            $allEventsQuery->where('status', $status);
+        }
+
+        $allEvents = $allEventsQuery->get(['id', 'name', 'event_start_date', 'venue', 'city', 'status']);
+
+        // Status counts for filter tabs
+        $statusCounts = [
+            'all' => Event::where('tenant_id', $tenantId)->count(),
+            'published' => Event::where('tenant_id', $tenantId)->where('status', 'published')->count(),
+            'draft' => Event::where('tenant_id', $tenantId)->where('status', 'draft')->count(),
+            'cancelled' => Event::where('tenant_id', $tenantId)->where('status', 'cancelled')->count(),
+        ];
+
+        return view('organizer.events.index', compact('events', 'allEvents', 'statusCounts', 'status', 'q'));
     }
 
     public function create()

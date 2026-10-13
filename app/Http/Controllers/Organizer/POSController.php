@@ -17,7 +17,7 @@ class POSController extends Controller
     public function index()
     {
         $events = Event::where('tenant_id', auth()->user()->tenant_id)
-            ->whereIn('status', ['draft', 'published'])
+            ->where('status', 'published')
             ->withCount('ticketCategories')
             ->orderByDesc('event_start_date')
             ->get();
@@ -29,6 +29,10 @@ class POSController extends Controller
     {
         $this->authorizeTenant($event);
 
+        if ($event->status !== 'published') {
+            return redirect()->route('organizer.pos.index')->with('error', 'Penjualan tiket POS hanya tersedia untuk event yang sudah dipublikasikan.');
+        }
+
         $event->load(['ticketCategories' => function ($query) {
             $query->where('is_active', true)->orderBy('sort_order')->orderBy('price');
         }]);
@@ -39,6 +43,10 @@ class POSController extends Controller
     public function store(Request $request, Event $event)
     {
         $this->authorizeTenant($event);
+
+        if ($event->status !== 'published') {
+            return redirect()->route('organizer.pos.index')->with('error', 'Penjualan tiket POS hanya tersedia untuk event yang sudah dipublikasikan.');
+        }
 
         $validated = $request->validate([
             'ticket_category_id' => 'required|exists:ticket_categories,id',

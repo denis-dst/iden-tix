@@ -59,4 +59,66 @@ class Transaction extends Model
     {
         return $this->belongsTo(PromoCode::class, 'promo_code_id');
     }
+
+    /**
+     * Scope query to only include legitimate sales transactions (online or direct POS sales),
+     * excluding gate wristband scans and offline stock placeholders.
+     */
+    public function scopeSalesOnly($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('payment_method')
+              ->orWhereNotIn('payment_method', ['OFFLINE_WRISTBAND', 'OFFLINE STOCK']);
+        })
+        ->where(function ($q) {
+            $q->whereNull('reference_no')
+              ->orWhere(function ($sub) {
+                  $sub->where('reference_no', 'not like', 'WB-%')
+                      ->where('reference_no', 'not like', 'STOCK-%');
+              });
+        })
+        ->where(function ($q) {
+            $q->whereNull('customer_email')
+              ->orWhere('customer_email', '!=', 'wristband@gentix-apps.com');
+        })
+        ->where(function ($q) {
+            $q->whereNull('customer_name')
+              ->orWhere(function ($sub) {
+                  $sub->where('customer_name', 'not like', 'Gelang Fisik %')
+                      ->where('customer_name', '!=', 'OFFLINE STOCK');
+              });
+        });
+    }
+
+    /**
+     * Check if this transaction originates from a gate wristband scan or offline stock placeholder.
+     */
+    public function isGateWristband(): bool
+    {
+        if (in_array($this->payment_method, ['OFFLINE_WRISTBAND', 'OFFLINE STOCK'], true)) {
+            return true;
+        }
+
+        if ($this->customer_email === 'wristband@gentix-apps.com') {
+            return true;
+        }
+
+        if ($this->reference_no && (str_starts_with($this->reference_no, 'WB-') || str_starts_with($this->reference_no, 'STOCK-'))) {
+            return true;
+        }
+
+        if ($this->customer_name && (str_starts_with($this->customer_name, 'Gelang Fisik ') || $this->customer_name === 'OFFLINE STOCK')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if this transaction is an online or direct POS sale.
+     */
+    public function isSale(): bool
+    {
+        return !$this->isGateWristband();
+    }
 }
