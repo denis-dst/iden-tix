@@ -983,13 +983,6 @@ class PublicEventController extends Controller
                         $this->finalizeTransaction($transaction);
                         $transaction->refresh();
                         $transaction->load('tickets.category', 'event');
-                    } elseif ($checkResult['success'] && $checkResult['is_failed']) {
-                        $transaction->update(['payment_status' => $checkResult['internal_status']]);
-                        $transaction->refresh();
-                        if (in_array($checkResult['internal_status'], ['cancelled', 'failed']) && $transaction->event) {
-                            return redirect()->route('events.show', $transaction->event->slug)
-                                ->with('error', 'Pembayaran dibatalkan atau tidak berhasil. Silakan ulangi pemesanan tiket Anda.');
-                        }
                     }
                 }
             }
@@ -1035,14 +1028,6 @@ class PublicEventController extends Controller
                     'status'        => 'paid',
                     'is_paid'       => true,
                     'tickets_count' => $transaction->tickets()->count(),
-                ]);
-            }
-
-            if ($checkResult['success'] && $checkResult['is_failed']) {
-                $transaction->update(['payment_status' => $checkResult['internal_status']]);
-                return response()->json([
-                    'status'  => $checkResult['internal_status'],
-                    'is_paid' => false,
                 ]);
             }
         }
