@@ -22,6 +22,7 @@ class ReportController extends Controller
 
         $baseEventsQuery = Event::query()
             ->where('tenant_id', $tenantId)
+            ->where('status', 'published')
             ->when($request->filled('event_id'), fn ($query) => $query->where('id', $request->event_id))
             ->with(['ticketCategories' => fn ($query) => $query->orderBy('sort_order')->orderBy('name')])
             ->orderByDesc('event_start_date');
@@ -29,6 +30,7 @@ class ReportController extends Controller
         $events = (clone $baseEventsQuery)->paginate(8)->withQueryString();
 
         $eventOptions = Event::where('tenant_id', $tenantId)
+            ->where('status', 'published')
             ->orderByDesc('event_start_date')
             ->get(['id', 'name']);
 
@@ -48,6 +50,7 @@ class ReportController extends Controller
             ];
         } else {
             $ticketTotals = Ticket::whereIn('event_id', $matchingEventIds)
+                ->whereHas('transaction', fn ($q) => $q->salesOnly())
                 ->selectRaw("
                     SUM(CASE WHEN status IN ('sold', 'redeemed') THEN 1 ELSE 0 END) as sold,
                     SUM(CASE WHEN status = 'redeemed' THEN 1 ELSE 0 END) as redeemed
@@ -62,6 +65,7 @@ class ReportController extends Controller
                 ->first();
 
             $txnTotals = Transaction::whereIn('event_id', $matchingEventIds)
+                ->salesOnly()
                 ->where('payment_status', 'paid')
                 ->selectRaw("
                     COUNT(*) as paid_transactions,
@@ -84,6 +88,8 @@ class ReportController extends Controller
         }
 
         $transactions = Transaction::where('tenant_id', $tenantId)
+            ->salesOnly()
+            ->whereHas('event', fn ($q) => $q->where('status', 'published'))
             ->when($request->filled('event_id'), fn ($query) => $query->where('event_id', $request->event_id))
             ->with([
                 'event:id,name,umroh_question_enabled,meta',
@@ -106,10 +112,13 @@ class ReportController extends Controller
         $tenantId = auth()->user()->tenant_id;
 
         $eventOptions = Event::where('tenant_id', $tenantId)
+            ->where('status', 'published')
             ->orderByDesc('event_start_date')
             ->get(['id', 'name']);
 
         $transactions = Transaction::where('tenant_id', $tenantId)
+            ->salesOnly()
+            ->whereHas('event', fn ($q) => $q->where('status', 'published'))
             ->when($request->filled('event_id'), fn ($query) => $query->where('event_id', $request->event_id))
             ->select(['id', 'customer_name', 'customer_phone', 'customer_email', 'reference_no', 'created_at'])
             ->with([
@@ -128,6 +137,8 @@ class ReportController extends Controller
         $tenantId = auth()->user()->tenant_id;
 
         $transactions = Transaction::where('tenant_id', $tenantId)
+            ->salesOnly()
+            ->whereHas('event', fn ($q) => $q->where('status', 'published'))
             ->when($request->filled('event_id'), fn ($query) => $query->where('event_id', $request->event_id))
             ->with([
                 'event:id,name,umroh_question_enabled,meta',
@@ -268,6 +279,16 @@ class ReportController extends Controller
                 $checkedInCount      = $checkedInTickets->count();
                 $isPartialScan       = $totalTickets > 1 && $checkedInCount > 0 && $checkedInCount < $totalTickets;
 
+                $firstTicket = $transaction->tickets->first();
+                $firstVisitorData = $firstTicket && is_array($firstTicket->visitor_data) ? $firstTicket->visitor_data : [];
+                $customFields = $this->resolveCustomFields($transaction->event, $firstVisitorData, $transaction);
+                $customQuestionLabel = !empty($customFields)
+                    ? collect($customFields)->pluck('label')->implode(' | ')
+                    : '-';
+                $customAnswerSummary = !empty($customFields)
+                    ? collect($customFields)->pluck('value')->implode(' | ')
+                    : ($transaction->customer_umroh_answer ?: '-');
+
                 return [
                     'reference_no' => $transaction->reference_no,
                     'created_at' => $transaction->created_at,
@@ -276,8 +297,9 @@ class ReportController extends Controller
                     'customer_email' => $transaction->customer_email,
                     'customer_phone' => $transaction->customer_phone,
                     'customer_gender' => $transaction->customer_gender,
-                    'customer_umroh_answer' => $transaction->customer_umroh_answer,
-                    'custom_question_label' => $this->customQuestionLabel($transaction->event),
+                    'customer_umroh_answer' => $customAnswerSummary,
+                    'custom_question_label' => $customQuestionLabel,
+                    'custom_fields' => $customFields,
                     'event_name' => $transaction->event->name ?? '-',
                     'category_name' => $transaction->category->name ?? 'Mixed',
                     'quantity' => $transaction->quantity,
@@ -311,6 +333,14 @@ class ReportController extends Controller
                     $hasCheckin    = $inLogs->isNotEmpty();
                     $firstCheckin  = $inLogs->first()?->scanned_at;
 
+                    $customFields = $this->resolveCustomFields($transaction->event, $visitorData, $transaction);
+                    $customQuestionLabel = !empty($customFields)
+                        ? collect($customFields)->pluck('label')->implode(' | ')
+                        : '-';
+                    $customAnswerSummary = !empty($customFields)
+                        ? collect($customFields)->pluck('value')->implode(' | ')
+                        : ($visitorData['umroh_answer'] ?? ($transaction->customer_umroh_answer ?: '-'));
+
                     return [
                         'ticket_code' => $ticket->ticket_code,
                         'reference_no' => $transaction->reference_no,
@@ -319,8 +349,9 @@ class ReportController extends Controller
                         'email' => $visitorData['email'] ?? $transaction->customer_email,
                         'phone' => $visitorData['phone'] ?? $transaction->customer_phone,
                         'gender' => $visitorData['gender'] ?? $transaction->customer_gender,
-                        'umroh_answer' => $visitorData['umroh_answer'] ?? $transaction->customer_umroh_answer,
-                        'custom_question_label' => $this->customQuestionLabel($transaction->event),
+                        'umroh_answer' => $customAnswerSummary,
+                        'custom_question_label' => $customQuestionLabel,
+                        'custom_fields' => $customFields,
                         'event_name' => $transaction->event->name ?? '-',
                         'category_name' => $ticket->category->name ?? '-',
                         'status' => $ticket->status,
@@ -334,6 +365,66 @@ class ReportController extends Controller
                 });
             })
             ->values();
+    }
+
+    private function resolveCustomFields(?Event $event, array $visitorData, ?Transaction $transaction = null): array
+    {
+        if (!$event) {
+            return [];
+        }
+
+        $formatted = [];
+        $processedFieldIds = [];
+        $customAnswers = is_array($visitorData['custom_answers'] ?? null) ? $visitorData['custom_answers'] : [];
+
+        $customFields = method_exists($event, 'getCustomFields') ? $event->getCustomFields() : [];
+        if (!empty($customFields)) {
+            foreach ($customFields as $field) {
+                $fId = (string) ($field['id'] ?? '');
+                $processedFieldIds[] = $fId;
+                $val = $customAnswers[$fId] ?? null;
+
+                if (($val === null || $val === '') && $fId === 'umroh_answer') {
+                    $val = $visitorData['umroh_answer'] ?? ($transaction->customer_umroh_answer ?? null);
+                }
+
+                if (($val === null || $val === '') && count($customFields) === 1) {
+                    $val = $visitorData['umroh_answer'] ?? ($transaction->customer_umroh_answer ?? null);
+                }
+
+                $valueStr = is_array($val) ? implode(', ', array_filter($val)) : trim((string) $val);
+
+                $formatted[] = [
+                    'id' => $fId,
+                    'label' => $field['label'] ?? 'Pertanyaan Custom',
+                    'value' => $valueStr !== '' ? $valueStr : '-',
+                ];
+            }
+        } elseif (!empty($visitorData['umroh_answer']) || !empty($transaction?->customer_umroh_answer)) {
+            $ans = $visitorData['umroh_answer'] ?? $transaction->customer_umroh_answer;
+            $formatted[] = [
+                'id' => 'umroh_answer',
+                'label' => $this->customQuestionLabel($event),
+                'value' => trim((string) $ans) !== '' ? trim((string) $ans) : '-',
+            ];
+            $processedFieldIds[] = 'umroh_answer';
+        }
+
+        if (is_array($customAnswers)) {
+            foreach ($customAnswers as $key => $val) {
+                if (!in_array((string) $key, $processedFieldIds, true) && $val !== null && $val !== '') {
+                    $label = ucwords(str_replace(['_', '-'], ' ', (string) $key));
+                    $valueStr = is_array($val) ? implode(', ', array_filter($val)) : trim((string) $val);
+                    $formatted[] = [
+                        'id' => (string) $key,
+                        'label' => $label,
+                        'value' => $valueStr !== '' ? $valueStr : '-',
+                    ];
+                }
+            }
+        }
+
+        return $formatted;
     }
 
     private function customQuestionLabel(?Event $event): string
@@ -357,6 +448,7 @@ class ReportController extends Controller
 
         $ticketStats = Ticket::query()
             ->whereIn('event_id', $eventIds)
+            ->whereHas('transaction', fn ($q) => $q->salesOnly())
             ->select('event_id', 'ticket_category_id')
             ->selectRaw("SUM(CASE WHEN status IN ('sold', 'redeemed') THEN 1 ELSE 0 END) as sold_count")
             ->selectRaw("SUM(CASE WHEN status = 'redeemed' THEN 1 ELSE 0 END) as redeemed_count")
@@ -374,18 +466,51 @@ class ReportController extends Controller
             ->get()
             ->groupBy('event_id');
 
-        $transactionStats = Transaction::query()
+        $rawTransactions = Transaction::query()
             ->whereIn('event_id', $eventIds)
+            ->salesOnly()
             ->where('payment_status', 'paid')
-            ->select('event_id', 'ticket_category_id')
-            ->selectRaw('COUNT(*) as paid_transactions_count')
-            ->selectRaw('COALESCE(SUM(total_amount), 0) as revenue')
-            ->groupBy('event_id', 'ticket_category_id')
-            ->get()
-            ->groupBy('event_id');
+            ->select(['id', 'event_id', 'ticket_category_id', 'total_amount'])
+            ->with(['tickets:id,transaction_id,ticket_category_id'])
+            ->get();
+
+        $eventCategoriesMap = $events->keyBy('id')->map(fn ($e) => $e->ticketCategories->keyBy('id'));
+
+        $transactionStats = $rawTransactions
+            ->groupBy('event_id')
+            ->map(function ($eventTxns, $eventId) use ($eventCategoriesMap) {
+                $categories = $eventCategoriesMap->get($eventId, collect());
+                $firstCatId = $categories->keys()->first();
+
+                return $eventTxns->groupBy(function ($txn) use ($categories, $firstCatId) {
+                    if ($txn->ticket_category_id && $categories->has($txn->ticket_category_id)) {
+                        return $txn->ticket_category_id;
+                    }
+                    $ticketCat = $txn->tickets->first(fn ($t) => $t->ticket_category_id && $categories->has($t->ticket_category_id));
+                    if ($ticketCat) {
+                        return $ticketCat->ticket_category_id;
+                    }
+                    return $txn->ticket_category_id ?: $firstCatId;
+                })->map(function ($catTxns) {
+                    return (object) [
+                        'paid_transactions_count' => $catTxns->count(),
+                        'revenue' => (float) $catTxns->sum('total_amount'),
+                    ];
+                });
+            });
+
+        $eventTransactionTotals = $rawTransactions
+            ->groupBy('event_id')
+            ->map(function ($eventTxns) {
+                return (object) [
+                    'paid_transactions_count' => $eventTxns->count(),
+                    'revenue' => (float) $eventTxns->sum('total_amount'),
+                ];
+            });
 
         $partialScanByEventAndCategory = Transaction::query()
             ->whereIn('event_id', $eventIds)
+            ->salesOnly()
             ->where('payment_status', 'paid')
             ->select(['id', 'event_id', 'ticket_category_id'])
             ->with([
@@ -405,11 +530,12 @@ class ReportController extends Controller
                 });
             });
 
-        return $events->map(function ($event) use ($ticketStats, $gateStats, $transactionStats, $partialScanByEventAndCategory) {
+        return $events->map(function ($event) use ($ticketStats, $gateStats, $transactionStats, $eventTransactionTotals, $partialScanByEventAndCategory) {
             $eventTicketStats = $ticketStats->get($event->id, collect())->keyBy('ticket_category_id');
             $eventGateStats = $gateStats->get($event->id, collect())->keyBy('ticket_category_id');
-            $eventTxStats = $transactionStats->get($event->id, collect())->keyBy('ticket_category_id');
+            $eventTxStats = $transactionStats->get($event->id, collect());
             $eventPartialStats = $partialScanByEventAndCategory->get($event->id, collect());
+            $eventTxTotal = $eventTransactionTotals->get($event->id);
 
             $categories = $event->ticketCategories->map(function ($category) use ($eventTicketStats, $eventGateStats, $eventTxStats, $eventPartialStats) {
                 $ticket = $eventTicketStats->get($category->id);
@@ -441,8 +567,8 @@ class ReportController extends Controller
                 'checkin_count' => $categories->sum('checkin_count'),
                 'checkout_count' => $categories->sum('checkout_count'),
                 'inside_count' => $categories->sum('inside_count'),
-                'paid_transactions_count' => $categories->sum('paid_transactions_count'),
-                'revenue' => $categories->sum('revenue'),
+                'paid_transactions_count' => (int) ($eventTxTotal->paid_transactions_count ?? $categories->sum('paid_transactions_count')),
+                'revenue' => (float) ($eventTxTotal->revenue ?? $categories->sum('revenue')),
                 'partial_scan_count' => $categories->sum('partial_scan_count'),
             ];
         });

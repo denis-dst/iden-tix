@@ -8,6 +8,19 @@
                 <h2 class="text-3xl font-black text-slate-800 font-outfit">Laporan Penjualan</h2>
                 <p class="text-sm text-slate-500 font-medium mt-1">Cari dan kelola transaksi tiket, serta cetak ulang e-voucher pembeli.</p>
             </div>
+            <div class="flex items-center gap-2.5">
+                <div id="sse-connection-badge" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm transition-all" title="Status koneksi real-time Server-Sent Events">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span id="sse-badge-text">Live Update</span>
+                </div>
+                <button type="button" id="toggle-sound-btn" onclick="toggleSseSound()" title="Suara Notifikasi: Aktif (Klik untuk ubah)" class="p-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition shadow-sm">
+                    <svg id="sound-icon-on" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                    <svg id="sound-icon-off" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+                </button>
+            </div>
         </div>
 
         @if(session('success'))
@@ -66,16 +79,25 @@
                 <option value="pos" {{ request('channel') === 'pos' ? 'selected' : '' }}>Penjualan Langsung (POS)</option>
             </select>
 
+            <select name="status" class="rounded-xl border-slate-200 text-sm font-bold text-slate-600 focus:border-orange-500 focus:ring-orange-500 xl:w-48">
+                <option value="">Semua Status</option>
+                <option value="paid" {{ request('status') === 'paid' ? 'selected' : '' }}>PAID</option>
+                <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>PENDING</option>
+                <option value="expired" {{ request('status') === 'expired' ? 'selected' : '' }}>EXPIRED</option>
+                <option value="failed" {{ request('status') === 'failed' ? 'selected' : '' }}>FAILED</option>
+                <option value="refunded" {{ request('status') === 'refunded' ? 'selected' : '' }}>REFUNDED</option>
+            </select>
+
             <button type="submit" class="px-8 py-2.5 bg-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-orange-700 transition shadow-lg shadow-orange-200">Cari Transaksi</button>
             
-            @if(request()->anyFilled(['q', 'event_id', 'ticket_category_id', 'channel']))
+            @if(request()->anyFilled(['q', 'event_id', 'ticket_category_id', 'channel', 'status']))
                 <a href="{{ route('organizer.transactions.index') }}" class="px-5 py-2.5 bg-slate-100 text-slate-500 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-slate-200 transition text-center">Reset</a>
             @endif
         </form>
 
         <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full text-left border-collapse" id="transactions-table">
                     <thead>
                         <tr class="bg-slate-50/70 border-b border-slate-100">
                             <th class="w-10 px-4 py-5"></th>
@@ -89,280 +111,11 @@
                             <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-50">
+                    <tbody class="divide-y divide-slate-50" id="transactions-tbody">
                         @forelse($transactions as $tx)
-                            @php
-                                $activeTicketsCount = $tx->tickets->where('status', '!=', 'void')->count();
-                                $voidTicketsCount = $tx->tickets->where('status', 'void')->count();
-                                $proofTicket = $tx->tickets->first(function ($ticket) {
-                                    $visitorData = is_array($ticket->visitor_data) ? $ticket->visitor_data : [];
-                                    return !empty($visitorData['proof_ig']) || !empty($visitorData['proof_review']) || !empty($visitorData['proofs']);
-                                });
-                                $proofData = $proofTicket && is_array($proofTicket->visitor_data) ? $proofTicket->visitor_data : [];
-                                $cancelableTickets = $tx->tickets
-                                    ->where('status', '!=', 'void')
-                                    ->map(function ($ticket) use ($tx) {
-                                        $visitorData = is_array($ticket->visitor_data) ? $ticket->visitor_data : [];
-
-                                        return [
-                                            'id' => $ticket->id,
-                                            'code' => $ticket->ticket_code,
-                                            'name' => $visitorData['name'] ?? $tx->customer_name,
-                                            'category' => $ticket->category->name ?? '-',
-                                        ];
-                                    })
-                                    ->values();
-                                $cancelableTicketsPayload = base64_encode($cancelableTickets->toJson());
-                            @endphp
-                            <tr class="hover:bg-slate-50/40 transition group">
-                                <td class="px-4 py-5 text-center">
-                                    <button type="button" onclick="toggleRow('tickets-{{ $tx->id }}')" class="p-1 hover:bg-slate-100 rounded-lg transition text-slate-400 hover:text-slate-600 focus:outline-none">
-                                        <svg id="icon-{{ $tx->id }}" class="w-5 h-5 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                    </button>
-                                </td>
-                                <td class="px-8 py-5">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-xs font-black text-slate-600 font-mono">{{ $tx->reference_no }}</span>
-                                        @if($tx->channel === 'pos' || str_starts_with($tx->reference_no, 'POS-'))
-                                            <span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-[9px] font-black uppercase tracking-wider border border-amber-200/50">POS</span>
-                                        @else
-                                            <span class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[9px] font-black uppercase tracking-wider border border-blue-200/50">Online</span>
-                                        @endif
-                                    </div>
-                                    <div class="text-[10px] font-bold text-slate-400 mt-1 uppercase">{{ $tx->created_at->format('d M Y H:i') }}</div>
-                                </td>
-                                <td class="px-8 py-5">
-                                    <div class="text-sm font-black text-slate-800">{{ $tx->customer_name }}</div>
-                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-tight mt-0.5">{{ $tx->customer_email }}</div>
-                                </td>
-                                <td class="px-8 py-5 text-right">
-                                    <div class="text-sm font-black text-slate-700">{{ $activeTicketsCount }} / {{ $tx->tickets->count() }}</div>
-                                    <div class="text-[9px] font-bold text-orange-500 uppercase">{{ $tx->tickets->first()->category->name ?? 'Mixed' }}</div>
-                                    @if($voidTicketsCount > 0)
-                                        <div class="text-[9px] font-black text-rose-500 uppercase mt-0.5">{{ $voidTicketsCount }} dibatalkan</div>
-                                    @endif
-                                </td>
-                                <td class="px-8 py-5 text-right">
-                                    @if($tx->promoCode)
-                                        <div class="text-xs font-black text-orange-600 font-mono">{{ $tx->promoCode->code }}</div>
-                                        <div class="text-[9px] font-bold text-slate-400 uppercase">-Rp {{ number_format($tx->discount_amount, 0, ',', '.') }}</div>
-                                    @else
-                                        <div class="text-xs font-bold text-slate-300">-</div>
-                                    @endif
-                                </td>
-                                <td class="px-8 py-5 text-right">
-                                    <div class="text-sm font-black text-green-600">Rp {{ number_format($tx->total_amount, 0, ',', '.') }}</div>
-                                    <div class="text-[9px] font-bold text-slate-400 uppercase">{{ $tx->payment_method ?? 'Unknown' }}</div>
-                                </td>
-                                <td class="px-8 py-5">
-                                    @php
-                                        $visitorProofs = $proofData['proofs'] ?? [];
-                                        if (empty($visitorProofs)) {
-                                            if (!empty($proofData['proof_ig'])) $visitorProofs['proof_ig'] = $proofData['proof_ig'];
-                                            if (!empty($proofData['proof_review'])) $visitorProofs['proof_review'] = $proofData['proof_review'];
-                                        }
-                                    @endphp
-                                    @if(!empty($visitorProofs))
-                                        <div class="flex flex-col gap-1.5">
-                                            @foreach($visitorProofs as $proofId => $path)
-                                                @php
-                                                    $proofLabel = 'Proof';
-                                                    if ($proofId === 'proof_ig') $proofLabel = 'IG';
-                                                    elseif ($proofId === 'proof_review') $proofLabel = 'Review';
-                                                    else {
-                                                        $eventProofs = $tx->event->getRegistrationProofs();
-                                                        $matchedProof = collect($eventProofs)->firstWhere('id', $proofId);
-                                                        $proofLabel = $matchedProof['label'] ?? 'Proof';
-                                                        if (strlen($proofLabel) > 10) {
-                                                            $proofLabel = substr($proofLabel, 0, 8) . '..';
-                                                        }
-                                                    }
-                                                @endphp
-                                                <a href="{{ asset('storage/' . $path) }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-[9px] font-black uppercase tracking-wider hover:bg-blue-600 hover:text-white transition">{{ $proofLabel }}</a>
-                                            @endforeach
-                                        </div>
-                                    @else
-                                        <span class="text-xs font-bold text-slate-300">-</span>
-                                    @endif
-                                </td>
-                                <td class="px-8 py-5">
-                                    @if($tx->payment_status === 'paid')
-                                        <span class="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase tracking-wider">PAID</span>
-                                    @elseif($tx->payment_status === 'refunded')
-                                        <span class="px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-[9px] font-black uppercase tracking-wider">REFUNDED</span>
-                                    @else
-                                        <span class="px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-600 text-[9px] font-black uppercase tracking-wider">{{ strtoupper($tx->payment_status) }}</span>
-                                    @endif
-                                </td>
-                                <td class="px-8 py-5">
-                                    <div class="flex items-center gap-2">
-                                        @if($tx->payment_status !== 'paid' && $tx->payment_status !== 'refunded')
-                                            <form method="POST" action="{{ route('organizer.transactions.sync-wago', $tx) }}" class="inline">
-                                                @csrf
-                                                <button type="submit" title="Cek Status Pembayaran ke Gateway WAGO" class="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition shadow-sm border border-blue-200">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                                                </button>
-                                            </form>
-                                            <form method="POST" action="{{ route('organizer.transactions.mark-as-paid', $tx) }}" onsubmit="return confirm('PENTING: Pastikan uang pembayaran sudah diterima secara manual sebelum melakukan verifikasi ini. Lanjutkan?')">
-                                                @csrf
-                                                <button type="submit" title="Konfirmasi Pembayaran Manual" class="p-2.5 bg-orange-500 text-black rounded-xl hover:bg-orange-600 transition shadow-sm border border-orange-200">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-                                                </button>
-                                            </form>
-                                        @elseif($tx->payment_status === 'paid')
-                                            <form method="POST" action="{{ route('organizer.transactions.resend-evoucher', $tx) }}" class="inline">
-                                                @csrf
-                                                <button type="submit" title="Kirim Ulang Email" class="p-2.5 bg-orange-500 text-black rounded-xl hover:bg-orange-600 transition shadow-sm">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                                                </button>
-                                            </form>
-                                             @if(($global_settings['global_wa_notifications_enabled'] ?? '1') !== '0')
-                                                 <form method="POST" action="{{ route('organizer.transactions.send-whatsapp', $tx) }}" class="inline">
-                                                     @csrf
-                                                     <button type="submit" title="Kirim E-Voucher via WhatsApp (Fonnte)" class="p-2.5 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition shadow-sm">
-                                                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                             <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.717-1.458L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436.002 9.859-4.42 9.863-9.864.002-2.637-1.023-5.115-2.887-6.979C16.584 1.898 14.1 8.75 11.466 8.75 6.03 8.748 1.608 13.17 1.605 18.613c-.001 1.666.452 3.284 1.312 4.708L1.875 22.25l4.772-1.258a10.06 10.06 0 004.825 1.451zm9.957-6.808c-.27-.135-1.597-.788-1.845-.878-.247-.09-.427-.135-.607.135-.18.27-.697.878-.855 1.058-.158.18-.315.202-.585.067-.27-.135-1.14-.42-2.172-1.34-.803-.715-1.345-1.6-1.503-1.871-.158-.27-.017-.416.118-.551.121-.122.27-.315.405-.472.135-.158.18-.27.27-.45.09-.18.045-.337-.023-.472-.068-.135-.607-1.463-.832-2.003-.22-.529-.44-.457-.607-.466-.157-.008-.337-.01-.517-.01-.18 0-.472.067-.72.337-.248.27-.945.923-.945 2.25 0 1.328.968 2.61 1.103 2.79.135.18 1.905 2.91 4.613 4.078.644.278 1.147.444 1.54.569.647.206 1.236.177 1.701.108.519-.078 1.598-.653 1.823-1.283.225-.63.225-1.17.157-1.283-.067-.113-.247-.18-.517-.315z"/>
-                                                         </svg>
-                                                     </button>
-                                                 </form>
-                                             @endif
-                                            @if(($tx->event->purchase_flow ?? '') === 'print')
-                                                <a href="{{ route('organizer.pos.print', $tx) }}" target="_blank" title="Cetak Tiket Termal" class="p-2.5 bg-orange-50 text-orange-600 rounded-xl hover:bg-orange-600 hover:text-white transition shadow-sm">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                                                </a>
-                                            @else
-                                                <a href="{{ route('organizer.transactions.print-evoucher', $tx) }}" target="_blank" title="Cetak E-Voucher" class="p-2.5 bg-orange-50 text-orange-600 rounded-xl hover:bg-orange-600 hover:text-white transition shadow-sm">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                                                </a>
-                                            @endif
-                                        @endif
-                                        
-                                        @if(!in_array($tx->payment_status, ['failed', 'expired', 'refunded']))
-                                            <x-transactions.partials.cancel-tickets-popover
-                                                :action="route('organizer.transactions.cancel-tickets', $tx)"
-                                                :cancelable-tickets="$cancelableTickets"
-                                                :reference-no="$tx->reference_no"
-                                                summary-class="p-2.5 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition border border-rose-100 shadow-sm"
-                                                confirm-message="Apakah Anda yakin ingin membatalkan tiket yang dipilih? Kuota akan otomatis dikembalikan ke stok."
-                                            />
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                            <!-- Collapsible Ticket Detail Row -->
-                            <tr id="tickets-{{ $tx->id }}" class="hidden bg-slate-50/50">
-                                <td></td>
-                                <td colspan="8" class="px-8 py-5 border-b border-slate-100">
-                                    <div class="p-5 bg-white rounded-3xl border border-slate-100 shadow-sm space-y-4">
-                                        <div class="flex items-center justify-between border-b border-slate-50 pb-3">
-                                            <div>
-                                                <h4 class="text-xs font-black text-slate-700 uppercase tracking-widest">Detail Rincian Tiket Peserta</h4>
-                                                <p class="text-[10px] font-bold text-slate-400 mt-0.5">Daftar e-voucher untuk pemesanan ini</p>
-                                            </div>
-                                            @if($tx->payment_status === 'paid' && $tx->tickets->where('status', '!=', 'void')->count() > 0)
-                                                <x-transactions.partials.cancel-tickets-popover
-                                                    :action="route('organizer.transactions.cancel-tickets', $tx)"
-                                                    :cancelable-tickets="$cancelableTickets"
-                                                    :reference-no="$tx->reference_no"
-                                                    summary-class="px-4 py-2 bg-rose-50 border border-rose-200 text-rose-600 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-rose-600 hover:text-white transition"
-                                                    summary-text="Batal Transaksi (Pilih Tiket)"
-                                                    confirm-message="Apakah Anda yakin ingin membatalkan tiket yang dipilih? Kuota akan otomatis dikembalikan ke stok."
-                                                />
-                                            @endif
-                                        </div>
-                                        <div class="overflow-x-auto">
-                                            <table class="w-full text-left border-collapse text-xs">
-                                                <thead>
-                                                    <tr class="text-[9px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                                                        <th class="py-2.5">Kode Tiket</th>
-                                                        <th class="py-2.5">Pemegang/Pengunjung</th>
-                                                        <th class="py-2.5">Kategori</th>
-                                                        <th class="py-2.5">Bukti</th>
-                                                        <th class="py-2.5">Status</th>
-                                                        <th class="py-2.5 text-right">Aksi</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody class="divide-y divide-slate-50">
-                                                    @foreach($tx->tickets as $ticket)
-                                                        @php
-                                                            $visitorData = is_array($ticket->visitor_data) ? $ticket->visitor_data : [];
-                                                        @endphp
-                                                        <tr class="hover:bg-slate-50/50 transition">
-                                                            <td class="py-3 font-mono font-black text-slate-600">{{ $ticket->ticket_code }}</td>
-                                                            <td class="py-3">
-                                                                <div class="font-black text-slate-800 uppercase">
-                                                                    {{ $visitorData['name'] ?? $tx->customer_name }}
-                                                                </div>
-                                                                <div class="text-[9px] font-bold text-slate-400 uppercase mt-0.5">
-                                                                    NIK: {{ $visitorData['nik'] ?? $tx->customer_nik ?? '-' }}
-                                                                    | Gender: {{ $visitorData['gender'] ?? $tx->customer_gender ?? '-' }}
-                                                                </div>
-                                                            </td>
-                                                            <td class="py-3 text-slate-500 font-bold">{{ $ticket->category->name ?? '-' }}</td>
-                                                            <td class="py-3">
-                                                                @php
-                                                                    $tProofs = $visitorData['proofs'] ?? [];
-                                                                    if (empty($tProofs)) {
-                                                                        if (!empty($visitorData['proof_ig'])) $tProofs['proof_ig'] = $visitorData['proof_ig'];
-                                                                        if (!empty($visitorData['proof_review'])) $tProofs['proof_review'] = $visitorData['proof_review'];
-                                                                    }
-                                                                @endphp
-                                                                @if(!empty($tProofs))
-                                                                    <div class="flex flex-wrap gap-1.5">
-                                                                        @foreach($tProofs as $proofId => $path)
-                                                                            @php
-                                                                                $proofLabel = 'Proof';
-                                                                                if ($proofId === 'proof_ig') $proofLabel = 'IG';
-                                                                                elseif ($proofId === 'proof_review') $proofLabel = 'Review';
-                                                                                else {
-                                                                                    $eventProofs = $tx->event->getRegistrationProofs();
-                                                                                    $matchedProof = collect($eventProofs)->firstWhere('id', $proofId);
-                                                                                    $proofLabel = $matchedProof['label'] ?? 'Proof';
-                                                                                    if (strlen($proofLabel) > 10) {
-                                                                                        $proofLabel = substr($proofLabel, 0, 8) . '..';
-                                                                                    }
-                                                                                }
-                                                                            @endphp
-                                                                            <a href="{{ asset('storage/' . $path) }}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-[9px] font-black uppercase tracking-wider hover:bg-blue-600 hover:text-white transition">{{ $proofLabel }}</a>
-                                                                        @endforeach
-                                                                    </div>
-                                                                @else
-                                                                    <span class="text-[9px] text-slate-300 font-black uppercase">-</span>
-                                                                @endif
-                                                            </td>
-                                                            <td class="py-3">
-                                                                @if($ticket->status === 'sold')
-                                                                    <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-600 font-bold text-[9px] uppercase tracking-wide">SOLD</span>
-                                                                @elseif($ticket->status === 'redeemed')
-                                                                    <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 font-bold text-[9px] uppercase tracking-wide">REDEEMED</span>
-                                                                @elseif($ticket->status === 'void')
-                                                                    <span class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 font-bold text-[9px] uppercase tracking-wide">VOID (CANCELED)</span>
-                                                                @else
-                                                                    <span class="px-2 py-0.5 rounded bg-slate-50 text-slate-500 font-bold text-[9px] uppercase tracking-wide">{{ strtoupper($ticket->status) }}</span>
-                                                                @endif
-                                                            </td>
-                                                            <td class="py-3 text-right">
-                                                                @if($ticket->status !== 'void')
-                                                                    <form method="POST" action="{{ route('organizer.tickets.cancel', $ticket) }}" class="inline" onsubmit="return confirm('PENTING: Anda yakin ingin membatalkan TIKET SATUAN ini? Kuota akan otomatis dikembalikan ke stok. Lanjutkan?')">
-                                                                        @csrf
-                                                                        <button type="submit" class="px-3 py-1.5 bg-rose-50 border border-rose-200 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition">
-                                                                            Cancel Tiket
-                                                                        </button>
-                                                                    </form>
-                                                                @else
-                                                                    <span class="text-[9px] text-slate-300 font-black uppercase">BATAL (CANCELED)</span>
-                                                                @endif
-                                                            </td>
-                                                        </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
+                            @include('organizer.transactions.partials.transaction-row', ['tx' => $tx])
                         @empty
-                            <tr>
+                            <tr id="empty-transactions-row">
                                 <td colspan="9" class="px-8 py-20 text-center">
                                     <div class="flex flex-col items-center">
                                         <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mb-4">
@@ -584,5 +337,468 @@
             }
             return confirm('Apakah Anda yakin ingin membatalkan ' + checkedCount + ' tiket yang dipilih? Kuota akan otomatis dikembalikan ke stok.');
         }
+
+        /* ========================================================
+           SSE (Server-Sent Events) Real-Time Transaction Engine
+           ======================================================== */
+        let sseSoundEnabled = localStorage.getItem('sse_sound_enabled') !== '0';
+
+        function updateSoundButtonUI() {
+            const iconOn = document.getElementById('sound-icon-on');
+            const iconOff = document.getElementById('sound-icon-off');
+            const btn = document.getElementById('toggle-sound-btn');
+            if (!iconOn || !iconOff) return;
+
+            if (sseSoundEnabled) {
+                iconOn.classList.remove('hidden');
+                iconOff.classList.add('hidden');
+                if (btn) btn.title = "Suara Notifikasi: Aktif (Klik untuk matikan)";
+            } else {
+                iconOn.classList.add('hidden');
+                iconOff.classList.remove('hidden');
+                if (btn) btn.title = "Suara Notifikasi: Mati (Klik untuk nyalakan)";
+            }
+        }
+
+        function toggleSseSound() {
+            sseSoundEnabled = !sseSoundEnabled;
+            localStorage.setItem('sse_sound_enabled', sseSoundEnabled ? '1' : '0');
+            updateSoundButtonUI();
+            if (sseSoundEnabled) {
+                playNotificationChime();
+            }
+        }
+
+        function playNotificationChime() {
+            if (!sseSoundEnabled) return;
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                if (ctx.state === 'suspended') {
+                    ctx.resume();
+                }
+                
+                const now = ctx.currentTime;
+                // Harmonic two-tone notification sound (D5 -> A5)
+                const osc1 = ctx.createOscillator();
+                const gain1 = ctx.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(587.33, now);
+                gain1.gain.setValueAtTime(0.12, now);
+                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                osc1.connect(gain1);
+                gain1.connect(ctx.destination);
+                osc1.start(now);
+                osc1.stop(now + 0.35);
+
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(880, now + 0.12);
+                gain2.gain.setValueAtTime(0.12, now + 0.12);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+                osc2.start(now + 0.12);
+                osc2.stop(now + 0.55);
+            } catch (e) {
+                // Audio not allowed or unavailable
+            }
+        }
+
+        function showSseToast(title, message, options = {}) {
+            const container = document.getElementById('sse-toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = 'pointer-events-auto bg-slate-900/95 text-white p-4 rounded-2xl shadow-2xl border border-orange-500/40 backdrop-blur-md max-w-sm w-full flex items-start gap-3 animate-toast-in transition-all';
+            
+            const isUpdate = options.type === 'update';
+            const iconColor = isUpdate ? 'text-emerald-400' : 'text-orange-400';
+            const badgeText = isUpdate ? 'STATUS UPDATE' : 'TRANSAKSI BARU';
+            const badgeBg = isUpdate ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-orange-500/20 text-orange-300 border-orange-500/30';
+
+            toast.innerHTML = `
+                <div class="p-2 rounded-xl bg-slate-800 shrink-0 ${iconColor}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                        <span class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${badgeBg}">${badgeText}</span>
+                        <span class="text-[10px] text-slate-400 font-mono">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</span>
+                    </div>
+                    <div class="text-xs font-black text-slate-100 truncate">${title}</div>
+                    <div class="text-[11px] font-bold text-slate-300 mt-0.5 leading-snug">${message}</div>
+                    ${options.actionText ? `
+                        <div class="mt-2.5">
+                            <button type="button" class="text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 text-white transition shadow-sm sse-toast-action-btn">
+                                ${options.actionText}
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+                <button type="button" class="text-slate-400 hover:text-white shrink-0 p-1" onclick="this.closest('.pointer-events-auto').remove()">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            `;
+
+            if (options.actionCallback) {
+                const btn = toast.querySelector('.sse-toast-action-btn');
+                if (btn) {
+                    btn.addEventListener('click', () => {
+                        options.actionCallback();
+                        toast.remove();
+                    });
+                }
+            }
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.classList.remove('animate-toast-in');
+                    toast.classList.add('animate-toast-out');
+                    setTimeout(() => toast.remove(), 350);
+                }
+            }, options.duration || 6000);
+        }
+
+        let eventSource = null;
+        let currentLastId = {{ $latestTransactionId ?? 0 }};
+        let currentLastUpdatedAt = @js($latestUpdatedAtIso ?? now()->toIso8601String());
+        const currentPage = {{ $transactions->currentPage() ?? 1 }};
+
+        const currentFilters = {
+            q: @js(request('q', '')),
+            event_id: @js(request('event_id', '')),
+            ticket_category_id: @js(request('ticket_category_id', '')),
+            channel: @js(request('channel', '')),
+            status: @js(request('status', '')),
+        };
+
+        function updateSseStatus(status) {
+            const badge = document.getElementById('sse-connection-badge');
+            if (!badge) return;
+
+            if (status === 'connected') {
+                badge.className = 'inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm transition-all';
+                badge.innerHTML = `
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span id="sse-badge-text">Live Update</span>
+                `;
+            } else if (status === 'connecting') {
+                badge.className = 'inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 shadow-sm transition-all';
+                badge.innerHTML = `
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span id="sse-badge-text">Menghubungkan...</span>
+                `;
+            } else if (status === 'error') {
+                badge.className = 'inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200 shadow-sm transition-all';
+                badge.innerHTML = `
+                    <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                    <span id="sse-badge-text">Offline</span>
+                `;
+            }
+        }
+
+        function updateMetricCard(elementId, newValue) {
+            const el = document.getElementById(elementId);
+            if (!el || el.textContent.trim() === newValue) return;
+
+            el.textContent = newValue;
+            el.classList.add('stat-changed');
+            setTimeout(() => {
+                el.classList.remove('stat-changed');
+            }, 1200);
+        }
+
+        function updateStatsUI(stats) {
+            if (!stats) return;
+            if (stats.total_quota_formatted) updateMetricCard('stat-total-quota', stats.total_quota_formatted);
+            if (stats.total_sold_formatted) updateMetricCard('stat-total-sold', stats.total_sold_formatted);
+            if (stats.total_unsold_formatted) updateMetricCard('stat-total-unsold', stats.total_unsold_formatted);
+            if (stats.total_revenue_formatted) updateMetricCard('stat-total-revenue', 'Rp ' + stats.total_revenue_formatted);
+        }
+
+        function matchesActiveFilters(tx) {
+            if (currentFilters.event_id && String(tx.event_id) !== String(currentFilters.event_id)) {
+                return false;
+            }
+            if (currentFilters.ticket_category_id && String(tx.ticket_category_id) !== String(currentFilters.ticket_category_id)) {
+                return false;
+            }
+            if (currentFilters.channel && String(tx.channel).toLowerCase() !== String(currentFilters.channel).toLowerCase()) {
+                return false;
+            }
+            if (currentFilters.status && String(tx.payment_status).toLowerCase() !== String(currentFilters.status).toLowerCase()) {
+                return false;
+            }
+            if (currentFilters.q) {
+                const query = currentFilters.q.toLowerCase();
+                const ref = (tx.reference_no || '').toLowerCase();
+                const name = (tx.customer_name || '').toLowerCase();
+                const email = (tx.customer_email || '').toLowerCase();
+                if (!ref.includes(query) && !name.includes(query) && !email.includes(query)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function initEventSource() {
+            if (eventSource) {
+                eventSource.close();
+            }
+
+            const params = new URLSearchParams({
+                last_id: currentLastId,
+                last_updated_at: currentLastUpdatedAt,
+            });
+            if (currentFilters.event_id) params.append('event_id', currentFilters.event_id);
+            if (currentFilters.ticket_category_id) params.append('ticket_category_id', currentFilters.ticket_category_id);
+            if (currentFilters.channel) params.append('channel', currentFilters.channel);
+            if (currentFilters.status) params.append('status', currentFilters.status);
+            if (currentFilters.q) params.append('q', currentFilters.q);
+
+            const streamUrl = "{{ route('organizer.transactions.stream') }}?" + params.toString();
+            updateSseStatus('connecting');
+
+            eventSource = new EventSource(streamUrl);
+
+            eventSource.addEventListener('connected', function (e) {
+                updateSseStatus('connected');
+            });
+
+            eventSource.addEventListener('new_transaction', function (e) {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (!data || !data.id) return;
+
+                    currentLastId = Math.max(currentLastId, data.id);
+                    if (data.last_updated_at) {
+                        currentLastUpdatedAt = data.last_updated_at;
+                    }
+
+                    if (data.stats) {
+                        updateStatsUI(data.stats);
+                    }
+
+                    playNotificationChime();
+
+                    const existingRow = document.getElementById('tx-row-' + data.id);
+                    if (existingRow) {
+                        replaceTransactionRow(data);
+                        return;
+                    }
+
+                    const matchesFilter = matchesActiveFilters(data);
+
+                    if (currentPage === 1 && matchesFilter) {
+                        prependTransactionRow(data);
+
+                        showSseToast(
+                            '#' + data.reference_no + ' (' + (data.channel === 'pos' ? 'POS' : 'Online') + ')',
+                            data.customer_name + ' — Rp ' + data.total_amount_formatted,
+                            {
+                                type: 'new',
+                                actionText: 'Lihat Transaksi',
+                                actionCallback: () => {
+                                    const row = document.getElementById('tx-row-' + data.id);
+                                    if (row) {
+                                        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        row.classList.remove('animate-sse-new');
+                                        void row.offsetWidth;
+                                        row.classList.add('animate-sse-new');
+                                    }
+                                }
+                            }
+                        );
+                    } else if (currentPage > 1) {
+                        showSseToast(
+                            '#' + data.reference_no,
+                            data.customer_name + ' — Rp ' + data.total_amount_formatted + '. Anda di halaman ' + currentPage + '.',
+                            {
+                                type: 'new',
+                                actionText: 'Ke Halaman 1',
+                                actionCallback: () => {
+                                    const url = new URL(window.location.href);
+                                    url.searchParams.delete('page');
+                                    window.location.href = url.toString();
+                                }
+                            }
+                        );
+                    } else if (!matchesFilter) {
+                        showSseToast(
+                            '#' + data.reference_no + ' (Di luar filter)',
+                            data.customer_name + ' — Rp ' + data.total_amount_formatted,
+                            {
+                                type: 'new',
+                                actionText: 'Reset Filter',
+                                actionCallback: () => {
+                                    window.location.href = "{{ route('organizer.transactions.index') }}";
+                                }
+                            }
+                        );
+                    }
+                } catch (err) {
+                    console.error('SSE Error processing new_transaction:', err);
+                }
+            });
+
+            eventSource.addEventListener('update_transaction', function (e) {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (!data || !data.id) return;
+
+                    if (data.last_updated_at) {
+                        currentLastUpdatedAt = data.last_updated_at;
+                    }
+
+                    if (data.stats) {
+                        updateStatsUI(data.stats);
+                    }
+
+                    const existingRow = document.getElementById('tx-row-' + data.id);
+                    if (existingRow) {
+                        replaceTransactionRow(data);
+
+                        showSseToast(
+                            'Pembaruan: #' + data.reference_no,
+                            'Status: ' + (data.payment_status || '').toUpperCase() + ' (' + data.customer_name + ')',
+                            { type: 'update' }
+                        );
+                    }
+                } catch (err) {
+                    console.error('SSE Error processing update_transaction:', err);
+                }
+            });
+
+            eventSource.onerror = function (e) {
+                updateSseStatus('connecting');
+            };
+        }
+
+        function prependTransactionRow(data) {
+            const tbody = document.getElementById('transactions-tbody');
+            if (!tbody) return;
+
+            const emptyRow = document.getElementById('empty-transactions-row');
+            if (emptyRow) {
+                emptyRow.remove();
+            }
+
+            const tempTable = document.createElement('table');
+            const tempTbody = document.createElement('tbody');
+            tempTable.appendChild(tempTbody);
+            tempTbody.innerHTML = data.row_html;
+
+            const newRows = Array.from(tempTbody.children);
+            if (newRows.length > 0) {
+                const mainRow = newRows[0];
+                mainRow.classList.add('animate-sse-new');
+
+                // Insert all elements (main row and tickets row) at the top of tbody
+                for (let i = newRows.length - 1; i >= 0; i--) {
+                    tbody.insertBefore(newRows[i], tbody.firstChild);
+                }
+
+                if (typeof bootCancelModal === 'function') {
+                    bootCancelModal();
+                }
+            }
+        }
+
+        function replaceTransactionRow(data) {
+            const existingRow = document.getElementById('tx-row-' + data.id);
+            const existingDetails = document.getElementById('tickets-' + data.id);
+            if (!existingRow) return;
+
+            const tempTable = document.createElement('table');
+            const tempTbody = document.createElement('tbody');
+            tempTable.appendChild(tempTbody);
+            tempTbody.innerHTML = data.row_html;
+
+            const newRows = Array.from(tempTbody.children);
+            if (newRows.length > 0) {
+                const newMainRow = newRows[0];
+                newMainRow.classList.add('animate-sse-update');
+
+                existingRow.parentNode.replaceChild(newMainRow, existingRow);
+
+                if (existingDetails && newRows[1]) {
+                    if (!existingDetails.classList.contains('hidden')) {
+                        newRows[1].classList.remove('hidden');
+                        const btnIcon = document.getElementById('icon-' + data.id);
+                        if (btnIcon) btnIcon.classList.add('rotate-90');
+                    }
+                    existingDetails.parentNode.replaceChild(newRows[1], existingDetails);
+                }
+
+                if (typeof bootCancelModal === 'function') {
+                    bootCancelModal();
+                }
+            }
+        }
+
+        // Initialize SSE on page load
+        if (window.EventSource) {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    updateSoundButtonUI();
+                    initEventSource();
+                });
+            } else {
+                updateSoundButtonUI();
+                initEventSource();
+            }
+        } else {
+            console.warn('Browser Anda tidak mendukung Server-Sent Events (SSE).');
+        }
     </script>
+
+    <!-- SSE Notification Styles -->
+    <style>
+        @keyframes sse-glow-new {
+            0% { background-color: rgba(249, 115, 22, 0.35); transform: translateY(-3px); }
+            50% { background-color: rgba(249, 115, 22, 0.15); }
+            100% { background-color: transparent; transform: translateY(0); }
+        }
+        @keyframes sse-glow-update {
+            0% { background-color: rgba(16, 185, 129, 0.35); }
+            50% { background-color: rgba(16, 185, 129, 0.15); }
+            100% { background-color: transparent; }
+        }
+        @keyframes sse-toast-in {
+            0% { opacity: 0; transform: translateY(20px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes sse-toast-out {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-20px) scale(0.95); }
+        }
+        .animate-sse-new {
+            animation: sse-glow-new 3s ease-out forwards;
+        }
+        .animate-sse-update {
+            animation: sse-glow-update 3s ease-out forwards;
+        }
+        .animate-toast-in {
+            animation: sse-toast-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-toast-out {
+            animation: sse-toast-out 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .stat-changed {
+            transition: transform 0.3s ease, color 0.3s ease;
+            color: #f97316 !important;
+            transform: scale(1.08);
+        }
+    </style>
+
+    <!-- SSE Floating Toasts Container -->
+    <div id="sse-toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none max-w-sm w-full"></div>
 </x-app-layout>

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Gate;
 use App\Models\GateLog;
+use App\Models\Ticket;
+use App\Models\TicketCategory;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -14,8 +16,20 @@ class DashboardController extends Controller
     {
         $tenantId = auth()->user()->tenant_id;
         
-        // Single query for tenant events
-        $events = Event::withCount(['tickets', 'ticketCategories'])
+        $selectedEventId = $request->get('event_id');
+        $selectedGate = $request->get('gate_name');
+        $selectedType = $request->get('scan_type');
+        $sort = $request->get('sort', 'earliest');
+        $search = $request->get('search');
+
+        // Events list with genuine sold tickets count (excluding void & gate wristband transactions)
+        $events = Event::withCount([
+            'tickets' => function ($query) {
+                $query->whereIn('status', ['sold', 'redeemed'])
+                    ->whereHas('transaction', fn ($q) => $q->salesOnly());
+            },
+            'ticketCategories'
+        ])
             ->where('tenant_id', $tenantId)
             ->orderBy('event_start_date', 'desc')
             ->get();
@@ -23,11 +37,28 @@ class DashboardController extends Controller
         // Reuse in-memory events collection for dropdown options to eliminate duplicate query
         $eventOptions = $events->map(fn ($e) => (object) ['id' => $e->id, 'name' => $e->name]);
 
-        $selectedEventId = $request->get('event_id');
-        $selectedGate = $request->get('gate_name');
-        $selectedType = $request->get('scan_type');
-        $sort = $request->get('sort', 'earliest');
-        $search = $request->get('search');
+        // Sold tickets statistics synchronized with organizer/transactions (strictly published events)
+        $categoriesQuery = TicketCategory::where('tenant_id', $tenantId)
+            ->whereHas('event', fn ($q) => $q->where('status', 'published'))
+            ->when($selectedEventId, fn ($q) => $q->where('event_id', $selectedEventId));
+
+        $allCategories = $categoriesQuery->get(['id', 'quota']);
+
+        $soldByCategory = Ticket::where('tenant_id', $tenantId)
+            ->whereHas('event', fn ($q) => $q->where('status', 'published'))
+            ->when($selectedEventId, fn ($q) => $q->where('event_id', $selectedEventId))
+            ->whereIn('status', ['sold', 'redeemed'])
+            ->whereHas('transaction', function ($q) {
+                $q->salesOnly();
+            })
+            ->selectRaw('ticket_category_id, COUNT(*) as count')
+            ->groupBy('ticket_category_id')
+            ->pluck('count', 'ticket_category_id')
+            ->toArray();
+
+        $totalTicketsSold = (int) $allCategories->sum(function ($cat) use ($soldByCategory) {
+            return max(0, (int) ($soldByCategory[$cat->id] ?? 0));
+        });
 
         // Distinct gates query
         $gateOptions = GateLog::where('tenant_id', $tenantId)
@@ -116,6 +147,7 @@ class DashboardController extends Controller
             'eventOptions',
             'gateOptions',
             'scanLogs',
+            'totalTicketsSold',
             'totalScans',
             'totalCheckIn',
             'totalCheckOut',

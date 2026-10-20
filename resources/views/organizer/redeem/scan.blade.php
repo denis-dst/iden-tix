@@ -245,10 +245,13 @@
                         </div>
                     </div>
 
+                    <!-- White Shutter Flash Layer -->
+                    <div x-show="photoFlash" x-cloak x-transition.opacity.duration.200ms class="fixed inset-0 bg-white pointer-events-none z-[60]"></div>
+
                     <!-- Visitor Photo Capture & Confirmation Modal -->
-                    <div x-show="showCaptureModal" x-cloak class="fixed inset-0 z-50 flex flex-col items-center justify-between bg-black/85 backdrop-blur-md p-4 sm:p-6 select-none animate-in fade-in duration-200">
+                    <div x-show="showCaptureModal" x-cloak class="fixed inset-0 z-50 flex flex-col items-center justify-between bg-slate-950/60 p-3 sm:p-6 select-none animate-in fade-in duration-200">
                         <!-- Top Bar: Verified Visitor Header & Camera Controls -->
-                        <div class="w-full max-w-lg flex items-center justify-between gap-3 z-10 bg-slate-900/90 border border-white/10 px-4 py-3 rounded-2xl backdrop-blur-md shadow-xl">
+                        <div class="w-full max-w-lg flex items-center justify-between gap-3 z-10 bg-slate-900/95 border border-white/10 px-4 py-3 rounded-2xl backdrop-blur-md shadow-2xl">
                             <div class="flex items-center gap-3 min-w-0">
                                 <span class="px-2.5 py-1 bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shrink-0">
                                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -260,22 +263,23 @@
                                 </div>
                             </div>
 
-                            <div class="flex items-center gap-1.5 shrink-0">
-                                <!-- Switch Camera Button -->
+                            <div class="flex items-center gap-2 shrink-0">
+                                <!-- Switch Camera Button (Always visible during live preview) -->
                                 <button type="button" @click="switchCamera()" 
-                                    x-show="cameraDevices && cameraDevices.length > 1 && !capturedPhoto"
-                                    class="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 transition active:scale-95"
-                                    title="Ganti Lensa Kamera">
-                                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    x-show="!capturedPhoto"
+                                    class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 transition active:scale-95 shadow-md"
+                                    title="Ganti Lensa Kamera (Depan / Belakang)">
+                                    <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                                     </svg>
+                                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-200" x-text="getCameraShortName()"></span>
                                 </button>
 
                                 <!-- Torch Toggle Button -->
                                 <button type="button" @click="toggleTorch()" 
                                     x-show="hasTorch && !capturedPhoto"
-                                    :class="torchOn ? 'bg-amber-500 text-black border-amber-400' : 'bg-white/10 text-white border-white/15'"
-                                    class="p-2 rounded-xl border transition active:scale-95"
+                                    :class="torchOn ? 'bg-amber-500 text-black border-amber-400 shadow-amber-500/30' : 'bg-white/10 text-white border-white/15'"
+                                    class="p-2 rounded-xl border transition active:scale-95 shadow-md"
                                     title="Flashlight">
                                     <svg class="w-4 h-4" :class="torchOn ? 'text-black' : 'text-amber-400'" fill="currentColor" viewBox="0 0 24 24">
                                         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
@@ -288,19 +292,34 @@
                         <div class="w-full max-w-sm sm:max-w-md aspect-[3/4] relative my-auto flex items-center justify-center">
                             <!-- Live Camera Mode (Waiting for crew to click capture) -->
                             <template x-if="!capturedPhoto">
-                                <div class="w-full h-full rounded-3xl border-2 border-dashed border-emerald-400/60 relative overflow-hidden flex flex-col items-center justify-between p-6 bg-transparent">
-                                    <div class="text-center bg-black/70 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 shadow-lg">
+                                <div class="w-full h-full rounded-3xl border-2 border-dashed border-emerald-400/60 relative overflow-hidden flex flex-col items-center justify-between p-4 sm:p-6 bg-transparent">
+                                    <div class="text-center bg-black/75 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 shadow-lg">
                                         <p class="text-[11px] font-black uppercase tracking-wider text-emerald-300">Arahkan Kamera ke Pengunjung</p>
                                         <p class="text-[9px] text-slate-300">Ambil foto orang yang me-redeem tiket</p>
                                     </div>
 
-                                    <!-- Face Reticle Guide -->
-                                    <div class="w-44 h-56 sm:w-52 sm:h-64 rounded-full border-2 border-emerald-400/50 relative flex items-center justify-center opacity-70 pointer-events-none">
-                                        <div class="absolute inset-0 rounded-full border border-emerald-400/30 animate-ping duration-1000 opacity-30"></div>
-                                        <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
+                                    <!-- Face Reticle Guide & Countdown Display -->
+                                    <div class="w-44 h-56 sm:w-52 sm:h-64 rounded-full border-2 border-emerald-400/50 relative flex flex-col items-center justify-center opacity-85 pointer-events-none">
+                                        <!-- Countdown Display -->
+                                        <template x-if="countdown > 0">
+                                            <div class="flex flex-col items-center justify-center animate-in zoom-in-75 duration-200">
+                                                <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-emerald-500 text-slate-950 font-black text-4xl sm:text-5xl flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.7)] animate-bounce" x-text="countdown"></div>
+                                                <div class="mt-3 px-3 py-1 bg-black/85 rounded-full text-[11px] font-black uppercase tracking-widest text-emerald-300 shadow-md border border-emerald-400/40" x-text="countdownMessage"></div>
+                                            </div>
+                                        </template>
+
+                                        <!-- Reticle Marker when not counting down -->
+                                        <template x-if="countdown === 0">
+                                            <div class="flex flex-col items-center justify-center">
+                                                <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse"></div>
+                                                <div class="w-12 h-0.5 bg-emerald-400/40 mt-2"></div>
+                                            </div>
+                                        </template>
                                     </div>
 
-                                    <p class="text-[10px] text-slate-300 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full font-semibold text-center border border-white/10">Tekan tombol Ambil Foto di bawah</p>
+                                    <div class="bg-black/75 backdrop-blur-md px-4 py-1.5 rounded-full text-center border border-white/10 shadow-lg">
+                                        <p class="text-[10px] text-slate-200 font-bold" x-text="countdown > 0 ? 'Sedang aba-aba... bersiap!' : 'Beri aba-aba lalu tekan Ambil Foto'"></p>
+                                    </div>
                                 </div>
                             </template>
 
@@ -308,9 +327,12 @@
                             <template x-if="capturedPhoto">
                                 <div class="w-full h-full rounded-3xl border-2 border-emerald-500 overflow-hidden relative shadow-2xl bg-black animate-in zoom-in-95 duration-200">
                                     <img :src="capturedPhoto" class="w-full h-full object-cover">
-                                    <div class="absolute top-3 left-3 right-3 flex items-center justify-between px-3 py-1.5 bg-black/70 backdrop-blur-md rounded-xl text-[10px] font-bold text-slate-200 border border-white/10">
-                                        <span>PREVIEW FOTO</span>
-                                        <span class="text-emerald-400 font-black">✓ SIAP REDEEM</span>
+                                    <div class="absolute top-3 left-3 right-3 flex items-center justify-between px-3 py-2 bg-black/80 backdrop-blur-md rounded-xl text-[10px] font-black text-slate-200 border border-white/15">
+                                        <span class="text-slate-300">PREVIEW FOTO PENGUNJUNG</span>
+                                        <span class="text-emerald-400 flex items-center gap-1">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                            FOTO SIAP
+                                        </span>
                                     </div>
                                 </div>
                             </template>
@@ -318,17 +340,30 @@
 
                         <!-- Bottom Controls -->
                         <div class="w-full max-w-lg flex flex-col items-center gap-3 z-10">
-                            <!-- Live Camera State: Capture Shutter & Cancel -->
+                            <!-- Live Camera State: Capture Shutter, Countdown & Cancel -->
                             <template x-if="!capturedPhoto">
-                                <div class="w-full flex items-center justify-between gap-3">
+                                <div class="w-full flex items-center gap-2 sm:gap-3">
+                                    <!-- Cancel Button -->
                                     <button type="button" @click="cancelCapture()" 
-                                        class="px-5 py-4 bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white rounded-2xl text-xs font-black uppercase tracking-wider transition active:scale-95">
+                                        class="px-4 sm:px-5 py-4 bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white rounded-2xl text-xs font-black uppercase tracking-wider transition active:scale-95 shrink-0">
                                         Batal
                                     </button>
+
+                                    <!-- Countdown Aba-aba (3 Detik) Button -->
+                                    <button type="button" @click="startCountdown(3)" 
+                                        :class="countdown > 0 ? 'bg-amber-500 text-slate-950 animate-pulse border-amber-400' : 'bg-slate-800 hover:bg-slate-700 text-white border-white/15'"
+                                        class="px-3 sm:px-4 py-4 rounded-2xl font-black text-xs uppercase tracking-wider transition border flex items-center justify-center gap-1.5 active:scale-95 shrink-0 shadow-md"
+                                        title="Hitung mundur 3 detik dengan aba-aba">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span x-text="countdown > 0 ? 'Batal (' + countdown + 's)' : 'Aba-aba (3s)'"></span>
+                                    </button>
                                     
+                                    <!-- Shutter Instant Capture Button -->
                                     <button type="button" @click="capturePhoto()" 
-                                        class="flex-1 py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2.5 active:scale-98">
-                                        <svg class="w-5 h-5 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        class="flex-1 py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 active:scale-98">
+                                        <svg class="w-5 h-5 text-slate-950 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
@@ -339,7 +374,7 @@
 
                             <!-- Preview Mode: Ulangi vs Redeem Sekarang -->
                             <template x-if="capturedPhoto">
-                                <div class="w-full flex items-center gap-3">
+                                <div class="w-full flex items-center gap-2 sm:gap-3">
                                     <button type="button" @click="retakePhoto()" 
                                         class="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition border border-white/15 flex items-center justify-center gap-2 active:scale-98">
                                         <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -511,6 +546,12 @@
                 isStartingCamera: false,
                 cameraDevices: [],
                 selectedCameraId: null,
+                currentFacingMode: 'environment',
+                countdown: 0,
+                countdownTimer: null,
+                countdownMessage: '',
+                photoFlash: false,
+                photoCapturedAt: 0,
                 hasTorch: false,
                 torchOn: false,
                 hasZoom: false,
@@ -549,16 +590,17 @@
                     }, 1000);
 
                     // Dismiss by Space, Enter, or Escape key
+                    // IMPORTANT: Enter/Space must NEVER trigger instant photo capture when opening capture modal,
+                    // because barcode scanners emit trailing Enter characters upon scanning.
                     window.addEventListener('keydown', (e) => {
                         if (this.showCaptureModal) {
                             if (e.key === 'Escape') {
                                 e.preventDefault();
                                 this.cancelCapture();
-                            } else if (e.key === ' ' || e.key === 'Enter') {
-                                e.preventDefault();
-                                if (!this.capturedPhoto) {
-                                    this.capturePhoto();
-                                } else {
+                            } else if (e.key === 'Enter') {
+                                // Only permit Enter to confirm redemption if photo has already been taken and previewed (>800ms)
+                                if (this.capturedPhoto && (Date.now() - this.photoCapturedAt > 800)) {
+                                    e.preventDefault();
                                     this.confirmRedeem();
                                 }
                             }
@@ -608,7 +650,28 @@
                     }
                 },
 
-                async startCamera(preferFacingMode = true) {
+                async refreshCameraDevices() {
+                    try {
+                        const devices = await Html5Qrcode.getCameras();
+                        if (devices && devices.length > 0) {
+                            this.cameraDevices = devices;
+                            if (!this.selectedCameraId || !devices.some(d => d.id === this.selectedCameraId)) {
+                                if (this.currentFacingMode === 'user') {
+                                    const front = devices.find(d => /front|user|selfie/i.test(d.label));
+                                    this.selectedCameraId = (front || devices[0]).id;
+                                } else {
+                                    const mainBack = devices.find(d => /back|rear|environment/i.test(d.label) && !/wide|ultra|0\.5|tele|macro/i.test(d.label));
+                                    const anyBack = devices.find(d => /back|rear|environment/i.test(d.label));
+                                    this.selectedCameraId = (mainBack || anyBack || devices[0]).id;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('refreshCameraDevices warning:', e);
+                    }
+                },
+
+                async startCamera(preferFacingMode = false) {
                     if (this.isStartingCamera) return;
                     this.isStartingCamera = true;
                     this.cameraError = false;
@@ -616,9 +679,14 @@
 
                     if (this.html5QrCode) {
                         await this.stopCamera();
+                        await new Promise(r => setTimeout(r, 120));
                     }
 
-                    this.html5QrCode = new Html5Qrcode("reader");
+                    try {
+                        this.html5QrCode = new Html5Qrcode("reader");
+                    } catch (e) {
+                        console.warn("Html5Qrcode init warning:", e);
+                    }
 
                     const config = {
                         fps: 15,
@@ -632,22 +700,9 @@
                         }
                     };
 
-                    // Enumerate available cameras in background
-                    Html5Qrcode.getCameras().then(devices => {
-                        this.cameraDevices = devices || [];
-                        if (!this.selectedCameraId && devices && devices.length > 0) {
-                            const mainBack = devices.find(d => /back|rear|environment/i.test(d.label) && !/wide|ultra|0\.5|tele|macro/i.test(d.label));
-                            const anyBack = devices.find(d => /back|rear|environment/i.test(d.label));
-                            this.selectedCameraId = (mainBack || anyBack || devices[0]).id;
-                        }
-                    }).catch(e => {
-                        console.warn('getCameras warning:', e);
-                    });
-
                     const onScanSuccess = (text) => {
-                        if (!this.processing && !this.result) {
+                        if (!this.processing && !this.result && !this.showCaptureModal) {
                             const now = Date.now();
-                            // Debounce duplicate scans within 2.5 seconds
                             if (text === this.lastScannedCode && (now - this.lastScanTime) < 2500) {
                                 return;
                             }
@@ -659,9 +714,11 @@
 
                     const onScanFailure = () => {};
 
-                    let cameraConstraint = { facingMode: "environment" };
-                    if (!preferFacingMode && this.selectedCameraId) {
+                    let cameraConstraint = null;
+                    if (this.selectedCameraId && !preferFacingMode) {
                         cameraConstraint = { deviceId: { exact: this.selectedCameraId } };
+                    } else {
+                        cameraConstraint = { facingMode: this.currentFacingMode || "environment" };
                     }
 
                     try {
@@ -669,30 +726,29 @@
                         this.cameraStarted = true;
                         this.cameraError = false;
                         this.isStartingCamera = false;
+                        await this.refreshCameraDevices();
                         setTimeout(() => this.updateCameraCapabilities(), 500);
                     } catch (err) {
-                        console.warn("Camera start with facingMode failed, falling back to deviceId:", err);
+                        console.warn("Primary camera start failed, trying fallback:", err);
                         try {
-                            const devices = await Html5Qrcode.getCameras();
-                            this.cameraDevices = devices || [];
-                            if (devices && devices.length > 0) {
-                                const mainBack = devices.find(d => /back|rear|environment/i.test(d.label) && !/wide|ultra|0\.5|tele|macro/i.test(d.label));
-                                const chosenId = (mainBack || devices[0]).id;
-                                this.selectedCameraId = chosenId;
-                                await this.html5QrCode.start({ deviceId: { exact: chosenId } }, config, onScanSuccess, onScanFailure);
-                                this.cameraStarted = true;
-                                this.cameraError = false;
-                                this.isStartingCamera = false;
-                                setTimeout(() => this.updateCameraCapabilities(), 500);
-                                return;
-                            }
+                            const fallbackConstraint = (cameraConstraint && cameraConstraint.deviceId)
+                                ? { facingMode: this.currentFacingMode || "environment" }
+                                : (this.selectedCameraId ? { deviceId: { exact: this.selectedCameraId } } : { facingMode: "environment" });
+
+                            await this.html5QrCode.start(fallbackConstraint, config, onScanSuccess, onScanFailure);
+                            this.cameraStarted = true;
+                            this.cameraError = false;
+                            this.isStartingCamera = false;
+                            await this.refreshCameraDevices();
+                            setTimeout(() => this.updateCameraCapabilities(), 500);
+                            return;
                         } catch (fallbackErr) {
-                            console.error("Camera fallback failed:", fallbackErr);
+                            console.error("Camera start fallback failed:", fallbackErr);
+                            this.cameraError = true;
+                            this.cameraErrorMessage = fallbackErr?.message || err?.message || 'Gagal mengakses kamera. Izinkan akses kamera pada browser.';
+                            this.cameraStarted = false;
+                            this.isStartingCamera = false;
                         }
-                        this.cameraError = true;
-                        this.cameraErrorMessage = err?.message || 'Gagal mengakses kamera. Izinkan akses kamera pada browser.';
-                        this.cameraStarted = false;
-                        this.isStartingCamera = false;
                     }
                 },
 
@@ -703,30 +759,55 @@
                         } catch (e) {
                             console.warn("Error stopping scanner:", e);
                         }
+                        try {
+                            this.html5QrCode.clear();
+                        } catch (e) {}
                         this.cameraStarted = false;
                     }
                 },
 
                 async switchCamera(targetId = null) {
-                    if (this.cameraDevices.length <= 1 && !targetId) return;
+                    if (this.isStartingCamera) return;
+
+                    await this.refreshCameraDevices();
+
                     if (targetId) {
                         this.selectedCameraId = targetId;
-                    } else {
+                        const dev = this.cameraDevices.find(d => d.id === targetId);
+                        if (dev && /front|user|selfie/i.test(dev.label)) {
+                            this.currentFacingMode = 'user';
+                        } else {
+                            this.currentFacingMode = 'environment';
+                        }
+                    } else if (this.cameraDevices && this.cameraDevices.length > 1) {
                         const currentIndex = this.cameraDevices.findIndex(d => d.id === this.selectedCameraId);
                         const nextIndex = (currentIndex + 1) % this.cameraDevices.length;
-                        this.selectedCameraId = this.cameraDevices[nextIndex].id;
+                        const nextDev = this.cameraDevices[nextIndex];
+                        this.selectedCameraId = nextDev.id;
+                        if (/front|user|selfie/i.test(nextDev.label)) {
+                            this.currentFacingMode = 'user';
+                        } else {
+                            this.currentFacingMode = 'environment';
+                        }
+                    } else {
+                        this.currentFacingMode = (this.currentFacingMode === 'environment' ? 'user' : 'environment');
+                        this.selectedCameraId = null;
                     }
+
                     await this.startCamera(false);
                 },
 
                 getCameraShortName() {
-                    if (!this.selectedCameraId || !this.cameraDevices.length) return 'Kamera Utama';
+                    if (this.currentFacingMode === 'user') return 'Depan';
+                    if (!this.selectedCameraId || !this.cameraDevices || !this.cameraDevices.length) {
+                        return this.currentFacingMode === 'user' ? 'Depan' : 'Belakang';
+                    }
                     const dev = this.cameraDevices.find(d => d.id === this.selectedCameraId);
-                    if (!dev) return 'Kamera Aktif';
+                    if (!dev) return this.currentFacingMode === 'user' ? 'Depan' : 'Belakang';
                     const label = dev.label || '';
-                    if (/back|rear|environment/i.test(label)) return 'Belakang (1x)';
                     if (/front|user|selfie/i.test(label)) return 'Depan';
-                    return label.substring(0, 14);
+                    if (/back|rear|environment/i.test(label)) return 'Belakang';
+                    return label ? label.substring(0, 10) : (this.currentFacingMode === 'user' ? 'Depan' : 'Belakang');
                 },
 
                 getVideoTrack() {
@@ -849,6 +930,13 @@
                                 details: checkData
                             };
                             this.capturedPhoto = null;
+                            this.photoCapturedAt = 0;
+                            this.countdown = 0;
+                            this.countdownMessage = '';
+                            if (this.countdownTimer) {
+                                clearInterval(this.countdownTimer);
+                                this.countdownTimer = null;
+                            }
                             this.showCaptureModal = true;
                             
                             // Play success audio indicator
@@ -900,6 +988,13 @@
                                     details: ticket
                                 };
                                 this.capturedPhoto = null;
+                                this.photoCapturedAt = 0;
+                                this.countdown = 0;
+                                this.countdownMessage = '';
+                                if (this.countdownTimer) {
+                                    clearInterval(this.countdownTimer);
+                                    this.countdownTimer = null;
+                                }
                                 this.showCaptureModal = true;
                                 
                                 try {
@@ -917,23 +1012,96 @@
                     this.processing = false;
                 },
 
+                playTone(frequency = 600, durationMs = 80) {
+                    try {
+                        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                        if (!AudioCtx) return;
+                        const ctx = new AudioCtx();
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(frequency, ctx.currentTime);
+                        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (durationMs / 1000));
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start();
+                        osc.stop(ctx.currentTime + (durationMs / 1000));
+                    } catch (e) {}
+                },
+
+                startCountdown(seconds = 3) {
+                    if (this.countdownTimer) {
+                        clearInterval(this.countdownTimer);
+                        this.countdownTimer = null;
+                        this.countdown = 0;
+                        this.countdownMessage = '';
+                        return;
+                    }
+
+                    this.countdown = seconds;
+                    this.countdownMessage = 'Bersiap!';
+                    this.playTone(550, 100);
+
+                    this.countdownTimer = setInterval(() => {
+                        this.countdown--;
+                        if (this.countdown > 0) {
+                            this.countdownMessage = this.countdown + '... Senyum!';
+                            this.playTone(650, 100);
+                        } else {
+                            clearInterval(this.countdownTimer);
+                            this.countdownTimer = null;
+                            this.countdownMessage = 'Cekrek!';
+                            this.playTone(1000, 160);
+                            this.capturePhoto();
+                        }
+                    }, 1000);
+                },
+
                 capturePhoto() {
+                    if (this.countdownTimer) {
+                        clearInterval(this.countdownTimer);
+                        this.countdownTimer = null;
+                    }
+                    this.countdown = 0;
+                    this.countdownMessage = '';
+
                     const photo = this.takePhoto();
                     if (!photo) {
                         alert("Kamera belum siap. Pastikan lensa kamera aktif dan menghadap pengunjung.");
                         return;
                     }
+
+                    this.photoFlash = true;
+                    setTimeout(() => { this.photoFlash = false; }, 220);
+                    this.playTone(880, 120);
+
                     this.capturedPhoto = photo;
+                    this.photoCapturedAt = Date.now();
                 },
 
                 retakePhoto() {
                     this.capturedPhoto = null;
+                    this.photoCapturedAt = 0;
+                    this.countdown = 0;
+                    this.countdownMessage = '';
+                    if (this.countdownTimer) {
+                        clearInterval(this.countdownTimer);
+                        this.countdownTimer = null;
+                    }
                 },
 
                 cancelCapture() {
                     this.showCaptureModal = false;
                     this.pendingTicket = null;
                     this.capturedPhoto = null;
+                    this.photoCapturedAt = 0;
+                    this.countdown = 0;
+                    this.countdownMessage = '';
+                    if (this.countdownTimer) {
+                        clearInterval(this.countdownTimer);
+                        this.countdownTimer = null;
+                    }
                     if (this.inputType !== 'camera') {
                         this.stopCamera();
                         this.$nextTick(() => this.focusInput());
@@ -1082,10 +1250,17 @@
                         clearInterval(this.autoResetInterval);
                         this.autoResetInterval = null;
                     }
+                    if (this.countdownTimer) {
+                        clearInterval(this.countdownTimer);
+                        this.countdownTimer = null;
+                    }
                     this.result = null;
                     this.showCaptureModal = false;
                     this.pendingTicket = null;
                     this.capturedPhoto = null;
+                    this.photoCapturedAt = 0;
+                    this.countdown = 0;
+                    this.countdownMessage = '';
                     if (this.inputType === 'auto') {
                         this.$nextTick(() => this.focusInput());
                     }

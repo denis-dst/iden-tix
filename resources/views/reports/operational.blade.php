@@ -20,10 +20,71 @@
         return 'https://wa.me/' . $number;
     };
 
+    $resolveCustomFieldsFallback = function (?App\Models\Event $event, array $visitorData, ?App\Models\Transaction $transaction = null): array {
+        if (!$event) {
+            return [];
+        }
+
+        $formatted = [];
+        $processedFieldIds = [];
+        $customAnswers = is_array($visitorData['custom_answers'] ?? null) ? $visitorData['custom_answers'] : [];
+
+        $customFields = method_exists($event, 'getCustomFields') ? $event->getCustomFields() : [];
+        if (!empty($customFields)) {
+            foreach ($customFields as $field) {
+                $fId = (string) ($field['id'] ?? '');
+                $processedFieldIds[] = $fId;
+                $val = $customAnswers[$fId] ?? null;
+
+                if (($val === null || $val === '') && $fId === 'umroh_answer') {
+                    $val = $visitorData['umroh_answer'] ?? ($transaction->customer_umroh_answer ?? null);
+                }
+
+                if (($val === null || $val === '') && count($customFields) === 1) {
+                    $val = $visitorData['umroh_answer'] ?? ($transaction->customer_umroh_answer ?? null);
+                }
+
+                $valueStr = is_array($val) ? implode(', ', array_filter($val)) : trim((string) $val);
+
+                $formatted[] = [
+                    'id' => $fId,
+                    'label' => $field['label'] ?? 'Pertanyaan Custom',
+                    'value' => $valueStr !== '' ? $valueStr : '-',
+                ];
+            }
+        } elseif (!empty($visitorData['umroh_answer']) || !empty($transaction?->customer_umroh_answer)) {
+            $ans = $visitorData['umroh_answer'] ?? $transaction->customer_umroh_answer;
+            $formatted[] = [
+                'id' => 'umroh_answer',
+                'label' => ($event->umroh_question_enabled ?? false)
+                    ? ($event->meta['custom_question_text'] ?? 'Pertanyaan Custom')
+                    : 'Pertanyaan Custom',
+                'value' => trim((string) $ans) !== '' ? trim((string) $ans) : '-',
+            ];
+            $processedFieldIds[] = 'umroh_answer';
+        }
+
+        if (is_array($customAnswers)) {
+            foreach ($customAnswers as $key => $val) {
+                if (!in_array((string) $key, $processedFieldIds, true) && $val !== null && $val !== '') {
+                    $label = ucwords(str_replace(['_', '-'], ' ', (string) $key));
+                    $valueStr = is_array($val) ? implode(', ', array_filter($val)) : trim((string) $val);
+                    $formatted[] = [
+                        'id' => (string) $key,
+                        'label' => $label,
+                        'value' => $valueStr !== '' ? $valueStr : '-',
+                    ];
+                }
+            }
+        }
+
+        return $formatted;
+    };
+
     $reportTransactionRows = collect($transactionReportRows ?? null);
 
     if ($reportTransactionRows->isEmpty() && isset($transactions)) {
-        $reportTransactionRows = collect($transactions)->map(function ($transaction) {
+        $reportTransactionRows = collect($transactions)->map(function ($transaction) use ($resolveCustomFieldsFallback) {
             $proofTicket = $transaction->tickets->first(function ($ticket) {
                 $visitorData = is_array($ticket->visitor_data) ? $ticket->visitor_data : [];
 
@@ -43,6 +104,16 @@
             )->count();
             $isPartialScan   = $totalTickets > 1 && $checkedInCount > 0 && $checkedInCount < $totalTickets;
 
+            $firstTicket = $transaction->tickets->first();
+            $firstVisitorData = $firstTicket && is_array($firstTicket->visitor_data) ? $firstTicket->visitor_data : [];
+            $customFields = $resolveCustomFieldsFallback($transaction->event, $firstVisitorData, $transaction);
+            $customQuestionLabel = !empty($customFields)
+                ? collect($customFields)->pluck('label')->implode(' | ')
+                : '-';
+            $customAnswerSummary = !empty($customFields)
+                ? collect($customFields)->pluck('value')->implode(' | ')
+                : ($transaction->customer_umroh_answer ?: '-');
+
             return [
                 'reference_no' => $transaction->reference_no,
                 'created_at' => $transaction->created_at,
@@ -51,10 +122,9 @@
                 'customer_email' => $transaction->customer_email,
                 'customer_phone' => $transaction->customer_phone,
                 'customer_gender' => $transaction->customer_gender,
-                'customer_umroh_answer' => $transaction->customer_umroh_answer,
-                'custom_question_label' => ($transaction->event->umroh_question_enabled ?? false)
-                    ? ($transaction->event->meta['custom_question_text'] ?? 'Pertanyaan Custom')
-                    : '-',
+                'customer_umroh_answer' => $customAnswerSummary,
+                'custom_question_label' => $customQuestionLabel,
+                'custom_fields' => $customFields,
                 'event_name' => $transaction->event->name ?? '-',
                 'category_name' => $transaction->category->name ?? 'Mixed',
                 'quantity' => $transaction->quantity,
@@ -98,6 +168,35 @@
             <button type="submit" class="px-5 py-2.5 bg-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-orange-700 transition">Filter</button>
         </form>
     </div>
+
+    @if(isset($totals))
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+            <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                <div class="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Terjual</div>
+                <div class="text-xl sm:text-2xl font-black text-slate-800 mt-1">{{ number_format($totals['sold']) }}</div>
+            </div>
+            <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                <div class="text-[10px] font-black uppercase tracking-wider text-emerald-500">Total Redeem</div>
+                <div class="text-xl sm:text-2xl font-black text-emerald-600 mt-1">{{ number_format($totals['redeemed']) }}</div>
+            </div>
+            <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                <div class="text-[10px] font-black uppercase tracking-wider text-blue-500">Total Check-in</div>
+                <div class="text-xl sm:text-2xl font-black text-blue-600 mt-1">{{ number_format($totals['checkin']) }}</div>
+            </div>
+            <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                <div class="text-[10px] font-black uppercase tracking-wider text-purple-500">Di Dalam Venue</div>
+                <div class="text-xl sm:text-2xl font-black text-purple-600 mt-1">{{ number_format($totals['inside']) }}</div>
+            </div>
+            <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                <div class="text-[10px] font-black uppercase tracking-wider text-slate-400">Transaksi Paid</div>
+                <div class="text-xl sm:text-2xl font-black text-slate-800 mt-1">{{ number_format($totals['paid_transactions']) }}</div>
+            </div>
+            <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm bg-gradient-to-br from-emerald-50/50 to-white">
+                <div class="text-[10px] font-black uppercase tracking-wider text-emerald-600">Total Pendapatan</div>
+                <div class="text-xl sm:text-2xl font-black text-emerald-600 mt-1">Rp {{ number_format($totals['revenue'], 0, ',', '.') }}</div>
+            </div>
+        </div>
+    @endif
 
     <div class="space-y-5">
         @forelse($reportRows as $row)
@@ -345,8 +444,39 @@
                                         <span class="text-slate-300">-</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 text-xs text-slate-600 max-w-[240px] truncate" title="{{ $customQuestionLabel }}">{{ $customQuestionLabel }}</td>
-                                <td class="px-6 py-4 text-xs text-slate-600 max-w-[200px] truncate" title="{{ $customerUmrohAnswer }}">{{ $customerUmrohAnswer }}</td>
+                                <td class="px-6 py-4 text-xs">
+                                    @php $cfList = $transactionRow['custom_fields'] ?? []; @endphp
+                                    @if(!empty($cfList))
+                                        <div class="space-y-1.5 py-0.5 min-w-[140px] max-w-[240px]">
+                                            @foreach($cfList as $cf)
+                                                <div class="text-xs font-bold text-slate-600 truncate" title="{{ $cf['label'] }}">
+                                                    @if(count($cfList) > 1)
+                                                        <span class="text-slate-400 font-bold mr-0.5">{{ $loop->iteration }}.</span>
+                                                    @endif
+                                                    {{ $cf['label'] }}
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="text-slate-300">-</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-xs">
+                                    @if(!empty($cfList))
+                                        <div class="space-y-1.5 py-0.5 min-w-[140px] max-w-[220px]">
+                                            @foreach($cfList as $cf)
+                                                <div class="text-xs font-black text-slate-800 truncate" title="{{ $cf['label'] }}: {{ $cf['value'] }}">
+                                                    @if(count($cfList) > 1)
+                                                        <span class="text-slate-400 font-bold mr-0.5">{{ $loop->iteration }}.</span>
+                                                    @endif
+                                                    <span class="{{ $cf['value'] === '-' ? 'text-slate-300' : 'text-slate-800' }}">{{ $cf['value'] }}</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="text-slate-300">-</span>
+                                    @endif
+                                </td>
                                 <td class="px-6 py-4 text-xs">
                                     <span class="font-bold text-slate-700 block">{{ $eventName }}</span>
                                     <span class="text-[10px] text-orange-500 font-black uppercase tracking-wider block mt-0.5">{{ $categoryName }}</span>
@@ -497,8 +627,39 @@
                                             <span class="text-slate-300">-</span>
                                         @endif
                                     </td>
-                                    <td class="px-6 py-4 text-xs text-slate-600 max-w-[240px] truncate" title="{{ $ticketRow['custom_question_label'] ?? '-' }}">{{ $ticketRow['custom_question_label'] ?? '-' }}</td>
-                                    <td class="px-6 py-4 text-xs text-slate-600 max-w-[200px] truncate" title="{{ $ticketRow['umroh_answer'] }}">{{ $ticketRow['umroh_answer'] ?? '-' }}</td>
+                                    <td class="px-6 py-4 text-xs">
+                                        @php $tcfList = $ticketRow['custom_fields'] ?? []; @endphp
+                                        @if(!empty($tcfList))
+                                            <div class="space-y-1.5 py-0.5 min-w-[140px] max-w-[240px]">
+                                                @foreach($tcfList as $cf)
+                                                    <div class="text-xs font-bold text-slate-600 truncate" title="{{ $cf['label'] }}">
+                                                        @if(count($tcfList) > 1)
+                                                            <span class="text-slate-400 font-bold mr-0.5">{{ $loop->iteration }}.</span>
+                                                        @endif
+                                                        {{ $cf['label'] }}
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <span class="text-slate-300">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 text-xs">
+                                        @if(!empty($tcfList))
+                                            <div class="space-y-1.5 py-0.5 min-w-[140px] max-w-[220px]">
+                                                @foreach($tcfList as $cf)
+                                                    <div class="text-xs font-black text-slate-800 truncate" title="{{ $cf['label'] }}: {{ $cf['value'] }}">
+                                                        @if(count($tcfList) > 1)
+                                                            <span class="text-slate-400 font-bold mr-0.5">{{ $loop->iteration }}.</span>
+                                                        @endif
+                                                        <span class="{{ $cf['value'] === '-' ? 'text-slate-300' : 'text-slate-800' }}">{{ $cf['value'] }}</span>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <span class="text-slate-300">-</span>
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4 text-xs text-slate-700 font-bold" data-sort="{{ strtolower($ticketRow['event_name']) }}">{{ $ticketRow['event_name'] }}</td>
                                     <td class="px-6 py-4 text-xs text-orange-500 font-black uppercase tracking-wider" data-sort="{{ strtolower($ticketRow['category_name']) }}">{{ $ticketRow['category_name'] }}</td>
                                     <td class="px-6 py-4" data-sort="{{ $ticketRow['status'] }}">
@@ -781,6 +942,15 @@
 
         if (!container) return;
 
+        const formatReportCell = (cell) => {
+            if (!cell) return '-';
+            const items = Array.from(cell.querySelectorAll('.space-y-1\\.5 > div'));
+            if (items.length > 0) {
+                return items.map(el => el.textContent.trim()).filter(Boolean).join(' | ');
+            }
+            return cell.textContent.trim() || '-';
+        };
+
         if (window.activeTab === 'transactions') {
             filename = 'Laporan_Pendaftar_Per_Transaksi.csv';
             headers = ['Invoice No', 'Tanggal', 'Nama Pemesan', 'NIK', 'Email', 'WhatsApp', 'Bukti Upload', 'Gender', 'Pertanyaan Custom', 'Jawaban Custom', 'Event Name', 'Category Name', 'Quantity', 'Total Amount', 'Status', 'Payment Method'];
@@ -799,8 +969,8 @@
                         cols[4].textContent.trim(),
                         Array.from(cols[5].querySelectorAll('button')).map(btn => btn.textContent.trim()).join('; ') || 'Belum Upload',
                         cols[6].textContent.trim().replace(/[🧔🧕]/g, '').trim(),
-                        cols[7].textContent.trim(),
-                        cols[8].textContent.trim(),
+                        formatReportCell(cols[7]),
+                        formatReportCell(cols[8]),
                         cols[9].querySelector('span:nth-child(1)').textContent.trim(),
                         cols[9].querySelector('span:nth-child(2)').textContent.trim(),
                         cols[10].textContent.trim(),
@@ -830,8 +1000,8 @@
                     cols[4].textContent.trim(),
                     cols[5].textContent.trim(),
                     cols[6].textContent.trim().replace(/[🧔🧕]/g, '').trim(),
-                    cols[7].textContent.trim(),
-                    cols[8].textContent.trim(),
+                    formatReportCell(cols[7]),
+                    formatReportCell(cols[8]),
                     cols[9].textContent.trim(),
                     cols[10].textContent.trim(),
                     cols[11].querySelector('span').textContent.trim(),

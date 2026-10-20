@@ -138,7 +138,7 @@
             <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 group hover:shadow-md transition-all duration-300 flex items-center justify-between">
                 <div>
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tiket Terjual</p>
-                    <h4 class="text-2xl font-black text-slate-800 font-outfit">{{ $events->sum('tickets_count') }}</h4>
+                    <h4 class="text-2xl font-black text-slate-800 font-outfit">{{ number_format($totalTicketsSold ?? $events->sum('tickets_count'), 0, ',', '.') }}</h4>
                 </div>
                 <div class="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500 group-hover:bg-orange-600 group-hover:text-white transition-all duration-300">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" /></svg>
@@ -541,7 +541,7 @@
                                     <td class="p-4 md:px-6 md:py-4">
                                         <div class="flex gap-4">
                                             <div>
-                                                <div class="text-xs md:text-sm font-black text-slate-800 leading-none mb-1">{{ $event->tickets_count }}</div>
+                                                <div class="text-xs md:text-sm font-black text-slate-800 leading-none mb-1">{{ number_format($event->tickets_count, 0, ',', '.') }}</div>
                                                 <div class="text-[9px] text-slate-400 uppercase font-black tracking-tighter">Laku</div>
                                             </div>
                                             <div class="h-6 w-px bg-slate-100"></div>

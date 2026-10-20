@@ -211,6 +211,7 @@ Route::middleware(['auth', 'role:Superadmin|Penyedia Event|Petugas Loket|Petugas
         Route::post('pos/events/{event}', [App\Http\Controllers\Organizer\POSController::class, 'store'])->name('pos.store');
         Route::get('pos/transactions/{transaction}/print', [App\Http\Controllers\Organizer\POSController::class, 'print'])->name('pos.print');
     });
+    Route::get('transactions/stream', [App\Http\Controllers\Organizer\TransactionController::class, 'stream'])->name('transactions.stream');
     Route::get('transactions', [App\Http\Controllers\Organizer\TransactionController::class, 'index'])->name('transactions.index');
     Route::post('transactions/{transaction}/mark-as-paid', [App\Http\Controllers\Organizer\TransactionController::class, 'markAsPaid'])->name('transactions.mark-as-paid');
     Route::post('transactions/{transaction}/sync-wago', [App\Http\Controllers\Organizer\TransactionController::class, 'syncWagoStatus'])->name('transactions.sync-wago');

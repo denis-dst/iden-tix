@@ -17,7 +17,7 @@
             <div style="color: #94a3b8 !important; font-size: 11px !important; font-weight: 800 !important; letter-spacing: 0.18em !important; text-transform: uppercase !important; margin-bottom: 8px !important;">
                 KUOTA
             </div>
-            <div style="color: #ffffff !important; font-size: 28px !important; font-weight: 900 !important; font-family: 'Outfit', sans-serif !important; line-height: 1.2 !important;">
+            <div id="stat-total-quota" style="color: #ffffff !important; font-size: 28px !important; font-weight: 900 !important; font-family: 'Outfit', sans-serif !important; line-height: 1.2 !important;">
                 {{ number_format($totalQuota, 0, ',', '.') }}
             </div>
         </div>
@@ -27,7 +27,7 @@
             <div style="color: #94a3b8 !important; font-size: 11px !important; font-weight: 800 !important; letter-spacing: 0.18em !important; text-transform: uppercase !important; margin-bottom: 8px !important;">
                 TERJUAL
             </div>
-            <div style="color: #ffffff !important; font-size: 28px !important; font-weight: 900 !important; font-family: 'Outfit', sans-serif !important; line-height: 1.2 !important;">
+            <div id="stat-total-sold" style="color: #ffffff !important; font-size: 28px !important; font-weight: 900 !important; font-family: 'Outfit', sans-serif !important; line-height: 1.2 !important;">
                 {{ number_format($totalSold, 0, ',', '.') }}
             </div>
         </div>
@@ -37,7 +37,7 @@
             <div style="color: #94a3b8 !important; font-size: 11px !important; font-weight: 800 !important; letter-spacing: 0.18em !important; text-transform: uppercase !important; margin-bottom: 8px !important;">
                 BELUM TERJUAL
             </div>
-            <div style="color: #ffffff !important; font-size: 28px !important; font-weight: 900 !important; font-family: 'Outfit', sans-serif !important; line-height: 1.2 !important;">
+            <div id="stat-total-unsold" style="color: #ffffff !important; font-size: 28px !important; font-weight: 900 !important; font-family: 'Outfit', sans-serif !important; line-height: 1.2 !important;">
                 {{ number_format($totalUnsold, 0, ',', '.') }}
             </div>
         </div>
@@ -47,8 +47,8 @@
             <div style="color: #94a3b8 !important; font-size: 11px !important; font-weight: 800 !important; letter-spacing: 0.18em !important; text-transform: uppercase !important; margin-bottom: 8px !important;">
                 TOTAL PENDAPATAN
             </div>
-            <div style="color: #ffffff !important; font-size: 28px !important; font-weight: 900 !important; font-family: 'Outfit', sans-serif !important; line-height: 1.2 !important; white-space: nowrap !important; overflow: hidden; text-overflow: ellipsis;" title="Rp {{ number_format($totalRevenue, 0, ',', '.') }}">
-                Rp,{{ number_format($totalRevenue, 0, ',', '.') }}
+            <div id="stat-total-revenue" style="color: #ffffff !important; font-size: 28px !important; font-weight: 900 !important; font-family: 'Outfit', sans-serif !important; line-height: 1.2 !important; white-space: nowrap !important; overflow: hidden; text-overflow: ellipsis;" title="Rp {{ number_format($totalRevenue, 0, ',', '.') }}">
+                Rp {{ number_format($totalRevenue, 0, ',', '.') }}
             </div>
         </div>
 
