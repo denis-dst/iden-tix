@@ -719,5 +719,74 @@ class EventTypeAndCustomQuestionsTest extends TestCase
         $showResponse->assertSee('Nomor WhatsApp Wali');
         $showResponse->assertSee('Tanggal Lahir Peserta');
     }
+
+    public function test_organizer_can_configure_show_in_evoucher_on_custom_fields(): void
+    {
+        $customFields = [
+            [
+                'id' => 'cf_nama_panggilan',
+                'label' => 'Nama Panggilan',
+                'type' => 'text',
+                'is_required' => true,
+                'show_in_evoucher' => true,
+            ],
+            [
+                'id' => 'cf_alasan_bergabung',
+                'label' => 'Alasan Bergabung Komunitas',
+                'type' => 'textarea',
+                'is_required' => false,
+                'show_in_evoucher' => false,
+            ],
+        ];
+
+        $response = $this->actingAs($this->organizer)
+            ->post(route('organizer.events.store'), [
+                'name' => 'Gathering Komunitas Tech',
+                'type' => 'seminar',
+                'event_start_date' => Carbon::now()->addDays(5)->format('Y-m-d\TH:i'),
+                'event_end_date' => Carbon::now()->addDays(5)->addHours(4)->format('Y-m-d\TH:i'),
+                'venue' => 'Co-Working Space',
+                'city' => 'Bandung',
+                'status' => 'published',
+                'purchase_flow' => 'evoucher',
+                'categories' => [
+                    [
+                        'name' => 'Peserta Regular',
+                        'price' => 50000,
+                        'quota' => 30,
+                    ]
+                ],
+                'custom_fields_json' => json_encode($customFields),
+            ]);
+
+        $event = Event::where('name', 'Gathering Komunitas Tech')->first();
+        $this->assertNotNull($event);
+
+        $fields = $event->getCustomFields();
+        $this->assertCount(2, $fields);
+        $this->assertTrue($fields[0]['show_in_evoucher']);
+        $this->assertFalse($fields[1]['show_in_evoucher']);
+
+        // Test updating show_in_evoucher
+        $fields[1]['show_in_evoucher'] = true;
+        $updateResponse = $this->actingAs($this->organizer)
+            ->put(route('organizer.events.update', $event->id), [
+                'name' => 'Gathering Komunitas Tech (Updated)',
+                'type' => 'seminar',
+                'event_start_date' => Carbon::now()->addDays(5)->format('Y-m-d\TH:i'),
+                'event_end_date' => Carbon::now()->addDays(5)->addHours(4)->format('Y-m-d\TH:i'),
+                'venue' => 'Co-Working Space',
+                'city' => 'Bandung',
+                'status' => 'published',
+                'purchase_flow' => 'evoucher',
+                'security_code' => $event->security_code ?: '123456',
+                'custom_fields_json' => json_encode($fields),
+            ]);
+
+        $updateResponse->assertSessionHasNoErrors();
+        $event->refresh();
+        $updatedFields = $event->getCustomFields();
+        $this->assertTrue($updatedFields[1]['show_in_evoucher']);
+    }
 }
 

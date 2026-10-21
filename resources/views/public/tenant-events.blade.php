@@ -437,16 +437,23 @@
 
                         <article class="glass-card rounded-3xl overflow-hidden flex flex-col h-full group focus-within:ring-2 focus-within:ring-orange-500">
                             <!-- Image / Fixture Header Container -->
-                            <div class="relative aspect-[16/10] overflow-hidden bg-slate-900">
+                            <div class="relative aspect-[16/10] overflow-hidden bg-slate-950 flex items-center justify-center">
+                                <!-- Ambient Blurred Background (Prevents empty bars) -->
+                                <img src="{{ $bgImg }}" 
+                                     alt="" 
+                                     aria-hidden="true"
+                                     class="absolute inset-0 w-full h-full object-cover blur-md scale-110 opacity-50 brightness-75 transition-transform duration-500 group-hover:scale-125 pointer-events-none">
+                                
+                                <!-- Sharp Foreground Image (Never Cropped) -->
                                 <img src="{{ $bgImg }}" 
                                      alt="{{ $event->name }}" 
                                      width="480" 
                                      height="300" 
                                      loading="lazy" 
                                      decoding="async" 
-                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                     class="relative z-10 max-w-full max-h-full object-contain drop-shadow-lg group-hover:scale-105 transition-transform duration-500">
                                 
-                                <div class="absolute inset-0 bg-gradient-to-t from-[#0b0f19] via-transparent to-transparent opacity-90"></div>
+                                <div class="absolute inset-0 bg-gradient-to-t from-[#0b0f19] via-transparent to-transparent opacity-80 z-10 pointer-events-none"></div>
 
                                 <!-- City Tag -->
                                 <div class="absolute top-3 left-3 z-10">

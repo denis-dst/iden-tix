@@ -137,9 +137,10 @@
                             <div>
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">E-Voucher Background</label>
                                 @if($category->background_image)
-                                    <div class="mb-4 relative group">
-                                        <img src="{{ Storage::url($category->background_image) }}" class="w-full h-32 object-cover rounded-2xl shadow-sm">
-                                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition rounded-2xl flex items-center justify-center text-white text-xs font-bold">Current Background</div>
+                                    <div class="mb-4 relative group h-32 rounded-2xl overflow-hidden bg-slate-950 flex items-center justify-center border border-slate-100 shadow-sm">
+                                        <img src="{{ Storage::url($category->background_image) }}" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover blur-sm scale-110 opacity-50 brightness-75 pointer-events-none">
+                                        <img src="{{ Storage::url($category->background_image) }}" alt="Current Background" class="relative z-10 max-w-full max-h-full object-contain">
+                                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-bold z-20">Current Background</div>
                                     </div>
                                 @endif
                                 <input type="file" name="background_image" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 transition cursor-pointer">

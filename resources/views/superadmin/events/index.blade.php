@@ -43,11 +43,15 @@
                     <tr class="hover:bg-slate-50/50 transition-colors group">
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-xl bg-slate-50 overflow-hidden border border-slate-100 shrink-0">
-                                    @if($event->banner_image)
-                                        <img src="{{ asset('storage/' . $event->banner_image) }}" class="w-full h-full object-cover">
+                                <div class="w-12 h-12 rounded-xl bg-slate-950 overflow-hidden border border-slate-100 shrink-0 relative flex items-center justify-center">
+                                    @php
+                                        $superadminImg = $event->banner_image ? asset('storage/' . $event->banner_image) : ($event->background_image ? asset('storage/' . $event->background_image) : null);
+                                    @endphp
+                                    @if($superadminImg)
+                                        <img src="{{ $superadminImg }}" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover blur-xs scale-110 opacity-50 brightness-75 pointer-events-none">
+                                        <img src="{{ $superadminImg }}" alt="{{ $event->name }}" class="relative z-10 max-w-full max-h-full object-contain">
                                     @else
-                                        <div class="w-full h-full flex items-center justify-center text-slate-200">
+                                        <div class="w-full h-full flex items-center justify-center text-slate-600 bg-slate-900">
                                             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5.04-6.71l-2.75 3.54-1.96-2.36L6.5 17h11l-3.54-4.71z"/></svg>
                                         </div>
                                     @endif

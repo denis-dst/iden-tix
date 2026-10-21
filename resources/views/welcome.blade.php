@@ -340,12 +340,16 @@
                         }
                     @endphp
                     <div class="glass-card rounded-3xl overflow-hidden group transition-all flex flex-col h-full">
-                        <div class="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-[#181824] to-[#12121c] flex items-center justify-center"
+                        <div class="relative aspect-[16/10] overflow-hidden bg-slate-950 flex items-center justify-center"
                             style="aspect-ratio: 16/10;">
+                            <!-- Ambient blurred backdrop (fills aspect box with image colors) -->
+                            <img src="{{ $bgImg }}" alt="" aria-hidden="true"
+                                class="absolute inset-0 w-full h-full object-cover blur-md scale-110 opacity-50 brightness-75 pointer-events-none">
+
                             <!-- Main contained poster image (100% visible, fully responsive without cropping) -->
                             <img src="{{ $bgImg }}" alt="{{ $event->name }}" width="473" height="236" loading="lazy"
                                 decoding="async"
-                                class="relative z-10 w-full h-full object-cover transition duration-500 group-hover:scale-105">
+                                class="relative z-10 max-h-full max-w-full w-auto h-auto object-contain transition duration-500 group-hover:scale-105 drop-shadow-md">
 
                             <div
                                 class="absolute inset-0 bg-gradient-to-t from-[#13131b]/80 via-transparent to-transparent z-10 pointer-events-none">

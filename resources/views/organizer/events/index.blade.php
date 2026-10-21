@@ -251,10 +251,13 @@
                                 </td>
                                 <td class="px-4 py-4">
                                     <div class="flex items-center gap-3.5">
-                                        <div class="w-16 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200 shadow-xs">
+                                        <div class="w-16 h-12 rounded-xl bg-slate-950 overflow-hidden shrink-0 border border-slate-200 shadow-xs relative flex items-center justify-center">
+                                            <img src="{{ $event->background_image ? asset('storage/' . $event->background_image) : asset('images/concert.webp') }}" 
+                                                 alt="" aria-hidden="true"
+                                                 class="absolute inset-0 w-full h-full object-cover blur-xs scale-110 opacity-50 brightness-75 pointer-events-none">
                                             <img src="{{ $event->background_image ? asset('storage/' . $event->background_image) : asset('images/concert.webp') }}" 
                                                  alt="{{ $event->name }}"
-                                                 class="w-full h-full object-cover">
+                                                 class="relative z-10 max-w-full max-h-full object-contain">
                                         </div>
                                         <div class="min-w-0">
                                             <div class="flex items-center gap-2">

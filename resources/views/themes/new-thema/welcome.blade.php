@@ -261,8 +261,9 @@
                              x-transition:leave="transition ease-in duration-500"
                              x-transition:leave-start="opacity-100 scale-100"
                              x-transition:leave-end="opacity-0 scale-105"
-                             class="absolute inset-0 w-full h-full">
-                            <img src="{{ $slideImg }}" alt="{{ $slideEvent->name }}" class="w-full h-full object-cover">
+                             class="absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center bg-slate-950">
+                            <img src="{{ $slideImg }}" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover blur-lg scale-110 opacity-50 brightness-75 pointer-events-none">
+                            <img src="{{ $slideImg }}" alt="{{ $slideEvent->name }}" class="relative z-10 max-h-full max-w-full w-auto h-auto object-contain drop-shadow-2xl">
                             <!-- Soft gradient vignette -->
                             <div class="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/60 to-transparent flex items-center">
                                 <div class="px-6 sm:px-12 lg:px-16 max-w-2xl text-white space-y-3">
@@ -481,9 +482,10 @@
                                  (eventTab === 'all' || (eventTab === 'upcoming' && {{ $isUpcoming ? 'true' : 'false' }}))"
                          class="event-card bg-white rounded-2xl overflow-hidden border border-slate-200 flex flex-col h-full group">
                         
-                        <!-- Thumbnail 16:9 -->
-                        <div class="relative aspect-[16/10] overflow-hidden bg-slate-100">
-                            <img src="{{ $eventImg }}" alt="{{ $event->name }}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                        <!-- Thumbnail 16:10 -->
+                        <div class="relative aspect-[16/10] overflow-hidden bg-slate-950 flex items-center justify-center">
+                            <img src="{{ $eventImg }}" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover blur-md scale-110 opacity-50 brightness-75 pointer-events-none">
+                            <img src="{{ $eventImg }}" alt="{{ $event->name }}" loading="lazy" class="relative z-10 max-h-full max-w-full w-auto h-auto object-contain group-hover:scale-105 transition duration-300 drop-shadow-md">
                             
                             <!-- City Pill Overlay -->
                             <div class="absolute top-3 left-3 bg-slate-900/80 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-1 rounded-lg">

@@ -1,7 +1,7 @@
 @php
-    $event = $ticket->event;
-    $transaction = $ticket->transaction;
-    $category = $ticket->category;
+    $event = $event ?? $ticket->event;
+    $transaction = $transaction ?? $ticket->transaction;
+    $category = $category ?? $ticket->category;
     $tenant = $event->tenant ?? $transaction->tenant ?? null;
 
     $isPromo100 = $transaction->payment_method === 'promo' || ($transaction->total_amount == 0 && ($transaction->discount_amount ?? 0) > 0);
@@ -27,6 +27,21 @@
     // Custom attendee questions & answers
     $customFields = method_exists($event, 'getCustomFields') ? $event->getCustomFields() : [];
     $visitorAnswers = is_array($ticket->visitor_data['custom_answers'] ?? null) ? $ticket->visitor_data['custom_answers'] : [];
+
+    // Fallback: Check transaction payment_reference if visitor_data was not populated
+    if (empty($visitorAnswers) && !empty($transaction->payment_reference)) {
+        $decodedRef = json_decode($transaction->payment_reference, true);
+        if (is_array($decodedRef) && !empty($decodedRef['custom_answers']) && is_array($decodedRef['custom_answers'])) {
+            $visitorAnswers = $decodedRef['custom_answers'];
+        }
+    }
+
+    // Fallback split answers if answer was stored as a single pipe-delimited string
+    $rawSummary = $ticket->visitor_data['umroh_answer'] ?? ($transaction->customer_umroh_answer ?? null);
+    $splitAnswers = [];
+    if (is_string($rawSummary) && str_contains($rawSummary, ' | ')) {
+        $splitAnswers = array_map('trim', explode(' | ', $rawSummary));
+    }
 
     // Fallback standard 9-point promotor terms if event terms not customized
     $defaultTerms = "1. E-ticket yang sah adalah yang dibeli melalui website resmi identix.\n"
@@ -87,19 +102,27 @@
         {{-- =====================================================
              1. TOP SECTION: BANNER ETIKET DARI PROMOTOR
              ===================================================== --}}
-        <div class="relative w-full h-44 sm:h-52 bg-slate-900 overflow-hidden shrink-0"
+        <div class="relative w-full h-48 sm:h-56 bg-slate-950 overflow-hidden shrink-0 flex items-center justify-center"
              style="-webkit-print-color-adjust: exact; print-color-adjust: exact;">
+            <!-- Ambient blurred backdrop (fills width/height seamlessly with event artwork colors) -->
+            <img src="{{ $bannerUrl }}" 
+                 alt=""
+                 aria-hidden="true"
+                 class="absolute inset-0 w-full h-full object-cover object-center blur-lg scale-110 opacity-50 brightness-75 pointer-events-none"
+                 loading="eager" decoding="async">
+
+            <!-- Vignette & Gradient for text contrast -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/30 pointer-events-none z-10"></div>
+
+            <!-- Main sharp poster/thumbnail image (100% visible, complete, never cropped) -->
             <img src="{{ $bannerUrl }}" 
                  alt="{{ $event->name }}"
-                 class="w-full h-full object-cover object-center"
+                 class="relative z-10 max-h-full max-w-full w-auto h-auto object-contain object-center drop-shadow-2xl"
                  loading="eager" decoding="async">
-            
-            <!-- Vignette & Gradient for text contrast -->
-            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
 
             <!-- Matchup Header (Soccer / Sport / Team Match) -->
             @if($event->home_team_name && $event->away_team_name)
-                <div class="absolute top-4 left-6 right-6 flex items-center justify-between text-white">
+                <div class="absolute top-4 left-6 right-6 flex items-center justify-between text-white z-20">
                     <div class="flex items-center gap-3">
                         @if($event->home_team_logo)
                             <img src="{{ str_starts_with($event->home_team_logo, 'http') ? $event->home_team_logo : asset('storage/' . $event->home_team_logo) }}" 
@@ -121,7 +144,7 @@
             @endif
 
             <!-- Bottom Banner Badges: Venue, Date, Time -->
-            <div class="absolute bottom-3 left-4 right-4 sm:left-6 sm:right-6 space-y-2 text-white">
+            <div class="absolute bottom-3 left-4 right-4 sm:left-6 sm:right-6 space-y-2 text-white z-20">
                 <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-sm border border-white/20 text-xs font-bold text-white shadow-sm">
                     <svg class="w-3.5 h-3.5 text-rose-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
@@ -258,9 +281,37 @@
                              DYNAMIC CUSTOM DATA & QUESTIONS (ISIAN KUSTOM)
                              ============================================= --}}
                         @if(!empty($customFields))
-                            @foreach($customFields as $cf)
+                            @foreach($customFields as $idx => $cf)
                                 @php
-                                    $ans = $visitorAnswers[$cf['id']] ?? ($ticket->visitor_data['umroh_answer'] ?? ($transaction->customer_umroh_answer ?? null));
+                                    $showInEvoucher = isset($cf['show_in_evoucher']) ? (bool) $cf['show_in_evoucher'] : true;
+                                    if (!$showInEvoucher) {
+                                        continue;
+                                    }
+
+                                    $ans = null;
+                                    if (isset($visitorAnswers[$cf['id']])) {
+                                        $ans = $visitorAnswers[$cf['id']];
+                                    } elseif (isset($visitorAnswers[$cf['label']])) {
+                                        $ans = $visitorAnswers[$cf['label']];
+                                    } elseif (!empty($splitAnswers) && isset($splitAnswers[$idx])) {
+                                        $ans = $splitAnswers[$idx];
+                                    } else {
+                                        $labelLower = strtolower(trim($cf['label'] ?? ''));
+                                        if (($cf['type'] ?? '') === 'name' || preg_match('/^(nama|name)$/i', $labelLower)) {
+                                            $ans = $ticket->visitor_data['name'] ?? $transaction->customer_name;
+                                        } elseif (($cf['type'] ?? '') === 'email' || preg_match('/^(email|surel)$/i', $labelLower)) {
+                                            $ans = $ticket->visitor_data['email'] ?? $transaction->customer_email;
+                                        } elseif (($cf['type'] ?? '') === 'phone' || preg_match('/^(no\.?\s*(hp|wa|telepon|telpon|whatsapp)|nomor\s*(hp|wa|telepon|telpon|whatsapp))$/i', $labelLower)) {
+                                            $ans = $ticket->visitor_data['phone'] ?? $transaction->customer_phone;
+                                        } elseif (preg_match('/^(nik|nomor\s*identitas|no\.?\s*ktp|no\.?\s*identitas)$/i', $labelLower)) {
+                                            $ans = $ticket->visitor_data['nik'] ?? $transaction->customer_nik;
+                                        } elseif (preg_match('/^(gender|jenis\s*kelamin)$/i', $labelLower)) {
+                                            $ans = $ticket->visitor_data['gender'] ?? $transaction->customer_gender;
+                                        } elseif (count($customFields) === 1) {
+                                            $ans = $rawSummary;
+                                        }
+                                    }
+
                                     $displayAns = is_array($ans) ? implode(', ', $ans) : (string) $ans;
                                     if (is_string($displayAns) && preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($displayAns))) {
                                         try {
@@ -268,7 +319,7 @@
                                         } catch (\Exception $e) {}
                                     }
                                 @endphp
-                                @if($ans !== null && $ans !== '')
+                                @if($ans !== null && trim((string)$ans) !== '')
                                     <div class="flex items-start gap-2.5 text-xs">
                                         <div class="w-5 h-5 rounded-md bg-amber-500 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
                                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
@@ -298,8 +349,14 @@
                             </div>
                         @endif
 
-                        <!-- Optional Gender (if set on attendee) -->
-                        @if(!empty($ticket->visitor_data['gender']))
+                        <!-- Optional Gender (if set on attendee and not already shown in custom questions) -->
+                        @php
+                            $hasGenderInCustom = collect($customFields)->contains(function($cf) {
+                                $show = isset($cf['show_in_evoucher']) ? (bool) $cf['show_in_evoucher'] : true;
+                                return $show && preg_match('/gender|jenis\s*kelamin/i', $cf['label'] ?? '');
+                            });
+                        @endphp
+                        @if(!$hasGenderInCustom && !empty($ticket->visitor_data['gender']))
                             <div class="flex items-start gap-2.5 text-xs">
                                 <div class="w-5 h-5 rounded-md bg-slate-900 text-white flex items-center justify-center shrink-0 mt-0.5">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
@@ -311,8 +368,14 @@
                             </div>
                         @endif
 
-                        <!-- Optional Phone / WhatsApp -->
-                        @if(!empty($ticket->visitor_data['phone']) || !empty($transaction->customer_phone))
+                        <!-- Optional Phone / WhatsApp (only if not already shown in custom questions) -->
+                        @php
+                            $hasPhoneInCustom = collect($customFields)->contains(function($cf) {
+                                $show = isset($cf['show_in_evoucher']) ? (bool) $cf['show_in_evoucher'] : true;
+                                return $show && (($cf['type'] ?? '') === 'phone' || preg_match('/wa|whatsapp|hp|phone|telepon|telpon/i', $cf['label'] ?? ''));
+                            });
+                        @endphp
+                        @if(!$hasPhoneInCustom && (!empty($ticket->visitor_data['phone']) || !empty($transaction->customer_phone)))
                             <div class="flex items-start gap-2.5 text-xs">
                                 <div class="w-5 h-5 rounded-md bg-slate-900 text-white flex items-center justify-center shrink-0 mt-0.5">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
@@ -330,10 +393,10 @@
                 </div>
 
                 <!-- Right Details: Price, QR Code, Code string, 1X pill (5 cols) -->
-                <div class="col-span-5 flex flex-col items-center justify-between text-center pl-2">
+                <div class="col-span-5 flex flex-col items-center justify-start text-center pl-2">
                     
                     <!-- Category Name & Price -->
-                    <div class="text-center w-full mb-1">
+                    <div class="text-center w-full mb-2">
                         <div class="text-xs font-black text-slate-900 uppercase font-outfit truncate">
                             {{ $category->name ?? 'VIP' }}
                         </div>
@@ -347,13 +410,13 @@
                     </div>
 
                     <!-- QR Code Box -->
-                    <div class="bg-white border-2 border-slate-300 rounded-2xl p-2.5 shadow-sm inline-block my-1"
+                    <div class="bg-white border-2 border-slate-300 rounded-2xl p-2.5 shadow-sm inline-block mb-2"
                          style="-webkit-print-color-adjust: exact; print-color-adjust: exact;">
                         {!! QrCode::size(140)->margin(0)->generate($ticket->ticket_code) !!}
                     </div>
 
-                    <!-- Code String & 1X pill -->
-                    <div class="w-full text-center space-y-1.5 mt-1">
+                    <!-- Code String & 1X pill (Tightly placed directly under QR Code) -->
+                    <div class="w-full text-center space-y-1">
                         <div class="font-mono font-black text-xs sm:text-sm text-slate-950 tracking-[0.2em]">
                             {{ $ticket->ticket_code }}
                         </div>

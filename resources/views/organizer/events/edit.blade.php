@@ -97,13 +97,19 @@
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Event
                                     Thumbnail</label>
                                 <div
-                                    class="relative rounded-2xl overflow-hidden shadow-md border border-gray-100 aspect-video bg-gray-50">
+                                    class="relative rounded-2xl overflow-hidden shadow-md border border-gray-100 aspect-video bg-slate-950 flex items-center justify-center">
+                                    <!-- Ambient blurred backdrop -->
                                     <img src="{{ asset('storage/' . $event->background_image) }}"
                                         onerror="this.src='https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80'"
-                                        class="w-full h-full object-cover transition duration-500 group-hover:scale-105"
+                                        class="absolute inset-0 w-full h-full object-cover blur-md scale-110 opacity-50 brightness-75 transition duration-500 group-hover:scale-115 pointer-events-none"
+                                        alt="" aria-hidden="true">
+                                    <!-- Sharp uncropped thumbnail -->
+                                    <img src="{{ asset('storage/' . $event->background_image) }}"
+                                        onerror="this.src='https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80'"
+                                        class="relative z-10 max-w-full max-h-full object-contain transition duration-500 group-hover:scale-105 drop-shadow-lg"
                                         alt="Thumbnail">
                                     <div
-                                        class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                        class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 z-20">
                                         <span
                                             class="text-white text-xs font-bold px-3 py-1 bg-black/50 rounded-full backdrop-blur-sm">Preview</span>
                                     </div>
@@ -409,6 +415,7 @@
                                     'helper_text' => $f['helper_text'] ?? '',
                                     'options' => is_array($f['options'] ?? null) ? implode("\n", $f['options']) : ($f['options'] ?? ''),
                                     'is_required' => !empty($f['is_required']),
+                                    'show_in_evoucher' => isset($f['show_in_evoucher']) ? !empty($f['show_in_evoucher']) : true,
                                 ];
                             }, $rawCustomFields);
 
@@ -421,6 +428,7 @@
                                     'helper_text' => old('custom_question_helper', ''),
                                     'options' => old('custom_question_options', ''),
                                     'is_required' => false,
+                                    'show_in_evoucher' => true,
                                 ]];
                             }
                         @endphp
@@ -441,7 +449,8 @@
                                         placeholder: '',
                                         helper_text: '',
                                         options: '',
-                                        is_required: true
+                                        is_required: true,
+                                        show_in_evoucher: true
                                     });
                                 },
                                 removeQuestion(idx) {
@@ -543,10 +552,18 @@
                                                 </div>
                                             </div>
 
-                                            <div class="pt-1">
+                                            <div class="pt-2 flex flex-wrap items-center gap-5 border-t border-amber-100">
                                                 <label class="inline-flex items-center gap-2 cursor-pointer select-none">
                                                     <input type="checkbox" x-model="q.is_required" class="w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500">
-                                                    <span class="text-xs font-bold text-slate-700">Wajib diisi oleh customer saat transaksi</span>
+                                                    <span class="text-xs font-bold text-slate-700">Wajib diisi customer saat transaksi</span>
+                                                </label>
+
+                                                <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                                                    <input type="checkbox" x-model="q.show_in_evoucher" class="w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500">
+                                                    <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                                        <span>🎫 Tampilkan di E-Voucher</span>
+                                                        <span class="text-[10px] text-slate-400 font-normal hidden sm:inline">(Data dicetak pada tiket)</span>
+                                                    </span>
                                                 </label>
                                             </div>
                                         </div>

@@ -152,9 +152,11 @@
     <div class="col-span-1 md:col-span-2 border-t border-gray-100 pt-4 mt-2">
         <label for="banner_image" class="block font-medium text-sm text-gray-700 mb-1">Banner Image</label>
         <div class="flex items-start gap-4">
-            <div class="w-32 h-20 bg-gray-100 rounded-lg border border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
-                @if(isset($event) && $event->banner_image)
-                    <img src="{{ asset('storage/' . $event->banner_image) }}" class="w-full h-full object-cover">
+            <div class="w-32 h-20 bg-slate-950 rounded-lg border border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative">
+                @if(isset($event) && ($event->banner_image || $event->background_image))
+                    @php $formBanner = $event->banner_image ?? $event->background_image; @endphp
+                    <img src="{{ asset('storage/' . $formBanner) }}" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover blur-xs scale-110 opacity-50 brightness-75 pointer-events-none">
+                    <img src="{{ asset('storage/' . $formBanner) }}" alt="Banner" class="relative z-10 max-w-full max-h-full object-contain">
                 @else
                     <i class="fas fa-cloud-upload-alt text-gray-400 text-xl"></i>
                 @endif

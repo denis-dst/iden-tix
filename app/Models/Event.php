@@ -210,6 +210,7 @@ class Event extends Model
                     'helper_text' => $f['helper_text'] ?? '',
                     'options' => $f['options'] ?? [],
                     'is_required' => !empty($f['is_required']),
+                    'show_in_evoucher' => isset($f['show_in_evoucher']) ? (bool) $f['show_in_evoucher'] : true,
                 ];
             }, $this->meta['custom_fields']);
         }
@@ -230,6 +231,7 @@ class Event extends Model
                     'helper_text' => $helper,
                     'options' => $options,
                     'is_required' => false,
+                    'show_in_evoucher' => true,
                 ]
             ];
         }

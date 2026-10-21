@@ -506,9 +506,10 @@
                                 <tr class="hover:bg-slate-50/30 transition-colors group">
                                     <td class="p-4 md:px-6 md:py-4">
                                         <div class="flex items-center gap-4">
-                                            <div class="w-12 h-12 md:w-14 md:h-14 rounded-2xl overflow-hidden shadow-sm shrink-0 border border-slate-100">
+                                            <div class="w-12 h-12 md:w-14 md:h-14 rounded-2xl overflow-hidden shadow-sm shrink-0 border border-slate-100 bg-slate-950 relative flex items-center justify-center">
                                                 @if($event->background_image)
-                                                    <img src="{{ Storage::url($event->background_image) }}" class="w-full h-full object-cover">
+                                                    <img src="{{ Storage::url($event->background_image) }}" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover blur-xs scale-110 opacity-50 brightness-75 pointer-events-none">
+                                                    <img src="{{ Storage::url($event->background_image) }}" alt="{{ $event->name }}" class="relative z-10 max-w-full max-h-full object-contain">
                                                 @else
                                                     <div class="w-full h-full bg-orange-100 flex items-center justify-center text-orange-600 font-black font-outfit text-xl">
                                                         {{ substr($event->name, 0, 1) }}

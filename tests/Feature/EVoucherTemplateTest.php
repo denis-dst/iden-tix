@@ -172,4 +172,68 @@ class EVoucherTemplateTest extends TestCase
         $response->assertSee('XL');
         $response->assertSee('TIKET HANYA DAPAT DIGUNAKAN 1X');
     }
+
+    public function test_evoucher_hides_questions_with_show_in_evoucher_false(): void
+    {
+        // Set nomor_member show_in_evoucher = false
+        $meta = $this->event->meta;
+        $meta['custom_fields'][1]['show_in_evoucher'] = false;
+        $this->event->meta = $meta;
+        $this->event->save();
+
+        $response = $this->get(route('tickets.view', $this->ticket->ticket_code));
+        $response->assertStatus(200);
+
+        // Ukuran Jersey should be visible
+        $response->assertSee('Ukuran Jersey');
+        $response->assertSee('XL');
+
+        // Nomor Anggota Suporter should be hidden
+        $response->assertDontSee('Nomor Anggota Suporter');
+        $response->assertDontSee('GARUDA-007');
+    }
+
+    public function test_evoucher_extracts_answers_from_payment_reference_when_ticket_visitor_data_is_null(): void
+    {
+        // Simulate a transaction where ticket visitor_data is empty but transaction has payment_reference with custom_answers
+        $tx = Transaction::create([
+            'tenant_id' => $this->tenant->id,
+            'event_id' => $this->event->id,
+            'ticket_category_id' => $this->category->id,
+            'reference_no' => 'IDTX-PAYREFTEST',
+            'customer_name' => 'Doni Salman',
+            'customer_email' => 'doni@example.com',
+            'customer_phone' => '081122334455',
+            'quantity' => 1,
+            'total_amount' => 150000,
+            'payment_status' => 'paid',
+            'payment_method' => 'qris',
+            'payment_reference' => json_encode([
+                'custom_answers' => [
+                    'ukuran_jersey' => 'M',
+                    'nomor_member' => 'MEMBER-889',
+                ]
+            ]),
+            'paid_at' => Carbon::now(),
+        ]);
+
+        $ticket = Ticket::create([
+            'tenant_id' => $this->tenant->id,
+            'event_id' => $this->event->id,
+            'transaction_id' => $tx->id,
+            'ticket_category_id' => $this->category->id,
+            'ticket_code' => '9918273645',
+            'status' => 'sold',
+            'visitor_data' => null, // empty visitor data
+        ]);
+
+        $response = $this->get(route('tickets.view', $ticket->ticket_code));
+        $response->assertStatus(200);
+
+        // Answers should be extracted per question from payment_reference
+        $response->assertSee('Ukuran Jersey');
+        $response->assertSee('M');
+        $response->assertSee('Nomor Anggota Suporter');
+        $response->assertSee('MEMBER-889');
+    }
 }

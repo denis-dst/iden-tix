@@ -266,6 +266,7 @@
                                 'helper_text' => $f['helper_text'] ?? '',
                                 'options' => is_array($f['options'] ?? null) ? implode("\n", $f['options']) : ($f['options'] ?? ''),
                                 'is_required' => !empty($f['is_required']),
+                                'show_in_evoucher' => isset($f['show_in_evoucher']) ? !empty($f['show_in_evoucher']) : true,
                             ];
                         }, $rawCreateCustomFields);
 
@@ -278,6 +279,7 @@
                                 'helper_text' => old('custom_question_helper', ''),
                                 'options' => old('custom_question_options', ''),
                                 'is_required' => false,
+                                'show_in_evoucher' => true,
                             ]];
                         }
                     @endphp
@@ -295,7 +297,8 @@
                                     placeholder: '',
                                     helper_text: '',
                                     options: '',
-                                    is_required: true
+                                    is_required: true,
+                                    show_in_evoucher: true
                                 });
                             },
                             removeQuestion(idx) {
@@ -397,10 +400,18 @@
                                             </div>
                                         </div>
 
-                                        <div class="pt-1">
+                                        <div class="pt-2 flex flex-wrap items-center gap-5 border-t border-amber-100">
                                             <label class="inline-flex items-center gap-2 cursor-pointer select-none">
                                                 <input type="checkbox" x-model="q.is_required" class="w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500">
-                                                <span class="text-xs font-bold text-slate-700">Wajib diisi oleh customer saat transaksi</span>
+                                                <span class="text-xs font-bold text-slate-700">Wajib diisi customer saat transaksi</span>
+                                            </label>
+
+                                            <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                                                <input type="checkbox" x-model="q.show_in_evoucher" class="w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500">
+                                                <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                                    <span>🎫 Tampilkan di E-Voucher</span>
+                                                    <span class="text-[10px] text-slate-400 font-normal hidden sm:inline">(Data dicetak pada tiket)</span>
+                                                </span>
                                             </label>
                                         </div>
                                     </div>

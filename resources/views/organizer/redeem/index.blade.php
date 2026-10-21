@@ -10,11 +10,18 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             @forelse($events as $event)
                 <a href="{{ route('organizer.redeem.verify', $event) }}" style="background-color: white; border: 1px solid #e2e8f0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);" class="group relative overflow-hidden rounded-[2.5rem] transition-all transform hover:-translate-y-2">
-                    <div class="aspect-[16/9] w-full bg-slate-100 overflow-hidden">
+                    <div class="aspect-[16/9] w-full bg-slate-950 overflow-hidden relative flex items-center justify-center">
                         @if($event->background_image)
+                            <!-- Ambient blurred backdrop -->
                             <img src="{{ Storage::url($event->background_image) }}" 
                                  onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1504450758481-7338eba7524a?q=80&w=800&auto=format&fit=crop';"
-                                 class="w-full h-full object-cover transition duration-700 group-hover:scale-110">
+                                 class="absolute inset-0 w-full h-full object-cover blur-md scale-110 opacity-50 brightness-75 transition duration-700 group-hover:scale-125 pointer-events-none"
+                                 alt="" aria-hidden="true">
+                            <!-- Sharp uncropped foreground image -->
+                            <img src="{{ Storage::url($event->background_image) }}" 
+                                 onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1504450758481-7338eba7524a?q=80&w=800&auto=format&fit=crop';"
+                                 class="relative z-10 max-w-full max-h-full object-contain transition duration-700 group-hover:scale-105 drop-shadow-lg"
+                                 alt="{{ $event->name }}">
                         @else
                             <div class="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-200">
                                 <svg class="w-20 h-20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>

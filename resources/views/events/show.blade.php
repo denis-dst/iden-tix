@@ -583,12 +583,19 @@
         <div class="bg-white border-b border-slate-200">
             <div class="max-w-6xl mx-auto p-4 lg:p-8">
                 <div class="flex flex-col lg:flex-row gap-8 items-start">
-                    <div class="w-full lg:w-1/3 shrink-0 relative group">
+                    <div class="w-full lg:w-1/3 shrink-0 relative group rounded-3xl overflow-hidden shadow-2xl shadow-slate-900/10 bg-slate-950 aspect-[2/1] sm:aspect-[16/10] flex items-center justify-center">
+                        <!-- Ambient blurred backdrop -->
+                        <img src="{{ $eventBannerImg }}" 
+                            onerror="this.onerror=null;this.src='{{ asset('images/concert.webp') }}'"
+                            alt="" aria-hidden="true"
+                            class="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-60 brightness-75 pointer-events-none">
+                        
+                        <!-- Main uncropped image -->
                         <img src="{{ $eventBannerImg }}" 
                             onerror="this.onerror=null;this.src='{{ asset('images/concert.webp') }}'"
                             width="600" height="300"
                             fetchpriority="high" decoding="async"
-                            class="w-full aspect-[2/1] object-contain rounded-3xl shadow-2xl shadow-purple-200 transition duration-500 group-hover:scale-[1.02] bg-slate-100" alt="{{ $event->name }}">
+                            class="relative z-10 max-h-full max-w-full w-auto h-auto object-contain transition duration-500 group-hover:scale-105 drop-shadow-xl" alt="{{ $event->name }}">
                        
                         
                         <div class="absolute top-4 left-4 flex flex-wrap items-center gap-2">

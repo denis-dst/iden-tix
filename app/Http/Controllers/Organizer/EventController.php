@@ -408,6 +408,7 @@ class EventController extends Controller
                         'helper_text' => trim((string) ($field['helper_text'] ?? '')),
                         'options' => $options,
                         'is_required' => isset($field['is_required']) ? filter_var($field['is_required'], FILTER_VALIDATE_BOOLEAN) : false,
+                        'show_in_evoucher' => isset($field['show_in_evoucher']) ? filter_var($field['show_in_evoucher'], FILTER_VALIDATE_BOOLEAN) : true,
                     ];
                 }
                 return $customFields;
@@ -430,6 +431,7 @@ class EventController extends Controller
                 'helper_text' => trim((string) $request->input('custom_question_helper', '')),
                 'options' => $options,
                 'is_required' => false,
+                'show_in_evoucher' => true,
             ];
         }
 
