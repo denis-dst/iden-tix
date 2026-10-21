@@ -83,12 +83,13 @@
         <!-- Spacer -->
         <div class="flex-1"></div>
 
-        <!-- Bottom Identix Brand Logo (Rotated 90 deg reading upward) -->
-        <div class="pb-2">
-            <div class="flex items-center gap-1.5 sm:gap-2 print:gap-2" style="writing-mode: vertical-rl; transform: rotate(180deg);">
+        <!-- Bottom Identix Brand Logo (Rotated vertically reading upward) -->
+        <div class="h-44 sm:h-52 print:h-52 w-full flex items-center justify-center relative shrink-0 pb-2">
+            <div class="flex items-center gap-1.5 sm:gap-2 print:gap-2 whitespace-nowrap select-none absolute"
+                 style="transform: rotate(-90deg); -webkit-transform: rotate(-90deg); transform-origin: center center;">
                 @if($identixLogoUrl)
                     <div class="flex items-center py-1">
-                        <img src="{{ $identixLogoUrl }}" alt="IDENTIX" class="h-5 sm:h-7 print:h-7 w-auto max-w-[100px] sm:max-w-[130px] object-contain">
+                        <img src="{{ $identixLogoUrl }}" alt="IDENTIX" class="h-5 sm:h-7 print:h-7 w-auto max-w-[120px] sm:max-w-[150px] object-contain">
                     </div>
                 @else
                     <div class="flex items-center gap-1.5">
