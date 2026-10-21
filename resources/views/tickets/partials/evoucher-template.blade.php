@@ -563,20 +563,20 @@
                         ORGANIZED BY :
                     </div>
                     
-                    <div class="p-3 flex-1 flex flex-col items-center justify-center text-center gap-1.5 min-h-[75px] sm:min-h-[85px]"
+                    <div class="p-3 sm:p-4 flex-1 flex flex-col items-center justify-center text-center gap-2 min-h-[90px] sm:min-h-[110px]"
                          style="-webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: #0f172a !important;">
                         @if($tenantLogoUrl)
                             <img src="{{ $tenantLogoUrl }}" 
                                  alt="{{ $organizerName }}" 
-                                 class="max-h-11 sm:max-h-12 max-w-[125px] object-contain mx-auto drop-shadow-sm"
+                                 class="max-h-16 sm:max-h-20 max-w-[150px] sm:max-w-[170px] w-auto object-contain mx-auto drop-shadow-md"
                                  onerror="this.style.display='none'">
                         @else
-                            <div class="w-8 h-8 rounded-full bg-slate-800 text-orange-400 border border-slate-700 font-black text-xs flex items-center justify-center mx-auto shadow-xs">
+                            <div class="w-11 h-11 rounded-full bg-slate-800 text-orange-400 border border-slate-700 font-black text-sm flex items-center justify-center mx-auto shadow-sm">
                                 {{ strtoupper(substr($organizerName, 0, 2)) }}
                             </div>
                         @endif
 
-                        <div class="text-[9px] sm:text-[9.5px] font-black text-white uppercase font-outfit tracking-wide leading-tight px-1 line-clamp-2">
+                        <div class="text-[10px] sm:text-[11px] font-black text-white uppercase font-outfit tracking-wider leading-tight px-1 line-clamp-2">
                             {{ $organizerName }}
                         </div>
                     </div>
