@@ -451,61 +451,7 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <h4 class="text-sm font-black text-slate-700 uppercase tracking-[0.18em]">📋 Kustomisasi Data & Pertanyaan Peserta</h4>
-                                    <p class="text-xs text-slate-400 mt-0.5">Atur pilihan gender dan pertanyaan kustom mandiri yang harus diisi peserta saat checkout.</p>
-                                </div>
-                            </div>
-
-                            <!-- Pengaturan Format Gender Peserta -->
-                            <div class="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-                                <div>
-                                    <h4 class="text-xs font-black text-slate-800 uppercase tracking-widest font-outfit flex items-center gap-2">
-                                        <span>👥</span> Pilihan Gender Peserta
-                                    </h4>
-                                    <p class="text-xs text-slate-500 mt-0.5">Tentukan bagaimana pilihan gender ditampilkan pada form pendaftaran tiket:</p>
-                                </div>
-
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
-                                    <!-- Option: general -->
-                                    <label class="relative flex flex-col p-3.5 border-2 rounded-xl cursor-pointer transition hover:border-slate-400 select-none"
-                                           :class="genderSetting === 'general' ? 'border-emerald-600 bg-emerald-50/60 shadow-sm' : 'border-slate-200 bg-white'">
-                                        <div class="flex items-center gap-2.5 mb-1.5">
-                                            <input type="radio" name="attendee_gender_type" value="general" x-model="genderSetting" class="sr-only">
-                                            <div class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0"
-                                                 :class="genderSetting === 'general' ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300 bg-white'">
-                                                <div class="w-1.5 h-1.5 rounded-full bg-white" x-show="genderSetting === 'general'"></div>
-                                            </div>
-                                            <span class="text-xs font-black text-slate-800">👨 / 👩 Umum</span>
-                                        </div>
-                                        <p class="text-[11px] text-slate-500 leading-snug pl-6.5">Laki-laki & Perempuan (Cocok untuk seminar, festival, konser, expo).</p>
-                                    </label>
-
-                                    <!-- Option: islamic -->
-                                    <label class="relative flex flex-col p-3.5 border-2 rounded-xl cursor-pointer transition hover:border-slate-400 select-none"
-                                           :class="genderSetting === 'islamic' ? 'border-amber-600 bg-amber-50/60 shadow-sm' : 'border-slate-200 bg-white'">
-                                        <div class="flex items-center gap-2.5 mb-1.5">
-                                            <input type="radio" name="attendee_gender_type" value="islamic" x-model="genderSetting" class="sr-only">
-                                            <div class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0"
-                                                 :class="genderSetting === 'islamic' ? 'border-amber-600 bg-amber-600' : 'border-slate-300 bg-white'">
-                                                <div class="w-1.5 h-1.5 rounded-full bg-white" x-show="genderSetting === 'islamic'"></div>
-                                            </div>
-                                            <span class="text-xs font-black text-slate-800">🧔 / 🧕 Islami</span>
-                                        </div>
-                                        <p class="text-[11px] text-slate-500 leading-snug pl-6.5">Ikhwan & Akhwat (Khusus kajian, majelis taklim, atau kegiatan Islami).</p>
-                                    </label>
-
-                                    <!-- Option: disabled -->
-                                    <label class="relative flex flex-col p-3.5 border-2 rounded-xl cursor-pointer transition hover:border-slate-400 select-none"
-                                           :class="genderSetting === 'disabled' ? 'border-indigo-600 bg-indigo-50/60 shadow-sm' : 'border-slate-200 bg-white'">
-                                        <div class="flex items-center gap-2.5 mb-1.5">
-                                            <input type="radio" name="attendee_gender_type" value="disabled" x-model="genderSetting" class="sr-only">
-                                            <div class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0"
-                                                 :class="genderSetting === 'disabled' ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300 bg-white'">
-                                                <div class="w-1.5 h-1.5 rounded-full bg-white" x-show="genderSetting === 'disabled'"></div>
-                                            </div>
-                                            <span class="text-xs font-black text-slate-800">🚫 Dinonaktifkan</span>
-                                        </div>
-                                        <p class="text-[11px] text-slate-500 leading-snug pl-6.5">Tidak menanyakan gender (Cocok untuk lomba hewan, kontes, komunitas).</p>
-                                    </label>
+                                    <p class="text-xs text-slate-400 mt-0.5">Atur pertanyaan kustom mandiri yang harus diisi peserta saat checkout.</p>
                                 </div>
                             </div>
 

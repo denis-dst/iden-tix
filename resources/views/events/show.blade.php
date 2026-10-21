@@ -98,6 +98,8 @@
     notifEmail: {{ $isEmailNotifEnabled ? 'true' : 'false' }},
     lang: '{{ app()->getLocale() === 'en' ? 'en' : 'id' }}',
     showModalSK: false,
+    agreedTerms1: false,
+    agreedTerms2: false,
     promoCode: '',
     discount: 0,
     appliedPromoId: null,
@@ -318,6 +320,12 @@
 
     async submitBooking() {
         if (!this.selectedCategory) return;
+
+        // Validasi persetujuan syarat dan ketentuan
+        if (!this.agreedTerms1 || !this.agreedTerms2) {
+            alert('Mohon centang persetujuan Persyaratan dan Ketentuan sebelum melanjutkan.');
+            return;
+        }
 
         // Validasi pertanyaan custom untuk event berbayar
         if (Array.isArray(this.customFields) && this.customFields.length > 0) {
@@ -1293,14 +1301,43 @@
                                         @endif
                                     </template>
 
-                                    <div class="pt-4">
-                                        <div class="flex justify-between items-center mb-4 p-4 bg-slate-50 rounded-2xl">
+                                    <div class="pt-4 space-y-4">
+                                        <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl">
                                             <span class="text-xs font-bold text-slate-500">Total Pembayaran</span>
                                             <span class="text-xl font-black text-blue-600 font-outfit">Rp <span x-text="total.toLocaleString('id-ID')"></span></span>
                                         </div>
+
+                                        <!-- Persetujuan Syarat & Ketentuan (Wajib) -->
+                                        <div class="p-4 bg-slate-50/80 border border-slate-200/80 rounded-2xl space-y-3">
+                                            <label class="flex items-start gap-3 cursor-pointer group">
+                                                <input type="checkbox" x-model="agreedTerms1" required 
+                                                       class="mt-0.5 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0 cursor-pointer">
+                                                <span class="text-[11px] font-bold text-slate-700 leading-relaxed uppercase group-hover:text-slate-900 transition text-left">
+                                                    SAYA TELAH MEMBACA DAN MEMAHAMI PERSYARATAN DAN KETENTUAN PEMBELIAN DAN PENGGUNAAN E-TICKET YANG TERTERA DI ATAS.
+                                                </span>
+                                            </label>
+
+                                            <label class="flex items-start gap-3 cursor-pointer group">
+                                                <input type="checkbox" x-model="agreedTerms2" required 
+                                                       class="mt-0.5 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0 cursor-pointer">
+                                                <span class="text-[11px] font-bold text-slate-700 leading-relaxed uppercase group-hover:text-slate-900 transition text-left">
+                                                    SAYA MENYETUJUI DAN MEMBERIKAN IZIN UNTUK TERKAIT SECARA SAH DENGAN PERSYARATAN DAN KETENTUAN TERSEBUT.
+                                                </span>
+                                            </label>
+
+                                            <div class="pt-1 text-right">
+                                                <button type="button" @click="showModalSK = true" 
+                                                        class="text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                    Lihat Syarat & Ketentuan Lengkap
+                                                </button>
+                                            </div>
+                                        </div>
+
                                         <button type="submit" 
-                                                :disabled="isSubmitting"
-                                                class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-200 hover:bg-blue-700 transition transform active:scale-95 disabled:bg-slate-300 flex items-center justify-center gap-3">
+                                                :disabled="isSubmitting || !agreedTerms1 || !agreedTerms2"
+                                                :class="(!agreedTerms1 || !agreedTerms2) ? 'bg-slate-300 cursor-not-allowed shadow-none' : 'bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-95'"
+                                                class="w-full py-4 text-white rounded-2xl font-black transition transform flex items-center justify-center gap-3">
                                             <template x-if="isSubmitting">
                                                 <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
