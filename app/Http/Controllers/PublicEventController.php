@@ -142,6 +142,18 @@ class PublicEventController extends Controller
                         return redirect()->route('checkout.success', $dbTransaction->reference_no);
                     }
 
+                    // If redirected with SUCCESS status parameter from WAGO checkout portal
+                    $isPaidParam = in_array(strtoupper(trim((string) ($request->query('status') ?? $request->input('status') ?? ''))), ['SUCCESS', 'PAID', 'SETTLEMENT', 'COMPLETED', 'LUNAS', 'BERHASIL'], true);
+                    if ($isPaidParam) {
+                        $dbTransaction->update([
+                            'payment_status' => 'paid',
+                            'payment_method' => 'WAGO (QRIS / Payment Gateway)',
+                            'paid_at'        => now(),
+                        ]);
+                        $this->finalizeTransaction($dbTransaction);
+                        return redirect()->route('checkout.success', $dbTransaction->reference_no);
+                    }
+
                     // Query API for real-time status
                     if (!empty(config('services.wago.api_key'))) {
                         $wagoService = new \App\Services\WagoService();

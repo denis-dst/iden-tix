@@ -102,6 +102,11 @@ class WagoService
             ?? (function_exists('route') ? route('wago.notification') : null);
 
         if (!empty($callbackUrl)) {
+            if (!str_contains($callbackUrl, 'order_id=') && !str_contains($callbackUrl, 'ref=')) {
+                $separator = str_contains($callbackUrl, '?') ? '&' : '?';
+                $callbackUrl .= $separator . 'order_id=' . urlencode((string) $orderId) . '&ref=' . urlencode((string) $orderId);
+            }
+
             $payload['callback_url'] = $callbackUrl;
             $payload['callbackUrl']  = $callbackUrl;
             $payload['notifyUrl']    = $callbackUrl;
