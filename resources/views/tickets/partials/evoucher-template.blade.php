@@ -337,6 +337,7 @@
                              DYNAMIC CUSTOM DATA & QUESTIONS (ISIAN KUSTOM)
                              ============================================= --}}
                         @php
+                            $nikRenderedInCustom = false;
                             $phoneRenderedInCustom = false;
                             $genderRenderedInCustom = false;
                             $mainAttendeeName = strtolower(trim((string)($ticket->visitor_data['name'] ?? $transaction->customer_name)));
@@ -390,7 +391,10 @@
                                         continue;
                                     }
 
-                                    // Track if phone or gender was displayed in custom fields
+                                    // Track if identity fields were displayed in custom fields
+                                    if (preg_match('/^(nik|nomor\s*identitas|no\.?\s*ktp|no\.?\s*identitas)$/i', $cfLabel)) {
+                                        $nikRenderedInCustom = true;
+                                    }
                                     if ($cfType === 'phone' || preg_match('/wa|whatsapp|hp|handphone|phone|telp|telepon|telpon|ponsel|seluler|kontak/i', $cfLabel)) {
                                         $phoneRenderedInCustom = true;
                                     }
@@ -428,34 +432,67 @@
                             </div>
                         @endif
 
-                        <!-- Check if phone or gender questions exist in organizer configuration -->
                         @php
-                            $hasPhoneFieldConfigured = collect($customFields)->contains(function($cf) {
-                                $lbl = strtolower(trim($cf['label'] ?? ''));
-                                return ($cf['type'] ?? '') === 'phone' || preg_match('/wa|whatsapp|hp|handphone|phone|telp|telepon|telpon|ponsel|seluler|kontak/i', $lbl);
-                            });
+                            // Resolve fallback attendee credentials if not displayed via custom questions
+                            $evoucherNik = $ticket->visitor_data['nik'] ?? ($transaction->customer_nik ?? null);
+                            if (empty($evoucherNik) && !empty($customFields)) {
+                                foreach ($customFields as $idx => $cf) {
+                                    if (preg_match('/nik|identitas|ktp|paspor|sim/i', $cf['label'] ?? '')) {
+                                        $evoucherNik = $visitorAnswers[$cf['id']] ?? ($visitorAnswers[$cf['label']] ?? ($splitAnswers[$idx] ?? null));
+                                        if ($evoucherNik) break;
+                                    }
+                                }
+                            }
 
-                            $hasGenderFieldConfigured = collect($customFields)->contains(function($cf) {
-                                $lbl = strtolower(trim($cf['label'] ?? ''));
-                                return preg_match('/gender|jenis\s*kelamin/i', $lbl);
-                            });
+                            $evoucherGender = $ticket->visitor_data['gender'] ?? ($transaction->customer_gender ?? null);
+                            if (empty($evoucherGender) && !empty($customFields)) {
+                                foreach ($customFields as $idx => $cf) {
+                                    if (preg_match('/gender|jenis\s*kelamin/i', $cf['label'] ?? '')) {
+                                        $evoucherGender = $visitorAnswers[$cf['id']] ?? ($visitorAnswers[$cf['label']] ?? ($splitAnswers[$idx] ?? null));
+                                        if ($evoucherGender) break;
+                                    }
+                                }
+                            }
+
+                            $evoucherPhone = $ticket->visitor_data['phone'] ?? ($transaction->customer_phone ?? null);
+                            if (empty($evoucherPhone) && !empty($customFields)) {
+                                foreach ($customFields as $idx => $cf) {
+                                    if (($cf['type'] ?? '') === 'phone' || preg_match('/wa|whatsapp|hp|phone|telepon|telp/i', $cf['label'] ?? '')) {
+                                        $evoucherPhone = $visitorAnswers[$cf['id']] ?? ($visitorAnswers[$cf['label']] ?? ($splitAnswers[$idx] ?? null));
+                                        if ($evoucherPhone) break;
+                                    }
+                                }
+                            }
                         @endphp
 
-                        <!-- Optional Gender (only if not configured or already displayed in custom questions) -->
-                        @if(!$genderRenderedInCustom && !$hasGenderFieldConfigured && !empty($ticket->visitor_data['gender']))
+                        <!-- Nomor Identitas / NIK (if not already displayed in custom questions) -->
+                        @if(!$nikRenderedInCustom && !empty($evoucherNik))
+                            <div class="flex items-start gap-2.5 text-xs">
+                                <div class="w-5 h-5 rounded-md bg-slate-900 text-white flex items-center justify-center shrink-0 mt-0.5">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">NO. IDENTITAS / NIK</div>
+                                    <div class="text-xs font-black text-slate-900 font-mono tracking-wider break-words">{{ $evoucherNik }}</div>
+                                </div>
+                            </div>
+                        @endif
+
+                        <!-- Gender (if not already displayed in custom questions) -->
+                        @if(!$genderRenderedInCustom && !empty($evoucherGender))
                             <div class="flex items-start gap-2.5 text-xs">
                                 <div class="w-5 h-5 rounded-md bg-slate-900 text-white flex items-center justify-center shrink-0 mt-0.5">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <div class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">GENDER</div>
-                                    <div class="text-xs font-black text-slate-900 uppercase break-words">{{ $ticket->visitor_data['gender'] }}</div>
+                                    <div class="text-xs font-black text-slate-900 uppercase break-words">{{ $evoucherGender }}</div>
                                 </div>
                             </div>
                         @endif
 
-                        <!-- Optional Phone / WhatsApp (only if not configured or already displayed in custom questions) -->
-                        @if(!$phoneRenderedInCustom && !$hasPhoneFieldConfigured && (!empty($ticket->visitor_data['phone']) || !empty($transaction->customer_phone)))
+                        <!-- Phone / WhatsApp (if not already displayed in custom questions) -->
+                        @if(!$phoneRenderedInCustom && !empty($evoucherPhone))
                             <div class="flex items-start gap-2.5 text-xs">
                                 <div class="w-5 h-5 rounded-md bg-slate-900 text-white flex items-center justify-center shrink-0 mt-0.5">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
@@ -463,7 +500,7 @@
                                 <div class="min-w-0 flex-1">
                                     <div class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">NO. TELEPON / WHATSAPP</div>
                                     <div class="text-xs font-black text-slate-900 uppercase break-words">
-                                        {{ $ticket->visitor_data['phone'] ?? $transaction->customer_phone }}
+                                        {{ $evoucherPhone }}
                                     </div>
                                 </div>
                             </div>

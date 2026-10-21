@@ -57,6 +57,112 @@
         $isPending = !$isPaid && $transaction->payment_status === 'pending';
         $isFailed  = !$isPaid && in_array($transaction->payment_status, ['failed', 'expired', 'refunded', 'cancelled']);
         $purchaseFlow = $transaction->event->purchase_flow ?? 'redeem';
+
+        $firstTicket = $transaction->tickets->first();
+        $customFields = method_exists($transaction->event, 'getCustomFields') ? $transaction->event->getCustomFields() : [];
+
+        // Parse custom answers from transaction payment_reference or ticket visitor_data
+        $txCustomAnswers = [];
+        if (!empty($transaction->payment_reference)) {
+            $decodedRef = is_string($transaction->payment_reference) ? json_decode($transaction->payment_reference, true) : $transaction->payment_reference;
+            if (is_array($decodedRef) && !empty($decodedRef['custom_answers']) && is_array($decodedRef['custom_answers'])) {
+                $txCustomAnswers = $decodedRef['custom_answers'];
+            }
+        }
+        if (empty($txCustomAnswers) && $firstTicket && !empty($firstTicket->visitor_data['custom_answers']) && is_array($firstTicket->visitor_data['custom_answers'])) {
+            $txCustomAnswers = $firstTicket->visitor_data['custom_answers'];
+        }
+
+        // Summary answer fallback (pipe-delimited)
+        $rawSummary = $firstTicket->visitor_data['umroh_answer'] ?? ($transaction->customer_umroh_answer ?? null);
+        $splitAnswers = [];
+        if (is_string($rawSummary) && str_contains($rawSummary, ' | ')) {
+            $splitAnswers = array_map('trim', explode(' | ', $rawSummary));
+        }
+
+        // Resolved customer/attendee fields
+        $customerName  = $transaction->customer_name ?: ($firstTicket->visitor_data['name'] ?? null);
+        $customerEmail = $transaction->customer_email ?: ($firstTicket->visitor_data['email'] ?? null);
+        $customerPhone = $transaction->customer_phone ?: ($firstTicket->visitor_data['phone'] ?? null);
+        $customerNik   = $transaction->customer_nik ?: ($firstTicket->visitor_data['nik'] ?? null);
+
+        // Fallbacks from custom questions if not set on transaction columns
+        if (empty($customerNik) && !empty($customFields)) {
+            foreach ($customFields as $idx => $cf) {
+                if (preg_match('/nik|identitas|ktp|paspor|sim/i', $cf['label'] ?? '')) {
+                    $customerNik = $txCustomAnswers[$cf['id']] ?? ($txCustomAnswers[$cf['label']] ?? ($splitAnswers[$idx] ?? null));
+                    if ($customerNik) break;
+                }
+            }
+        }
+        if (empty($customerEmail) && !empty($customFields)) {
+            foreach ($customFields as $idx => $cf) {
+                if (($cf['type'] ?? '') === 'email' || preg_match('/email|surel/i', $cf['label'] ?? '')) {
+                    $customerEmail = $txCustomAnswers[$cf['id']] ?? ($txCustomAnswers[$cf['label']] ?? ($splitAnswers[$idx] ?? null));
+                    if ($customerEmail) break;
+                }
+            }
+        }
+        if (empty($customerPhone) && !empty($customFields)) {
+            foreach ($customFields as $idx => $cf) {
+                if (($cf['type'] ?? '') === 'phone' || preg_match('/wa|whatsapp|hp|phone|telepon|telp/i', $cf['label'] ?? '')) {
+                    $customerPhone = $txCustomAnswers[$cf['id']] ?? ($txCustomAnswers[$cf['label']] ?? ($splitAnswers[$idx] ?? null));
+                    if ($customerPhone) break;
+                }
+            }
+        }
+
+        // Resolved gender: check custom fields first, then ticket visitor_data, then transaction column
+        $resolvedGender = null;
+        if (!empty($customFields)) {
+            foreach ($customFields as $idx => $cf) {
+                if (preg_match('/gender|jenis\s*kelamin/i', $cf['label'] ?? '')) {
+                    $resolvedGender = $txCustomAnswers[$cf['id']] ?? ($txCustomAnswers[$cf['label']] ?? ($splitAnswers[$idx] ?? null));
+                    if ($resolvedGender) break;
+                }
+            }
+        }
+        if (!$resolvedGender) {
+            $resolvedGender = $firstTicket->visitor_data['gender'] ?? ($transaction->customer_gender ?? null);
+        }
+
+        // Collect other custom questions that should be displayed
+        $otherCustomAnswers = [];
+        if (!empty($customFields)) {
+            foreach ($customFields as $idx => $cf) {
+                $cfLabel = trim($cf['label'] ?? '');
+                $cfType  = $cf['type'] ?? '';
+
+                $isHandled = ($cfType === 'name' || preg_match('/^(nama|name|nama\s*lengkap|nama\s*peserta)$/i', $cfLabel))
+                    || ($cfType === 'email' || preg_match('/^(email|surel)$/i', $cfLabel))
+                    || ($cfType === 'phone' || preg_match('/wa|whatsapp|hp|handphone|phone|telp|telepon|telpon|ponsel|kontak/i', $cfLabel))
+                    || preg_match('/^(nik|nomor\s*identitas|no\.?\s*ktp|no\.?\s*identitas)$/i', $cfLabel)
+                    || preg_match('/^(gender|jenis\s*kelamin)$/i', $cfLabel);
+
+                if (!$isHandled) {
+                    $val = $txCustomAnswers[$cf['id']] ?? ($txCustomAnswers[$cf['label']] ?? ($splitAnswers[$idx] ?? null));
+                    if ($val !== null && trim((string)$val) !== '') {
+                        $displayVal = is_array($val) ? implode(', ', $val) : (string) $val;
+                        if (is_string($displayVal) && preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($displayVal))) {
+                            try {
+                                $displayVal = \Carbon\Carbon::parse(trim($displayVal))->translatedFormat('d F Y');
+                            } catch (\Exception $e) {}
+                        }
+                        $otherCustomAnswers[] = [
+                            'label' => $cfLabel,
+                            'value' => $displayVal,
+                        ];
+                    }
+                }
+            }
+        } elseif (!empty($rawSummary) && empty($customerNik) && empty($resolvedGender)) {
+            $otherCustomAnswers[] = [
+                'label' => $transaction->event->meta['custom_question_text'] ?? 'Jawaban Tambahan',
+                'value' => $rawSummary,
+            ];
+        }
+
+        $ticketCategoryName = $transaction->ticketCategory->name ?? ($transaction->category->name ?? ($firstTicket->category->name ?? null));
     @endphp
 
     {{-- Modal: Terima Kasih (Free event, Promo 100% & Paid Transactions) --}}
@@ -241,56 +347,131 @@
             @endif
 
             <!-- Info Card -->
-            <div class="bg-slate-50 rounded-3xl p-6 mb-6 text-left space-y-3 border border-slate-100">
-                <div class="flex justify-between items-center">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">No. Referensi</span>
-                    <span class="text-sm font-black text-slate-900 font-mono">{{ $transaction->reference_no }}</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Nama</span>
-                    <span class="text-sm font-bold text-slate-700">{{ $transaction->customer_name }}</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Jumlah</span>
-                    <span class="text-sm font-bold text-slate-700">{{ $transaction->quantity }} {{ $isFree ? 'Peserta' : 'Tiket' }}</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Status Pembayaran</span>
-                    @if($isPaid)
-                        <span class="px-3 py-1 rounded-xl text-xs font-black bg-emerald-100 text-emerald-700 uppercase tracking-wider">LUNAS / BERHASIL</span>
-                    @elseif($isPending)
-                        <span class="px-3 py-1 rounded-xl text-xs font-black bg-amber-100 text-amber-700 uppercase tracking-wider">MENUNGGU PEMBAYARAN</span>
-                    @else
-                        <span class="px-3 py-1 rounded-xl text-xs font-black bg-rose-100 text-rose-700 uppercase tracking-wider">{{ strtoupper($transaction->payment_status) }}</span>
-                    @endif
-                </div>
-                @if($isFree)
+            <div class="bg-slate-50 rounded-3xl p-6 mb-6 text-left space-y-4 border border-slate-100 divide-y divide-slate-200/60">
+                
+                {{-- Group 1: Informasi Transaksi & Tiket --}}
+                <div class="space-y-2.5 pb-1">
                     <div class="flex justify-between items-center">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Gender</span>
-                        <span class="text-sm font-bold {{ $transaction->customer_gender === 'ikhwan' ? 'text-blue-600' : 'text-pink-600' }} capitalize">
-                            {{ $transaction->customer_gender === 'ikhwan' ? '🧔 Ikhwan' : '🧕 Akhwat' }}
-                        </span>
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">No. Referensi</span>
+                        <span class="text-sm font-black text-slate-900 font-mono">{{ $transaction->reference_no }}</span>
                     </div>
-                    <div class="pt-2 border-t border-slate-200 flex justify-between items-center">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Biaya</span>
-                        <span class="text-sm font-black text-emerald-600">GRATIS</span>
-                    </div>
-                @else
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Metode</span>
-                        <span class="text-sm font-bold text-slate-700 uppercase">{{ str_replace('_', ' ', $transaction->payment_method) }}</span>
-                    </div>
-                    @if(($transaction->service_fee ?? 0) > 0)
+                    @if($ticketCategoryName)
                         <div class="flex justify-between items-center">
-                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Biaya Layanan</span>
-                            <span class="text-sm font-bold text-slate-700">Rp {{ number_format($transaction->service_fee, 0, ',', '.') }}</span>
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Kategori Tiket</span>
+                            <span class="text-sm font-bold text-slate-800">{{ $ticketCategoryName }}</span>
                         </div>
                     @endif
-                    <div class="flex justify-between items-center pt-2 border-t border-slate-200">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Bayar</span>
-                        <span class="text-sm font-black text-blue-600 font-outfit">Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}</span>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Jumlah</span>
+                        <span class="text-sm font-bold text-slate-700">{{ $transaction->quantity }} {{ $isFree ? 'Peserta' : 'Tiket' }}</span>
                     </div>
-                @endif
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Status Pembayaran</span>
+                        @if($isPaid)
+                            <span class="px-3 py-1 rounded-xl text-xs font-black bg-emerald-100 text-emerald-700 uppercase tracking-wider">LUNAS / BERHASIL</span>
+                        @elseif($isPending)
+                            <span class="px-3 py-1 rounded-xl text-xs font-black bg-amber-100 text-amber-700 uppercase tracking-wider">MENUNGGU PEMBAYARAN</span>
+                        @else
+                            <span class="px-3 py-1 rounded-xl text-xs font-black bg-rose-100 text-rose-700 uppercase tracking-wider">{{ strtoupper($transaction->payment_status) }}</span>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Group 2: Data Isian Peserta --}}
+                <div class="space-y-2.5 pt-3 pb-1">
+                    <div class="flex items-center justify-between pb-1">
+                        <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Data Peserta</span>
+                        <span class="text-[10px] font-bold text-slate-500 bg-slate-200/70 px-2 py-0.5 rounded-md">Identitas</span>
+                    </div>
+                    @if($customerName)
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Nama</span>
+                            <span class="text-sm font-bold text-slate-800">{{ $customerName }}</span>
+                        </div>
+                    @endif
+                    @if($customerNik)
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">No. Identitas / NIK</span>
+                            <span class="text-sm font-black text-slate-800 font-mono">{{ $customerNik }}</span>
+                        </div>
+                    @endif
+                    @if($customerEmail)
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Email</span>
+                            <span class="text-sm font-bold text-slate-700 break-all text-right max-w-[65%]">{{ $customerEmail }}</span>
+                        </div>
+                    @endif
+                    @if($customerPhone)
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">No. WhatsApp</span>
+                            <span class="text-sm font-bold text-slate-700 font-mono">{{ $customerPhone }}</span>
+                        </div>
+                    @endif
+                    @if($resolvedGender)
+                        @php
+                            $genderLower = strtolower(trim((string)$resolvedGender));
+                            $genderDisplay = $resolvedGender;
+                            $genderBadgeClass = 'text-slate-700';
+                            if ($genderLower === 'ikhwan' || str_contains($genderLower, 'laki') || $genderLower === 'pria' || $genderLower === 'male') {
+                                $genderDisplay = ($genderLower === 'ikhwan') ? '🧔 Ikhwan' : 'Laki-Laki';
+                                $genderBadgeClass = 'text-blue-600';
+                            } elseif ($genderLower === 'akhwat' || str_contains($genderLower, 'perempuan') || $genderLower === 'wanita' || $genderLower === 'female') {
+                                $genderDisplay = ($genderLower === 'akhwat') ? '🧕 Akhwat' : 'Perempuan';
+                                $genderBadgeClass = 'text-pink-600';
+                            }
+                        @endphp
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Gender</span>
+                            <span class="text-sm font-bold {{ $genderBadgeClass }}">{{ $genderDisplay }}</span>
+                        </div>
+                    @endif
+
+                    {{-- Pertanyaan Tambahan / Kustom lainnya (misal: Tanggal Lahir, dll) --}}
+                    @foreach($otherCustomAnswers as $oca)
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">{{ $oca['label'] }}</span>
+                            <span class="text-sm font-bold text-slate-800 text-right max-w-[65%]">{{ $oca['value'] }}</span>
+                        </div>
+                    @endforeach
+                </div>
+
+                {{-- Group 3: Rincian Pembayaran --}}
+                <div class="space-y-2.5 pt-3">
+                    @if(($transaction->discount_amount ?? 0) > 0)
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Potongan Promo</span>
+                            <span class="text-sm font-bold text-emerald-600">-Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</span>
+                        </div>
+                    @endif
+
+                    @if($isFree)
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Metode</span>
+                            <span class="text-sm font-bold text-slate-700 uppercase">
+                                {{ $transaction->payment_method === 'promo' ? 'KODE PROMO' : 'REGISTRASI GRATIS' }}
+                            </span>
+                        </div>
+                        <div class="pt-2 border-t border-slate-200 flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Bayar</span>
+                            <span class="text-sm font-black text-emerald-600 font-outfit">GRATIS / Rp 0</span>
+                        </div>
+                    @else
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Metode</span>
+                            <span class="text-sm font-bold text-slate-700 uppercase">{{ str_replace('_', ' ', $transaction->payment_method) }}</span>
+                        </div>
+                        @if(($transaction->service_fee ?? 0) > 0)
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Biaya Layanan</span>
+                                <span class="text-sm font-bold text-slate-700">Rp {{ number_format($transaction->service_fee, 0, ',', '.') }}</span>
+                            </div>
+                        @endif
+                        <div class="flex justify-between items-center pt-2 border-t border-slate-200">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Bayar</span>
+                            <span class="text-sm font-black text-blue-600 font-outfit">Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}</span>
+                        </div>
+                    @endif
+                </div>
             </div>
 
             @if($isPaid && $transaction->event->evoucher_info)
@@ -327,7 +508,7 @@
                         <span><strong>PETUNJUK PENTING:</strong> Silakan klik / buka salah satu E-Voucher di bawah ini, kemudian simpan baik-baik (lakukan <strong>Cetak / Screenshot / Simpan sebagai PDF</strong>) untuk ditunjukkan kepada petugas saat masuk ke lokasi acara.</span>
                     </p>
                     <div class="grid grid-cols-1 gap-4">
-                        @forelse($transaction->tickets->take(1) as $ticket)
+                        @forelse($transaction->tickets as $ticket)
                             <a href="{{ route('tickets.view', $ticket->ticket_code) }}" target="_blank" 
                                class="flex items-center justify-between p-6 bg-white border-2 {{ $isFree ? 'border-emerald-100 hover:border-emerald-500 hover:bg-emerald-50/30' : 'border-slate-100 hover:border-emerald-600 hover:bg-emerald-50/30' }} rounded-[2rem] transition-all group shadow-sm">
                                 <div class="flex items-center gap-4">
@@ -335,8 +516,15 @@
                                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                     </div>
                                     <div class="text-left">
-                                        <p class="text-[10px] font-black text-slate-400 uppercase">{{ $isFree ? 'E-Voucher Peserta' : 'Tiket' }}</p>
-                                        <p class="text-sm font-black text-slate-900 font-outfit">{{ $transaction->event->name }}</p>
+                                        <p class="text-[10px] font-black text-slate-400 uppercase">
+                                            {{ $ticket->category->name ?? ($isFree ? 'E-Voucher Peserta' : 'Tiket') }}
+                                            @if($transaction->tickets->count() > 1)
+                                                • Tiket #{{ $loop->iteration }}
+                                            @endif
+                                        </p>
+                                        <p class="text-sm font-black text-slate-900 font-outfit">
+                                            {{ $ticket->visitor_data['name'] ?? ($transaction->customer_name ?: $transaction->event->name) }}
+                                        </p>
                                         <p class="text-[10px] text-slate-400 font-mono mt-0.5">{{ $ticket->ticket_code }}</p>
                                     </div>
                                 </div>

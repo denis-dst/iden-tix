@@ -929,6 +929,16 @@ class PublicEventController extends Controller
                 ? collect($firstAttCustom)->values()->filter(fn($v) => trim((string)$v) !== '')->implode(' | ')
                 : ($firstAttendee['umroh_answer'] ?? null);
 
+            $firstAttNik = $firstAttendee['nik'] ?? null;
+            if (!$firstAttNik && !empty($firstAttCustom) && !empty($customFields)) {
+                foreach ($customFields as $cf) {
+                    if (preg_match('/nik|identitas|ktp|paspor|sim/i', $cf['label'] ?? '')) {
+                        $firstAttNik = $firstAttCustom[$cf['id']] ?? null;
+                        if ($firstAttNik) break;
+                    }
+                }
+            }
+
             // Create Transaction: immediately paid (free event)
             $transaction = Transaction::create([
                 'tenant_id'            => $event->tenant_id,
@@ -939,13 +949,14 @@ class PublicEventController extends Controller
                 'customer_name'        => $firstAttendee['name'],
                 'customer_email'       => $validated['email'],
                 'customer_phone'       => $validated['phone'],
-                'customer_nik'         => null,
+                'customer_nik'         => $firstAttNik,
                 'customer_gender'      => $firstAttendee['gender'] ?? null,
                 'customer_umroh_answer'=> $firstAttSummary,
                 'discount_amount'      => 0,
                 'total_amount'         => 0,
                 'payment_status'       => 'paid',
                 'payment_method'       => 'free',
+                'payment_reference'    => json_encode(['custom_answers' => $firstAttCustom]),
                 'paid_at'              => now(),
                 'channel'              => 'online',
             ]);
@@ -959,6 +970,16 @@ class PublicEventController extends Controller
                     ? collect($attCustom)->values()->filter(fn($v) => trim((string)$v) !== '')->implode(' | ')
                     : ($attendee['umroh_answer'] ?? null);
 
+                $attNik = $attendee['nik'] ?? null;
+                if (!$attNik && !empty($attCustom) && !empty($customFields)) {
+                    foreach ($customFields as $cf) {
+                        if (preg_match('/nik|identitas|ktp|paspor|sim/i', $cf['label'] ?? '')) {
+                            $attNik = $attCustom[$cf['id']] ?? null;
+                            if ($attNik) break;
+                        }
+                    }
+                }
+
                 $ticket = Ticket::create([
                     'tenant_id'          => $event->tenant_id,
                     'event_id'           => $event->id,
@@ -968,6 +989,7 @@ class PublicEventController extends Controller
                     'status'             => 'sold',
                     'visitor_data'       => [
                         'name'           => $attendee['name'],
+                        'nik'            => $attNik,
                         'gender'         => $attendee['gender'] ?? null,
                         'umroh_answer'   => $attSummary,
                         'custom_answers' => $attCustom,
