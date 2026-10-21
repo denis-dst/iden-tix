@@ -688,11 +688,13 @@
                         @if($event->tenant)
                             <div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden font-bold text-xs text-orange-600">
+                                    <div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 p-1.5 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
                                         @if($event->tenant->logo)
-                                            <img src="{{ str_starts_with($event->tenant->logo, 'http') ? $event->tenant->logo : asset('storage/' . $event->tenant->logo) }}" alt="" class="w-full h-full object-contain">
+                                            <img src="{{ str_starts_with($event->tenant->logo, 'http') ? $event->tenant->logo : asset('storage/' . $event->tenant->logo) }}" 
+                                                 alt="{{ $event->tenant->name }}" 
+                                                 class="w-full h-full object-contain drop-shadow-sm">
                                         @else
-                                            {{ strtoupper(substr($event->tenant->name, 0, 1)) }}
+                                            <span class="font-bold text-xs text-orange-400 font-outfit">{{ strtoupper(substr($event->tenant->name, 0, 2)) }}</span>
                                         @endif
                                     </div>
                                     <div>
