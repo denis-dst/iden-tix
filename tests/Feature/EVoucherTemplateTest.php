@@ -236,4 +236,141 @@ class EVoucherTemplateTest extends TestCase
         $response->assertSee('Nomor Anggota Suporter');
         $response->assertSee('MEMBER-889');
     }
+
+    public function test_evoucher_does_not_duplicate_phone_number_when_phone_custom_field_is_configured(): void
+    {
+        $this->event->update([
+            'meta' => [
+                'custom_fields' => [
+                    [
+                        'id' => 'no_hp_wa',
+                        'label' => 'Nomor Telpon/WA',
+                        'type' => 'phone',
+                        'show_in_evoucher' => true,
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->ticket->update([
+            'visitor_data' => [
+                'name' => 'Brian Arisowo',
+                'phone' => '081234567890',
+                'custom_answers' => [
+                    'no_hp_wa' => '081234567890',
+                ],
+            ],
+        ]);
+
+        $response = $this->get(route('tickets.view', $this->ticket->ticket_code));
+        $response->assertStatus(200);
+
+        $content = $response->getContent();
+        // Count how many times the phone number 081234567890 appears in the rendered HTML
+        $count = substr_count($content, '081234567890');
+        $this->assertEquals(1, $count, 'Phone number must appear exactly once, never duplicated.');
+        $response->assertSee('Nomor Telpon/WA');
+        $response->assertDontSee('NO. TELEPON / WHATSAPP');
+    }
+
+    public function test_evoucher_hides_phone_when_phone_custom_field_has_show_in_evoucher_false(): void
+    {
+        $this->event->update([
+            'meta' => [
+                'custom_fields' => [
+                    [
+                        'id' => 'no_hp_wa',
+                        'label' => 'Nomor Telpon/WA',
+                        'type' => 'phone',
+                        'show_in_evoucher' => false,
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->ticket->update([
+            'visitor_data' => [
+                'name' => 'Brian Arisowo',
+                'phone' => '081234567890',
+                'custom_answers' => [
+                    'no_hp_wa' => '081234567890',
+                ],
+            ],
+        ]);
+
+        $response = $this->get(route('tickets.view', $this->ticket->ticket_code));
+        $response->assertStatus(200);
+
+        // Phone number should be completely hidden since organizer set show_in_evoucher to false
+        $response->assertDontSee('Nomor Telpon/WA');
+        $response->assertDontSee('NO. TELEPON / WHATSAPP');
+        $response->assertDontSee('081234567890');
+    }
+
+    public function test_evoucher_hides_gate_box_when_no_gate_is_configured(): void
+    {
+        // Detach gates from category and ensure no event gates exist
+        $this->category->gates()->detach();
+        $this->event->gates()->delete();
+
+        $response = $this->get(route('tickets.view', $this->ticket->ticket_code));
+        $response->assertStatus(200);
+
+        // Kategori should be visible
+        $response->assertSee('KATEGORI');
+        $response->assertSee('VIP TIMUR');
+
+        // GATE box should NOT be rendered and should not fallback to GATE UTAMA
+        $response->assertDontSee('GATE UTAMA');
+        $response->assertDontSee('<div class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">GATE</div>', false);
+    }
+
+    public function test_evoucher_renders_waktu_acara_instead_of_penukaran_when_purchase_flow_is_not_redeem(): void
+    {
+        // Set event purchase_flow to evoucher (no penukaran)
+        $this->event->update([
+            'purchase_flow' => 'evoucher',
+        ]);
+
+        $response = $this->get(route('tickets.view', $this->ticket->ticket_code));
+        $response->assertStatus(200);
+
+        // Should NOT show WAKTU MULAI PENUKARAN
+        $response->assertDontSee('WAKTU MULAI PENUKARAN:');
+        $response->assertDontSee('PENUKARAN WRISTBAND');
+
+        // Should show WAKTU ACARA and DIRECT SCAN AT GATE
+        $response->assertSee('WAKTU ACARA:');
+        $response->assertSee('DIRECT SCAN AT GATE');
+    }
+
+    public function test_evoucher_renders_transaction_purchase_date_and_time(): void
+    {
+        $paidTime = Carbon::parse('2026-10-21 14:35:00');
+        $this->transaction->update([
+            'paid_at' => $paidTime,
+        ]);
+
+        $response = $this->get(route('tickets.view', $this->ticket->ticket_code));
+        $response->assertStatus(200);
+
+        $response->assertSee('WAKTU TRANSAKSI PEMBELIAN');
+        $response->assertSee('14:35 WIB');
+    }
+
+    public function test_evoucher_uses_identix_logo_from_settings_when_configured(): void
+    {
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'app_logo'],
+            ['value' => 'settings/test-identix-logo.webp', 'group' => 'appearance']
+        );
+
+        $response = $this->get(route('tickets.view', $this->ticket->ticket_code));
+        $response->assertStatus(200);
+
+        // Header and side strip should render the logo from settings
+        $response->assertSee('settings/test-identix-logo.webp');
+    }
 }
+
+

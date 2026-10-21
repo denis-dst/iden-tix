@@ -88,14 +88,31 @@
             </div>
         @endif
 
+        @php
+            $identixLogo = $global_settings['app_logo'] ?? \App\Models\Setting::get('app_logo');
+            $identixIcon = $global_settings['app_icon'] ?? \App\Models\Setting::get('app_icon');
+            $identixLogoUrl = $identixLogo ? (str_starts_with($identixLogo, 'http') ? $identixLogo : asset('storage/' . $identixLogo)) : null;
+            $identixIconUrl = $identixIcon ? (str_starts_with($identixIcon, 'http') ? $identixIcon : asset('storage/' . $identixIcon)) : null;
+        @endphp
+
         <!-- Floating Action Header -->
         <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 bg-black rounded-xl flex items-center justify-center text-white">
-                    <svg class="w-5 h-5 text-orange-500 fill-current" viewBox="0 0 24 24">
-                        <path d="M4 19h4L14 5H10L4 19zm6 0h4L20 5h-4L10 19z"/>
-                    </svg>
-                </div>
+                @if($identixLogoUrl)
+                    <div class="flex items-center shrink-0">
+                        <img src="{{ $identixLogoUrl }}" alt="{{ $global_settings['app_name'] ?? 'IdenTix' }}" class="h-9 w-auto max-w-[140px] object-contain">
+                    </div>
+                @elseif($identixIconUrl)
+                    <div class="w-9 h-9 bg-black rounded-xl flex items-center justify-center overflow-hidden p-1 shrink-0 shadow-sm">
+                        <img src="{{ $identixIconUrl }}" alt="{{ $global_settings['app_name'] ?? 'IdenTix' }}" class="w-full h-full object-contain">
+                    </div>
+                @else
+                    <div class="w-9 h-9 bg-black rounded-xl flex items-center justify-center text-white shrink-0">
+                        <svg class="w-5 h-5 text-orange-500 fill-current" viewBox="0 0 24 24">
+                            <path d="M4 19h4L14 5H10L4 19zm6 0h4L20 5h-4L10 19z"/>
+                        </svg>
+                    </div>
+                @endif
                 <div>
                     <h1 class="text-sm font-black text-slate-900 font-outfit uppercase tracking-wider">E-Voucher Resmi</h1>
                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">

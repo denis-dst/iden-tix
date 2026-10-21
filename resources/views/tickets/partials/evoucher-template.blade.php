@@ -24,6 +24,12 @@
         $tenantLogoUrl = str_starts_with($tenant->logo, 'http') ? $tenant->logo : asset('storage/' . $tenant->logo);
     }
 
+    // Identix brand logo & icon from settings
+    $identixLogo = $global_settings['app_logo'] ?? \App\Models\Setting::get('app_logo');
+    $identixIcon = $global_settings['app_icon'] ?? \App\Models\Setting::get('app_icon');
+    $identixLogoUrl = $identixLogo ? (str_starts_with($identixLogo, 'http') ? $identixLogo : asset('storage/' . $identixLogo)) : null;
+    $identixIconUrl = $identixIcon ? (str_starts_with($identixIcon, 'http') ? $identixIcon : asset('storage/' . $identixIcon)) : null;
+
     // Custom attendee questions & answers
     $customFields = method_exists($event, 'getCustomFields') ? $event->getCustomFields() : [];
     $visitorAnswers = is_array($ticket->visitor_data['custom_answers'] ?? null) ? $ticket->visitor_data['custom_answers'] : [];
@@ -80,16 +86,26 @@
         <!-- Bottom Identix Brand Logo (Rotated 90 deg reading upward) -->
         <div class="pb-2">
             <div class="flex items-center gap-2" style="writing-mode: vertical-rl; transform: rotate(180deg);">
-                <div class="flex items-center gap-1.5">
-                    <!-- Stylized Identix Orange Slashes -->
-                    <svg class="w-4 h-4 text-orange-500 fill-current shrink-0" viewBox="0 0 24 24">
-                        <path d="M4 19h4L14 5H10L4 19zm6 0h4L20 5h-4L10 19z"/>
-                    </svg>
-                    <span class="text-xs font-black tracking-widest text-white uppercase font-outfit">IDENTIX</span>
-                </div>
-                <span class="text-[6.5px] font-black tracking-[0.2em] text-orange-400 uppercase">
-                    TICKETING & FAN ENGAGEMENT
-                </span>
+                @if($identixLogoUrl)
+                    <div class="flex items-center py-1">
+                        <img src="{{ $identixLogoUrl }}" alt="IDENTIX" class="h-6 sm:h-7 w-auto max-w-[130px] object-contain">
+                    </div>
+                @else
+                    <div class="flex items-center gap-1.5">
+                        @if($identixIconUrl)
+                            <img src="{{ $identixIconUrl }}" alt="IDENTIX" class="w-4 h-4 object-contain shrink-0">
+                        @else
+                            <!-- Stylized Identix Orange Slashes -->
+                            <svg class="w-4 h-4 text-orange-500 fill-current shrink-0" viewBox="0 0 24 24">
+                                <path d="M4 19h4L14 5H10L4 19zm6 0h4L20 5h-4L10 19z"/>
+                            </svg>
+                        @endif
+                        <span class="text-xs font-black tracking-widest text-white uppercase font-outfit">IDENTIX</span>
+                    </div>
+                    <span class="text-[6.5px] font-black tracking-[0.2em] text-orange-400 uppercase">
+                        TICKETING & FAN ENGAGEMENT
+                    </span>
+                @endif
             </div>
         </div>
     </div>
@@ -196,10 +212,14 @@
 
                 <div class="border border-slate-300 bg-slate-50/70 rounded-xl px-3 py-1 text-right">
                     <div class="text-[8.5px] font-black text-slate-700 uppercase tracking-wider">
-                        WAKTU MULAI PENUKARAN: {{ $event->gate_open_at ? $event->gate_open_at->format('d F Y • H:i') . ' WIB' : ($event->event_start_date ? $event->event_start_date->format('d F Y • H:i') . ' WIB' : '-') }}
+                        @if(($event->purchase_flow ?? 'redeem') === 'redeem')
+                            WAKTU MULAI PENUKARAN: {{ $event->gate_open_at ? $event->gate_open_at->translatedFormat('d F Y • H:i') . ' WIB' : ($event->event_start_date ? $event->event_start_date->translatedFormat('d F Y • H:i') . ' WIB' : '-') }}
+                        @else
+                            WAKTU ACARA: {{ $event->event_start_date ? $event->event_start_date->translatedFormat('d F Y • H:i') . ' WIB' : ($event->gate_open_at ? $event->gate_open_at->translatedFormat('d F Y • H:i') . ' WIB' : '-') }}
+                        @endif
                     </div>
                     <div class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">
-                        {{ $event->city }} • {{ $event->purchase_flow === 'redeem' ? 'PENUKARAN WRISTBAND' : 'DIRECT SCAN AT GATE' }}
+                        {{ $event->city }} • {{ ($event->purchase_flow ?? 'redeem') === 'redeem' ? 'PENUKARAN WRISTBAND' : 'DIRECT SCAN AT GATE' }}
                     </div>
                 </div>
             </div>
@@ -210,18 +230,24 @@
                 <!-- Left Details (7 cols) -->
                 <div class="col-span-7 space-y-3">
                     
+                    @php
+                        $gateName = trim((string) ($category?->gates?->first()?->name ?? $event?->gates?->first()?->name ?? ''));
+                    @endphp
+
                     <!-- Kategori & Gate Boxes -->
-                    <div class="grid grid-cols-2 gap-2.5">
+                    <div class="grid {{ $gateName !== '' ? 'grid-cols-2' : 'grid-cols-1' }} gap-2.5">
                         <div class="border border-slate-200 bg-slate-50/70 rounded-xl p-2">
                             <div class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">KATEGORI</div>
                             <div class="text-xs font-black text-slate-900 uppercase font-outfit truncate">{{ $category->name ?? 'REGULAR' }}</div>
                         </div>
-                        <div class="border border-slate-200 bg-slate-50/70 rounded-xl p-2">
-                            <div class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">GATE</div>
-                            <div class="text-xs font-black text-slate-900 uppercase font-outfit truncate">
-                                {{ $category->gates->first()->name ?? ($event->gates->first()->name ?? 'GATE UTAMA') }}
+                        @if($gateName !== '')
+                            <div class="border border-slate-200 bg-slate-50/70 rounded-xl p-2">
+                                <div class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">GATE</div>
+                                <div class="text-xs font-black text-slate-900 uppercase font-outfit truncate">
+                                    {{ $gateName }}
+                                </div>
                             </div>
-                        </div>
+                        @endif
                     </div>
 
                     <!-- Event Name / Match Title -->
@@ -264,6 +290,29 @@
                             </div>
                         </div>
 
+                        <!-- Waktu Transaksi Pembelian -->
+                        @php
+                            $txDate = $transaction->paid_at ?? $transaction->created_at;
+                            if (is_string($txDate)) {
+                                try {
+                                    $txDate = \Carbon\Carbon::parse($txDate);
+                                } catch (\Exception $e) {}
+                            }
+                        @endphp
+                        @if($txDate instanceof \Carbon\CarbonInterface || $txDate instanceof \DateTimeInterface)
+                            <div class="flex items-start gap-2.5 text-xs">
+                                <div class="w-5 h-5 rounded-md bg-slate-900 text-white flex items-center justify-center shrink-0 mt-0.5">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">WAKTU TRANSAKSI PEMBELIAN</div>
+                                    <div class="text-xs font-black text-slate-900 uppercase truncate">
+                                        {{ $txDate->translatedFormat('d F Y • H:i') }} WIB
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
                         <!-- Tanggal Acara -->
                         <div class="flex items-start gap-2.5 text-xs">
                             <div class="w-5 h-5 rounded-md bg-slate-900 text-white flex items-center justify-center shrink-0 mt-0.5">
@@ -280,6 +329,12 @@
                         {{-- =============================================
                              DYNAMIC CUSTOM DATA & QUESTIONS (ISIAN KUSTOM)
                              ============================================= --}}
+                        @php
+                            $phoneRenderedInCustom = false;
+                            $genderRenderedInCustom = false;
+                            $mainAttendeeName = strtolower(trim((string)($ticket->visitor_data['name'] ?? $transaction->customer_name)));
+                        @endphp
+
                         @if(!empty($customFields))
                             @foreach($customFields as $idx => $cf)
                                 @php
@@ -301,7 +356,7 @@
                                             $ans = $ticket->visitor_data['name'] ?? $transaction->customer_name;
                                         } elseif (($cf['type'] ?? '') === 'email' || preg_match('/^(email|surel)$/i', $labelLower)) {
                                             $ans = $ticket->visitor_data['email'] ?? $transaction->customer_email;
-                                        } elseif (($cf['type'] ?? '') === 'phone' || preg_match('/^(no\.?\s*(hp|wa|telepon|telpon|whatsapp)|nomor\s*(hp|wa|telepon|telpon|whatsapp))$/i', $labelLower)) {
+                                        } elseif (($cf['type'] ?? '') === 'phone' || preg_match('/^(no\.?\s*(hp|wa|telepon|telpon|telp|whatsapp)|nomor\s*(hp|wa|telepon|telpon|telp|whatsapp))$/i', $labelLower)) {
                                             $ans = $ticket->visitor_data['phone'] ?? $transaction->customer_phone;
                                         } elseif (preg_match('/^(nik|nomor\s*identitas|no\.?\s*ktp|no\.?\s*identitas)$/i', $labelLower)) {
                                             $ans = $ticket->visitor_data['nik'] ?? $transaction->customer_nik;
@@ -317,6 +372,23 @@
                                         try {
                                             $displayAns = \Carbon\Carbon::parse(trim($displayAns))->translatedFormat('d F Y');
                                         } catch (\Exception $e) {}
+                                    }
+
+                                    $cfLabel = trim($cf['label'] ?? '');
+                                    $cfType = $cf['type'] ?? '';
+
+                                    // Skip redundant identical Name if already shown at the top
+                                    $isGenericName = ($cfType === 'name' || preg_match('/^(nama|name|nama\s*lengkap|nama\s*peserta)$/i', $cfLabel));
+                                    if ($isGenericName && strtolower(trim((string)$displayAns)) === $mainAttendeeName) {
+                                        continue;
+                                    }
+
+                                    // Track if phone or gender was displayed in custom fields
+                                    if ($cfType === 'phone' || preg_match('/wa|whatsapp|hp|handphone|phone|telp|telepon|telpon|ponsel|seluler|kontak/i', $cfLabel)) {
+                                        $phoneRenderedInCustom = true;
+                                    }
+                                    if (preg_match('/gender|jenis\s*kelamin/i', $cfLabel)) {
+                                        $genderRenderedInCustom = true;
                                     }
                                 @endphp
                                 @if($ans !== null && trim((string)$ans) !== '')
@@ -349,14 +421,21 @@
                             </div>
                         @endif
 
-                        <!-- Optional Gender (if set on attendee and not already shown in custom questions) -->
+                        <!-- Check if phone or gender questions exist in organizer configuration -->
                         @php
-                            $hasGenderInCustom = collect($customFields)->contains(function($cf) {
-                                $show = isset($cf['show_in_evoucher']) ? (bool) $cf['show_in_evoucher'] : true;
-                                return $show && preg_match('/gender|jenis\s*kelamin/i', $cf['label'] ?? '');
+                            $hasPhoneFieldConfigured = collect($customFields)->contains(function($cf) {
+                                $lbl = strtolower(trim($cf['label'] ?? ''));
+                                return ($cf['type'] ?? '') === 'phone' || preg_match('/wa|whatsapp|hp|handphone|phone|telp|telepon|telpon|ponsel|seluler|kontak/i', $lbl);
+                            });
+
+                            $hasGenderFieldConfigured = collect($customFields)->contains(function($cf) {
+                                $lbl = strtolower(trim($cf['label'] ?? ''));
+                                return preg_match('/gender|jenis\s*kelamin/i', $lbl);
                             });
                         @endphp
-                        @if(!$hasGenderInCustom && !empty($ticket->visitor_data['gender']))
+
+                        <!-- Optional Gender (only if not configured or already displayed in custom questions) -->
+                        @if(!$genderRenderedInCustom && !$hasGenderFieldConfigured && !empty($ticket->visitor_data['gender']))
                             <div class="flex items-start gap-2.5 text-xs">
                                 <div class="w-5 h-5 rounded-md bg-slate-900 text-white flex items-center justify-center shrink-0 mt-0.5">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
@@ -368,14 +447,8 @@
                             </div>
                         @endif
 
-                        <!-- Optional Phone / WhatsApp (only if not already shown in custom questions) -->
-                        @php
-                            $hasPhoneInCustom = collect($customFields)->contains(function($cf) {
-                                $show = isset($cf['show_in_evoucher']) ? (bool) $cf['show_in_evoucher'] : true;
-                                return $show && (($cf['type'] ?? '') === 'phone' || preg_match('/wa|whatsapp|hp|phone|telepon|telpon/i', $cf['label'] ?? ''));
-                            });
-                        @endphp
-                        @if(!$hasPhoneInCustom && (!empty($ticket->visitor_data['phone']) || !empty($transaction->customer_phone)))
+                        <!-- Optional Phone / WhatsApp (only if not configured or already displayed in custom questions) -->
+                        @if(!$phoneRenderedInCustom && !$hasPhoneFieldConfigured && (!empty($ticket->visitor_data['phone']) || !empty($transaction->customer_phone)))
                             <div class="flex items-start gap-2.5 text-xs">
                                 <div class="w-5 h-5 rounded-md bg-slate-900 text-white flex items-center justify-center shrink-0 mt-0.5">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
