@@ -515,7 +515,7 @@ class TransactionController extends Controller
                         'event_id' => $transaction->event_id,
                         'transaction_id' => $transaction->id,
                         'ticket_category_id' => $transaction->ticket_category_id,
-                        'ticket_code' => 'GTX-' . strtoupper(\Illuminate\Support\Str::random(10)),
+                        'ticket_code' => \App\Models\Ticket::generateTicketCode(),
                         'status' => 'sold',
                     ]);
                 }
@@ -573,7 +573,7 @@ class TransactionController extends Controller
                             'event_id'           => $transaction->event_id,
                             'transaction_id'     => $transaction->id,
                             'ticket_category_id' => $transaction->ticket_category_id,
-                            'ticket_code'        => 'GTX-' . strtoupper(\Illuminate\Support\Str::random(10)),
+                            'ticket_code'        => \App\Models\Ticket::generateTicketCode(),
                             'status'             => 'sold',
                             'visitor_data'       => [
                                 'name'  => $transaction->customer_name,

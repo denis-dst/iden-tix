@@ -15,12 +15,13 @@ class Transaction extends Model
         'user_id', 'reference_no', 
         'customer_name', 'customer_email', 'customer_phone', 'customer_nik',
         'customer_gender', 'customer_umroh_answer',
-        'discount_amount', 'total_amount', 'payment_status', 'payment_method', 
+        'discount_amount', 'service_fee', 'total_amount', 'payment_status', 'payment_method', 
         'payment_reference', 'channel', 'processed_by', 'paid_at'
     ];
 
     protected $casts = [
         'discount_amount' => 'decimal:2',
+        'service_fee' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'paid_at' => 'datetime',
     ];

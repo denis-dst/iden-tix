@@ -22,7 +22,7 @@ return new class extends Migration
             $table->dateTime('event_end_date');
             $table->dateTime('gate_open_at')->nullable();
             $table->dateTime('gate_close_at')->nullable();
-            $table->enum('status', ['draft', 'published', 'ongoing', 'ended', 'cancelled'])->default('draft');
+            $table->enum('status', ['draft', 'published', 'private', 'ongoing', 'ended', 'cancelled'])->default('draft');
             $table->json('meta')->nullable();
             $table->timestamps();
             $table->softDeletes();

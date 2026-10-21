@@ -79,7 +79,7 @@
                         <option value="">Pilih kategori</option>
                         @foreach($event->ticketCategories as $category)
                             <option value="{{ $category->id }}" {{ old('ticket_category_id') == $category->id ? 'selected' : '' }}>
-                                {{ $category->name }} · Rp {{ number_format($category->price, 0, ',', '.') }} · Sisa {{ max(0, $category->quota - $category->sold_count) }}
+                                {{ $category->name }} · Rp {{ number_format($category->price, 0, ',', '.') }}@if(($category->service_fee ?? 0) > 0) (+ Fee Rp {{ number_format($category->service_fee, 0, ',', '.') }})@endif · Sisa {{ max(0, $category->quota - $category->sold_count) }}
                             </option>
                         @endforeach
                     </select>

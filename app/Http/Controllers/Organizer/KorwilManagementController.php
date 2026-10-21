@@ -38,7 +38,7 @@ class KorwilManagementController extends Controller
             ->paginate(15);
 
         $events = Event::where('tenant_id', $tenantId)
-            ->where('status', 'published')
+            ->whereIn('status', ['published', 'private'])
             ->select(['id', 'name', 'event_start_date'])
             ->latest('event_start_date')
             ->get();

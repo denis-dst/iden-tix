@@ -12,7 +12,7 @@ class TicketViewController extends Controller
      */
     public function show($code)
     {
-        $ticket = Ticket::with(['event', 'category', 'transaction.tickets.category'])
+        $ticket = Ticket::with(['event.tenant', 'category', 'transaction.tickets.category'])
             ->where('ticket_code', $code)
             ->firstOrFail();
 

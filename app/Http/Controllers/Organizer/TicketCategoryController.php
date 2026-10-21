@@ -24,6 +24,7 @@ class TicketCategoryController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'price' => $event->is_free ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
+            'service_fee' => 'nullable|numeric|min:0',
             'nik_restriction' => 'nullable|string|max:255',
             'nik_restriction_message' => 'nullable|string|max:255',
             'badge_text' => 'nullable|string|max:255',
@@ -41,6 +42,9 @@ class TicketCategoryController extends Controller
         $data['hex_color'] = !empty($data['hex_color']) ? $data['hex_color'] : '#6366F1';
         if ($event->is_free) {
             $data['price'] = 0;
+            $data['service_fee'] = 0;
+        } else {
+            $data['service_fee'] = max(0, (float) $request->input('service_fee', 0));
         }
 
         if ($request->hasFile('category_image')) {
@@ -73,6 +77,7 @@ class TicketCategoryController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'price' => $event->is_free ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
+            'service_fee' => 'nullable|numeric|min:0',
             'nik_restriction' => 'nullable|string|max:255',
             'nik_restriction_message' => 'nullable|string|max:255',
             'badge_text' => 'nullable|string|max:255',
@@ -87,6 +92,9 @@ class TicketCategoryController extends Controller
         $data = $validated;
         if ($event->is_free) {
             $data['price'] = 0;
+            $data['service_fee'] = 0;
+        } else {
+            $data['service_fee'] = max(0, (float) $request->input('service_fee', 0));
         }
         if (isset($data['hex_color']) && empty($data['hex_color'])) {
             $data['hex_color'] = $category->hex_color ?? '#6366F1';

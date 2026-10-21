@@ -63,6 +63,7 @@
         <select name="status" id="status" class="w-full border-gray-300 focus:border-purple-500 focus:ring-purple-500 rounded-lg shadow-sm text-gray-900 font-medium" required>
             <option value="draft" {{ old('status', $event->status ?? '') === 'draft' ? 'selected' : '' }}>Draft</option>
             <option value="published" {{ old('status', $event->status ?? '') === 'published' ? 'selected' : '' }}>Published</option>
+            <option value="private" {{ old('status', $event->status ?? '') === 'private' ? 'selected' : '' }}>Private</option>
             <option value="finished" {{ old('status', $event->status ?? '') === 'finished' ? 'selected' : '' }}>Finished</option>
             <option value="cancelled" {{ old('status', $event->status ?? '') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
         </select>

@@ -205,11 +205,16 @@
                         <div
                             class="bg-slate-900/90 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] shadow-2xl">
                             <h3
-                                class="text-[10px] font-black text-center uppercase tracking-[0.4em] text-indigo-400 mb-8">
-                                Manual Entry</h3>
-                            <input type="text" x-model="manualCode" placeholder="KODE TIKET"
+                                class="text-[10px] font-black text-center uppercase tracking-[0.4em] text-indigo-400 mb-2">
+                                Input Manual Kode Tiket</h3>
+                            <p class="text-[11px] text-slate-400 text-center mb-6">Ketik kode angka yang tertera di bawah QR Code</p>
+                            <input type="text" 
+                                inputmode="numeric" 
+                                pattern="[0-9]*" 
+                                x-model="manualCode" 
+                                placeholder="Contoh: 8492019384"
                                 @keydown.enter="processManualScan()"
-                                class="w-full bg-white/5 border-2 border-white/10 rounded-2xl px-6 py-5 text-2xl font-black text-center tracking-[0.2em] text-white focus:border-indigo-500 focus:ring-0 mb-6 uppercase placeholder:text-white/10">
+                                class="w-full bg-white/5 border-2 border-white/10 rounded-2xl px-6 py-5 text-2xl font-black text-center tracking-[0.2em] font-mono text-white focus:border-indigo-500 focus:ring-0 mb-6 placeholder:text-white/20">
                             <button @click="processManualScan()"
                                 class="w-full py-5 bg-indigo-600 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-indigo-700 transition shadow-lg shadow-indigo-600/20 active:scale-[0.98]">Validasi
                                 Tiket</button>

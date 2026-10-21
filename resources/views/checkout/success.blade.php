@@ -280,6 +280,12 @@
                         <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Metode</span>
                         <span class="text-sm font-bold text-slate-700 uppercase">{{ str_replace('_', ' ', $transaction->payment_method) }}</span>
                     </div>
+                    @if(($transaction->service_fee ?? 0) > 0)
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Biaya Layanan</span>
+                            <span class="text-sm font-bold text-slate-700">Rp {{ number_format($transaction->service_fee, 0, ',', '.') }}</span>
+                        </div>
+                    @endif
                     <div class="flex justify-between items-center pt-2 border-t border-slate-200">
                         <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Bayar</span>
                         <span class="text-sm font-black text-blue-600 font-outfit">Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}</span>

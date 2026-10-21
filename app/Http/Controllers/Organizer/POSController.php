@@ -17,7 +17,7 @@ class POSController extends Controller
     public function index()
     {
         $events = Event::where('tenant_id', auth()->user()->tenant_id)
-            ->where('status', 'published')
+            ->whereIn('status', ['published', 'private'])
             ->withCount('ticketCategories')
             ->orderByDesc('event_start_date')
             ->get();
@@ -29,8 +29,8 @@ class POSController extends Controller
     {
         $this->authorizeTenant($event);
 
-        if ($event->status !== 'published') {
-            return redirect()->route('organizer.pos.index')->with('error', 'Penjualan tiket POS hanya tersedia untuk event yang sudah dipublikasikan.');
+        if (!in_array($event->status, ['published', 'private'])) {
+            return redirect()->route('organizer.pos.index')->with('error', 'Penjualan tiket POS hanya tersedia untuk event yang aktif (published atau private).');
         }
 
         $event->load(['ticketCategories' => function ($query) {
@@ -87,7 +87,8 @@ class POSController extends Controller
         // Handle QRIS Payment via WAGO Gateway
         if ($validated['payment_method'] === 'QRIS') {
             $referenceNo = 'POS-' . date('Ymd') . '-' . strtoupper(Str::random(6));
-            $totalAmount = (int) ($category->price * $validated['quantity']);
+            $serviceFee = (float) ($category->service_fee ?? 0) * $validated['quantity'];
+            $totalAmount = (int) (($category->price + ($category->service_fee ?? 0)) * $validated['quantity']);
 
             $transaction = Transaction::create([
                 'tenant_id'          => $event->tenant_id,
@@ -100,6 +101,7 @@ class POSController extends Controller
                 'customer_phone'     => $validated['customer_phone'],
                 'customer_nik'       => $validated['customer_nik'] ?? null,
                 'discount_amount'    => 0,
+                'service_fee'        => $serviceFee,
                 'total_amount'       => $totalAmount,
                 'payment_status'     => 'pending',
                 'payment_method'     => 'QRIS (WAGO)',
@@ -150,6 +152,9 @@ class POSController extends Controller
         $tickets = collect();
 
         DB::transaction(function () use ($event, $category, $validated, &$transaction, &$tickets) {
+            $serviceFee = (float) ($category->service_fee ?? 0) * $validated['quantity'];
+            $totalAmount = (int) (($category->price + ($category->service_fee ?? 0)) * $validated['quantity']);
+
             $transaction = Transaction::create([
                 'tenant_id' => $event->tenant_id,
                 'event_id' => $event->id,
@@ -161,7 +166,8 @@ class POSController extends Controller
                 'customer_phone' => $validated['customer_phone'],
                 'customer_nik' => $validated['customer_nik'] ?? null,
                 'discount_amount' => 0,
-                'total_amount' => $category->price * $validated['quantity'],
+                'service_fee' => $serviceFee,
+                'total_amount' => $totalAmount,
                 'payment_status' => 'paid',
                 'payment_method' => 'Tunai',
                 'channel' => 'pos',
@@ -175,7 +181,7 @@ class POSController extends Controller
                     'event_id' => $event->id,
                     'transaction_id' => $transaction->id,
                     'ticket_category_id' => $category->id,
-                    'ticket_code' => 'GTX-' . strtoupper(Str::random(10)),
+                    'ticket_code' => Ticket::generateTicketCode(),
                     'status' => 'sold',
                     'visitor_data' => [
                         'name' => $validated['customer_name'],

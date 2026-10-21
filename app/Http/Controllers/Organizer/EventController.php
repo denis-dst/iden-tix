@@ -50,6 +50,7 @@ class EventController extends Controller
         $statusCounts = [
             'all' => Event::where('tenant_id', $tenantId)->count(),
             'published' => Event::where('tenant_id', $tenantId)->where('status', 'published')->count(),
+            'private' => Event::where('tenant_id', $tenantId)->where('status', 'private')->count(),
             'draft' => Event::where('tenant_id', $tenantId)->where('status', 'draft')->count(),
             'cancelled' => Event::where('tenant_id', $tenantId)->where('status', 'cancelled')->count(),
         ];
@@ -84,7 +85,7 @@ class EventController extends Controller
             'custom_question_enabled' => 'nullable|boolean',
             'umroh_question_enabled' => 'nullable|boolean',
             'custom_question_text' => 'nullable|string|max:255',
-            'custom_question_type' => 'nullable|in:text,select',
+            'custom_question_type' => 'nullable|in:text,select,textarea,number,phone,date',
             'custom_question_options' => 'nullable|string',
             'attendee_gender_type' => 'nullable|in:disabled,general,islamic',
             'custom_fields_json' => 'nullable|string',
@@ -106,6 +107,7 @@ class EventController extends Controller
             'proof_review_required' => 'nullable|boolean',
             'registration_proofs_json' => 'nullable|string',
             'evoucher_page_mode' => 'nullable|in:1_page,multi_page',
+            'status' => 'nullable|string|in:draft,published,private,cancelled',
         ]);
 
         $validated['type'] = $request->input('type', 'concert');
@@ -115,7 +117,7 @@ class EventController extends Controller
         $validated['thermal_paper_height_mm'] = $request->integer('thermal_paper_height_mm', 160);
 
         $validated['tenant_id'] = auth()->user()->tenant_id;
-        $validated['status'] = 'draft';
+        $validated['status'] = in_array($request->input('status'), ['draft', 'published', 'private', 'cancelled']) ? $request->input('status') : 'draft';
         $validated['slug'] = \Illuminate\Support\Str::slug($validated['name']) . '-' . rand(1000, 9999);
         
         $meta = $this->buildWristbandMeta($request);
@@ -194,7 +196,7 @@ class EventController extends Controller
             'terms_conditions' => 'nullable|string',
             'event_start_date' => 'required|date',
             'event_end_date' => 'required|date|after_or_equal:event_start_date',
-            'status' => 'required|in:draft,published,cancelled',
+            'status' => 'required|in:draft,published,private,cancelled',
             'background_image' => 'nullable|image|max:10240',
             'type' => 'nullable|string|in:concert,sport,festival,seminar,other',
             'security_code' => 'required|string|size:6',
@@ -203,7 +205,7 @@ class EventController extends Controller
             'custom_question_enabled' => 'nullable|boolean',
             'umroh_question_enabled' => 'nullable|boolean',
             'custom_question_text' => 'nullable|string|max:255',
-            'custom_question_type' => 'nullable|in:text,select',
+            'custom_question_type' => 'nullable|in:text,select,textarea,number,phone,date',
             'custom_question_options' => 'nullable|string',
             'custom_fields_json' => 'nullable|string',
             'attendee_gender_type' => 'nullable|in:disabled,general,islamic',
@@ -232,6 +234,9 @@ class EventController extends Controller
         $validated['max_tickets_per_transaction'] = $request->input('is_free') ? $request->integer('max_tickets_per_transaction', 1) : 1;
         $validated['thermal_paper_width_mm'] = $request->integer('thermal_paper_width_mm', 80);
         $validated['thermal_paper_height_mm'] = $request->integer('thermal_paper_height_mm', 160);
+        if ($request->filled('status') && in_array($request->input('status'), ['draft', 'published', 'private', 'cancelled'])) {
+            $validated['status'] = $request->input('status');
+        }
 
         $meta = $this->buildWristbandMeta($request, $event->meta ?? []);
         $proofs = $this->parseRegistrationProofs($request);
@@ -385,7 +390,7 @@ class EventController extends Controller
                     if ($label === '') {
                         continue;
                     }
-                    $fType = in_array($field['type'] ?? 'text', ['text', 'textarea', 'select', 'number'], true) ? $field['type'] : 'text';
+                    $fType = in_array($field['type'] ?? 'text', ['text', 'textarea', 'select', 'number', 'phone', 'date'], true) ? $field['type'] : 'text';
                     $options = [];
                     if ($fType === 'select') {
                         $optsRaw = $field['options'] ?? '';
@@ -411,7 +416,7 @@ class EventController extends Controller
 
         if (($request->boolean('umroh_question_enabled') || $request->boolean('custom_question_enabled')) && $request->filled('custom_question_text')) {
             $label = $request->input('custom_question_text');
-            $fType = in_array($request->input('custom_question_type', 'text'), ['text', 'textarea', 'select', 'number'], true) ? $request->input('custom_question_type', 'text') : 'text';
+            $fType = in_array($request->input('custom_question_type', 'text'), ['text', 'textarea', 'select', 'number', 'phone', 'date'], true) ? $request->input('custom_question_type', 'text') : 'text';
             $options = [];
             if ($fType === 'select') {
                 $optionsStr = $request->input('custom_question_options', '');
@@ -636,7 +641,7 @@ class EventController extends Controller
             'copies_count' => 'nullable|integer|min:1|max:30',
             'naming_pattern' => 'required|in:copy,session,match,stage,custom',
             'custom_prefix' => 'nullable|string|max:100',
-            'status' => 'required|in:draft,published',
+            'status' => 'required|in:draft,published,private',
             'date_offset_mode' => 'required|in:none,hours,days',
             'date_offset_value' => 'nullable|integer|min:0|max:100',
         ]);

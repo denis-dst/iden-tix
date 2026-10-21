@@ -1,0 +1,175 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Event;
+use App\Models\Tenant;
+use App\Models\Ticket;
+use App\Models\TicketCategory;
+use App\Models\Transaction;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
+use Tests\TestCase;
+
+class EVoucherTemplateTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected User $organizer;
+    protected Tenant $tenant;
+    protected Event $event;
+    protected TicketCategory $category;
+    protected Transaction $transaction;
+    protected Ticket $ticket;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->tenant = Tenant::create([
+            'name' => 'Persatuan Sepakbola Indonesia',
+            'slug' => 'psi-tenant',
+            'email' => 'promotor@example.com',
+            'phone' => '081234567890',
+            'address' => 'Jakarta',
+            'is_active' => true,
+        ]);
+
+        Role::firstOrCreate(['name' => 'Penyedia Event', 'guard_name' => 'web']);
+
+        $this->organizer = User::factory()->create([
+            'tenant_id' => $this->tenant->id,
+        ]);
+        $this->organizer->assignRole('Penyedia Event');
+
+        $this->event = Event::create([
+            'tenant_id' => $this->tenant->id,
+            'name' => 'FIFA ASEAN CUP 2026: INDONESIA VS MALAYSIA',
+            'slug' => 'indonesia-vs-malaysia-2026',
+            'type' => 'sport',
+            'home_team_name' => 'INDONESIA',
+            'away_team_name' => 'MALAYSIA',
+            'event_start_date' => Carbon::parse('2026-09-28 20:00:00'),
+            'event_end_date' => Carbon::parse('2026-09-28 22:30:00'),
+            'gate_open_at' => Carbon::parse('2026-09-28 17:00:00'),
+            'venue' => 'Stadion Utama Gelora Bung Karno',
+            'city' => 'Jakarta',
+            'status' => 'published',
+            'is_free' => false,
+            'purchase_flow' => 'redeem',
+            'meta' => [
+                'custom_fields' => [
+                    [
+                        'id' => 'ukuran_jersey',
+                        'label' => 'Ukuran Jersey',
+                        'type' => 'select',
+                        'options' => ['S', 'M', 'L', 'XL'],
+                        'is_required' => true,
+                    ],
+                    [
+                        'id' => 'nomor_member',
+                        'label' => 'Nomor Anggota Suporter',
+                        'type' => 'text',
+                        'is_required' => false,
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->category = TicketCategory::create([
+            'tenant_id' => $this->tenant->id,
+            'event_id' => $this->event->id,
+            'name' => 'VIP TIMUR',
+            'price' => 150000,
+            'quota' => 500,
+            'sold_count' => 1,
+        ]);
+
+        $gate = \App\Models\Gate::create([
+            'tenant_id' => $this->tenant->id,
+            'event_id' => $this->event->id,
+            'name' => 'GATE 3',
+        ]);
+        $this->category->gates()->attach($gate->id);
+
+        $this->transaction = Transaction::create([
+            'tenant_id' => $this->tenant->id,
+            'event_id' => $this->event->id,
+            'ticket_category_id' => $this->category->id,
+            'reference_no' => 'IDTX-768122293',
+            'customer_name' => 'Brian Arisowo',
+            'customer_email' => 'brian@example.com',
+            'customer_phone' => '081234567890',
+            'quantity' => 1,
+            'total_amount' => 150000,
+            'payment_status' => 'paid',
+            'payment_method' => 'qris',
+            'paid_at' => Carbon::now(),
+        ]);
+
+        $this->ticket = Ticket::create([
+            'tenant_id' => $this->tenant->id,
+            'event_id' => $this->event->id,
+            'transaction_id' => $this->transaction->id,
+            'ticket_category_id' => $this->category->id,
+            'ticket_code' => 'IDTX-9876543210',
+            'status' => 'sold',
+            'visitor_data' => [
+                'name' => 'Brian Arisowo',
+                'phone' => '081234567890',
+                'custom_answers' => [
+                    'ukuran_jersey' => 'XL',
+                    'nomor_member' => 'GARUDA-007',
+                ],
+            ],
+        ]);
+    }
+
+    public function test_evoucher_view_renders_new_template_with_custom_questions(): void
+    {
+        $response = $this->get(route('tickets.view', $this->ticket->ticket_code));
+
+        $response->assertStatus(200);
+
+        // Branding
+        $response->assertSee('WWW.IDEN-TIX.COM');
+        $response->assertSee('IDENTIX');
+        $response->assertSee('TICKETING & FAN ENGAGEMENT', false);
+
+        // Event & Category Details
+        $response->assertSee('VIP TIMUR');
+        $response->assertSee('GATE 3');
+        $response->assertSee('INDONESIA VS MALAYSIA');
+        $response->assertSee('Brian Arisowo');
+        $response->assertSee('IDTX-768122293');
+        $response->assertSee('IDTX-9876543210');
+        $response->assertSee('Stadion Utama Gelora Bung Karno');
+        $response->assertSee('TIKET HANYA DAPAT DIGUNAKAN 1X');
+
+        // Custom Questions and Answers
+        $response->assertSee('Ukuran Jersey');
+        $response->assertSee('XL');
+        $response->assertSee('Nomor Anggota Suporter');
+        $response->assertSee('GARUDA-007');
+
+        // Terms & Promotor Section
+        $response->assertSee('SYARAT DAN KETENTUAN');
+        $response->assertSee('ORGANIZED BY :');
+        $response->assertSee('Persatuan Sepakbola Indonesia');
+    }
+
+    public function test_organizer_evoucher_print_view_renders_same_template(): void
+    {
+        $response = $this->get(route('evoucher.public', $this->transaction->reference_no));
+
+        $response->assertStatus(200);
+        $response->assertSee('WWW.IDEN-TIX.COM');
+        $response->assertSee('IDENTIX');
+        $response->assertSee('VIP TIMUR');
+        $response->assertSee('Ukuran Jersey');
+        $response->assertSee('XL');
+        $response->assertSee('TIKET HANYA DAPAT DIGUNAKAN 1X');
+    }
+}

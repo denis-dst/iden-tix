@@ -398,7 +398,7 @@ class PublicEventController extends Controller
                     'event_id' => $transaction->event_id,
                     'transaction_id' => $transaction->id,
                     'ticket_category_id' => $transaction->ticket_category_id,
-                    'ticket_code' => 'GTX-' . strtoupper(\Illuminate\Support\Str::random(10)),
+                    'ticket_code' => \App\Models\Ticket::generateTicketCode(),
                     'status' => 'sold',
                     'visitor_data' => array_merge([
                         'name' => $transaction->customer_name,
@@ -434,7 +434,7 @@ class PublicEventController extends Controller
     public function show($slug)
     {
         $event = Event::where('slug', $slug)
-            ->where('status', 'published')
+            ->whereIn('status', ['published', 'private'])
             ->with(['ticketCategories' => function($query) {
                 $query->where('is_active', true)->orderBy('price', 'asc');
             }, 'tenant'])
@@ -455,7 +455,10 @@ class PublicEventController extends Controller
 
     public function checkout(Request $request, $slug)
     {
-        $event = Event::where('slug', $slug)->with('tenant')->firstOrFail();
+        $event = Event::where('slug', $slug)
+            ->whereIn('status', ['published', 'private'])
+            ->with('tenant')
+            ->firstOrFail();
 
         // Free event validation rules include gender and custom questions
         if ($event->is_free) {
@@ -661,7 +664,9 @@ class PublicEventController extends Controller
         }
 
         return DB::transaction(function () use ($event, $category, $validated, $promo, $discount, $primaryAnswer, $customAnswersInput) {
-            $subtotal = $category->price * $validated['quantity'];
+            $ticketSubtotal = $category->price * $validated['quantity'];
+            $serviceFee = (float) ($category->service_fee ?? 0) * $validated['quantity'];
+            $subtotal = $ticketSubtotal + $serviceFee;
             $totalAmount = max(0, $subtotal - $discount);
             $referenceNo = 'TX-' . date('Ymd') . '-' . strtoupper(Str::random(6));
 
@@ -686,6 +691,7 @@ class PublicEventController extends Controller
                     'customer_nik'          => $validated['nik'],
                     'customer_umroh_answer' => $primaryAnswer,
                     'discount_amount'       => $discount,
+                    'service_fee'           => $serviceFee,
                     'total_amount'          => 0,
                     'payment_status'        => 'paid',
                     'payment_method'        => 'promo',
@@ -728,6 +734,7 @@ class PublicEventController extends Controller
                 'customer_nik'          => $validated['nik'],
                 'customer_umroh_answer' => $primaryAnswer,
                 'discount_amount'       => $discount,
+                'service_fee'           => $serviceFee,
                 'total_amount'          => $totalAmount,
                 'payment_status'        => 'pending', // Initial status
                 'payment_method'        => 'WAGO',
@@ -957,7 +964,7 @@ class PublicEventController extends Controller
                     'event_id'           => $event->id,
                     'transaction_id'     => $transaction->id,
                     'ticket_category_id' => $category->id,
-                    'ticket_code'        => 'GTX-' . strtoupper(Str::random(10)),
+                    'ticket_code'        => Ticket::generateTicketCode(),
                     'status'             => 'sold',
                     'visitor_data'       => [
                         'name'           => $attendee['name'],

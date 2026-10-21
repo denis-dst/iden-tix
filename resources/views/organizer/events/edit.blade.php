@@ -245,15 +245,15 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label
-                                    class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Status</label>
+                                    class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Status Publikasi Event</label>
                                 <select name="status"
-                                    class="w-full rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition">
-                                    <option value="draft" {{ $event->status == 'draft' ? 'selected' : '' }}>Draft</option>
-                                    <option value="published" {{ $event->status == 'published' ? 'selected' : '' }}>
-                                        Published</option>
-                                    <option value="cancelled" {{ $event->status == 'cancelled' ? 'selected' : '' }}>
-                                        Cancelled</option>
+                                    class="w-full rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition text-sm font-bold text-slate-800">
+                                    <option value="draft" {{ $event->status == 'draft' ? 'selected' : '' }}>📝 Draft</option>
+                                    <option value="published" {{ $event->status == 'published' ? 'selected' : '' }}>🌐 Published (Publik - Tampil di Beranda)</option>
+                                    <option value="private" {{ $event->status == 'private' ? 'selected' : '' }}>🔒 Private (Hanya via Link, Tidak Tampil di Beranda)</option>
+                                    <option value="cancelled" {{ $event->status == 'cancelled' ? 'selected' : '' }}>❌ Cancelled</option>
                                 </select>
+                                <p class="text-[10px] text-gray-400 mt-1 italic">Event berstatus <strong>Private</strong> tidak ditampilkan di halaman depan, namun siapapun dengan link dapat memesan tiket.</p>
                             </div>
                             <div>
                                 <label
@@ -511,8 +511,20 @@
                                                         <option value="textarea">Teks Panjang (Textarea)</option>
                                                         <option value="select">Pilihan Dropdown (Select)</option>
                                                         <option value="number">Angka (Number)</option>
+                                                        <option value="phone">Nomor HP / WhatsApp (Kode Negara)</option>
+                                                        <option value="date">Tanggal / Tanggal Lahir (Kalender)</option>
                                                     </select>
                                                 </div>
+                                            </div>
+
+                                            <div x-show="q.type === 'phone'" x-cloak class="p-2.5 bg-emerald-50/80 rounded-xl border border-emerald-200/80 flex items-center gap-2 text-emerald-800 text-xs">
+                                                <span>📱</span>
+                                                <span>Otomatis dilengkapi pemilih kode negara (default <strong>+62 Indonesia</strong>) dan validasi nomor HP.</span>
+                                            </div>
+
+                                            <div x-show="q.type === 'date'" x-cloak class="p-2.5 bg-sky-50/80 rounded-xl border border-sky-200/80 flex items-center gap-2 text-sky-800 text-xs">
+                                                <span>📅</span>
+                                                <span>Otomatis menggunakan <strong>pemilih kalender</strong> agar penulisan tanggal seragam.</span>
                                             </div>
 
                                             <div x-show="q.type === 'select'" x-cloak class="p-3 bg-amber-50/50 rounded-xl border border-amber-200/60">
@@ -763,13 +775,13 @@
                                                 style="background-color: {{ $category->hex_color ?? '#6366F1' }}"></div>
                                             <div>
                                                 <h4 class="font-bold text-gray-800 text-lg">{{ $category->name }}</h4>
-                                                <div class="flex items-center gap-3 mt-1">
-                                                    <span class="text-sm font-medium text-gray-600">Rp
-                                                        {{ number_format($category->price, 0, ',', '.') }}</span>
+                                                <div class="flex flex-wrap items-center gap-2 mt-1">
+                                                    <span class="text-sm font-bold text-gray-700">Rp {{ number_format($category->price, 0, ',', '.') }}</span>
+                                                    @if(($category->service_fee ?? 0) > 0)
+                                                        <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">+ Fee Rp {{ number_format($category->service_fee, 0, ',', '.') }}</span>
+                                                    @endif
                                                     <span class="text-xs text-gray-300">|</span>
-                                                    <span
-                                                        class="text-xs font-bold text-purple-600 uppercase">{{ $category->quota }}
-                                                        Quota</span>
+                                                    <span class="text-xs font-bold text-purple-600 uppercase">{{ $category->quota }} Quota</span>
                                                 </div>
                                                 @if($category->sale_start_at)
                                                     <div class="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-wider">

@@ -63,18 +63,19 @@ class RedeemController extends Controller
         ]);
 
         $rawCode = trim($request->ticket_code);
+        $cleanCode = preg_replace('/[\s\-]/', '', $rawCode);
         if (preg_match('/(GTX-[A-Za-z0-9_-]+)/', $rawCode, $matches)) {
             $extractedCode = $matches[1];
         } else {
             $extractedCode = basename(parse_url($rawCode, PHP_URL_PATH) ?: $rawCode);
         }
+        $cleanExtracted = preg_replace('/[\s\-]/', '', $extractedCode);
+        $possibleCodes = array_values(array_unique(array_filter([$rawCode, $cleanCode, $extractedCode, $cleanExtracted])));
 
         $ticket = Ticket::where('event_id', $request->event_id)
-            ->where(function ($q) use ($rawCode, $extractedCode) {
-                $q->where('ticket_code', $rawCode)
-                  ->orWhere('wristband_qr', $rawCode)
-                  ->orWhere('ticket_code', $extractedCode)
-                  ->orWhere('wristband_qr', $extractedCode);
+            ->where(function ($q) use ($possibleCodes) {
+                $q->whereIn('ticket_code', $possibleCodes)
+                  ->orWhereIn('wristband_qr', $possibleCodes);
             })
             ->with(['transaction:id,customer_name', 'category:id,name', 'redeemer:id,name'])
             ->first();
@@ -129,18 +130,19 @@ class RedeemController extends Controller
 
         $event = Event::findOrFail($request->event_id);
         $rawCode = trim($request->ticket_code);
+        $cleanCode = preg_replace('/[\s\-]/', '', $rawCode);
         if (preg_match('/(GTX-[A-Za-z0-9_-]+)/', $rawCode, $matches)) {
             $extractedCode = $matches[1];
         } else {
             $extractedCode = basename(parse_url($rawCode, PHP_URL_PATH) ?: $rawCode);
         }
+        $cleanExtracted = preg_replace('/[\s\-]/', '', $extractedCode);
+        $possibleCodes = array_values(array_unique(array_filter([$rawCode, $cleanCode, $extractedCode, $cleanExtracted])));
 
         $ticket = Ticket::where('event_id', $event->id)
-            ->where(function ($q) use ($rawCode, $extractedCode) {
-                $q->where('ticket_code', $rawCode)
-                  ->orWhere('wristband_qr', $rawCode)
-                  ->orWhere('ticket_code', $extractedCode)
-                  ->orWhere('wristband_qr', $extractedCode);
+            ->where(function ($q) use ($possibleCodes) {
+                $q->whereIn('ticket_code', $possibleCodes)
+                  ->orWhereIn('wristband_qr', $possibleCodes);
             })
             ->with(['transaction:id,customer_name', 'category:id,name'])
             ->first();

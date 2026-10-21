@@ -21,6 +21,30 @@ class Ticket extends Model
         'visitor_data' => 'array',
     ];
 
+    protected static function booted()
+    {
+        static::creating(function ($ticket) {
+            if (empty($ticket->ticket_code)) {
+                $ticket->ticket_code = static::generateTicketCode();
+            }
+        });
+    }
+
+    /**
+     * Generate a unique numeric ticket code (random digits only).
+     */
+    public static function generateTicketCode(int $length = 10): string
+    {
+        do {
+            $code = (string) random_int(1, 9);
+            for ($i = 1; $i < $length; $i++) {
+                $code .= (string) random_int(0, 9);
+            }
+        } while (static::where('ticket_code', $code)->exists());
+
+        return $code;
+    }
+
     public function event()
     {
         return $this->belongsTo(Event::class);

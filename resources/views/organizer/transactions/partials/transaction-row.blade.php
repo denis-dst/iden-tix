@@ -67,6 +67,9 @@
     </td>
     <td class="px-8 py-5 text-right">
         <div class="text-sm font-black text-green-600">Rp {{ number_format($tx->total_amount, 0, ',', '.') }}</div>
+        @if(($tx->service_fee ?? 0) > 0)
+            <div class="text-[9px] font-bold text-slate-400">Termasuk Fee Rp {{ number_format($tx->service_fee, 0, ',', '.') }}</div>
+        @endif
         <div class="text-[9px] font-bold text-slate-400 uppercase">{{ $tx->payment_method ?? 'Unknown' }}</div>
     </td>
     <td class="px-8 py-5">

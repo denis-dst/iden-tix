@@ -17,7 +17,7 @@ class GateController extends Controller
     {
         $tenantId = auth()->user()->tenant_id;
         $events = Event::where('tenant_id', $tenantId)
-            ->where('status', 'published')
+            ->whereIn('status', ['published', 'private'])
             ->select(['id', 'name', 'slug', 'venue', 'city', 'event_start_date', 'background_image'])
             ->orderBy('event_start_date', 'desc')
             ->get();
@@ -137,12 +137,16 @@ class GateController extends Controller
         ]);
 
         $scanCode = trim($request->ticket_code);
+        $cleanCode = preg_replace('/[\s\-]/', '', $scanCode);
+        $extractedCode = basename(parse_url($scanCode, PHP_URL_PATH) ?: $scanCode);
+        $cleanExtracted = preg_replace('/[\s\-]/', '', $extractedCode);
+        $possibleCodes = array_values(array_unique(array_filter([$scanCode, $cleanCode, $extractedCode, $cleanExtracted])));
 
         // Fetch ticket with event, transaction, and category in a single query
         $ticket = Ticket::where('event_id', $request->event_id)
-            ->where(function ($q) use ($scanCode) {
-                $q->where('ticket_code', $scanCode)
-                  ->orWhere('wristband_qr', $scanCode);
+            ->where(function ($q) use ($possibleCodes) {
+                $q->whereIn('ticket_code', $possibleCodes)
+                  ->orWhereIn('wristband_qr', $possibleCodes);
             })
             ->with([
                 'category:id,name,hex_color',
@@ -202,7 +206,7 @@ class GateController extends Controller
                                 'event_id' => $category->event_id,
                                 'transaction_id' => $stockTx->id,
                                 'ticket_category_id' => $category->id,
-                                'ticket_code' => 'GTX-WB-' . strtoupper(\Illuminate\Support\Str::random(8)),
+                                'ticket_code' => Ticket::generateTicketCode(),
                                 'wristband_qr' => $scanCode,
                                 'status' => 'redeemed',
                                 'redeemed_at' => now(),

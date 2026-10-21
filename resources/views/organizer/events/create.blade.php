@@ -145,13 +145,24 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Security Code (6 Digit PIN)</label>
-                        <div class="flex gap-2">
-                            <input type="text" name="security_code" id="security_code" placeholder="Akan di-generate otomatis jika kosong" class="flex-1 rounded-2xl border-slate-200 focus:border-purple-500 focus:ring-purple-500 transition py-3 px-5 font-mono font-bold text-center tracking-[0.3em]" maxlength="6">
-                            <button type="button" onclick="generatePIN()" class="px-4 bg-orange-50 text-orange-600 rounded-2xl border border-orange-200 hover:bg-orange-100 transition text-xs font-black uppercase">Generate</button>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Status Publikasi Event</label>
+                            <select name="status" class="w-full rounded-2xl border-slate-200 focus:border-purple-500 focus:ring-purple-500 transition py-3 px-5 text-sm font-bold text-slate-800">
+                                <option value="draft" {{ old('status', 'draft') == 'draft' ? 'selected' : '' }}>📝 Draft (Disimpan Belum Dipublikasikan)</option>
+                                <option value="published" {{ old('status') == 'published' ? 'selected' : '' }}>🌐 Published (Publik - Tampil di Beranda)</option>
+                                <option value="private" {{ old('status') == 'private' ? 'selected' : '' }}>🔒 Private (Hanya yang Punya Link, Tidak Tampil di Beranda)</option>
+                            </select>
+                            <p class="text-[10px] text-slate-400 mt-1.5 italic px-1">Status <strong>Private</strong> membuat event hanya dapat diakses & dipesan via tautan langsung (URL), tanpa muncul di halaman depan.</p>
                         </div>
-                        <p class="text-[10px] text-slate-400 mt-2 italic px-1">Kode ini diperlukan kru untuk masuk ke mode scan. Biarkan kosong untuk generate otomatis.</p>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Security Code (6 Digit PIN)</label>
+                            <div class="flex gap-2">
+                                <input type="text" name="security_code" id="security_code" placeholder="Akan di-generate otomatis jika kosong" class="flex-1 rounded-2xl border-slate-200 focus:border-purple-500 focus:ring-purple-500 transition py-3 px-5 font-mono font-bold text-center tracking-[0.3em]" maxlength="6">
+                                <button type="button" onclick="generatePIN()" class="px-4 bg-orange-50 text-orange-600 rounded-2xl border border-orange-200 hover:bg-orange-100 transition text-xs font-black uppercase">Generate</button>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-2 italic px-1">Kode ini diperlukan kru untuk masuk ke mode scan. Biarkan kosong untuk generate otomatis.</p>
+                        </div>
                     </div>
 
                     <script>
@@ -354,8 +365,20 @@
                                                     <option value="textarea">Teks Panjang (Textarea)</option>
                                                     <option value="select">Pilihan Dropdown (Select)</option>
                                                     <option value="number">Angka (Number)</option>
+                                                    <option value="phone">Nomor HP / WhatsApp (Kode Negara)</option>
+                                                    <option value="date">Tanggal / Tanggal Lahir (Kalender)</option>
                                                 </select>
                                             </div>
+                                        </div>
+
+                                        <div x-show="q.type === 'phone'" x-cloak class="p-2.5 bg-emerald-50/80 rounded-xl border border-emerald-200/80 flex items-center gap-2 text-emerald-800 text-xs">
+                                            <span>📱</span>
+                                            <span>Otomatis dilengkapi pemilih kode negara (default <strong>+62 Indonesia</strong>) dan validasi nomor HP.</span>
+                                        </div>
+
+                                        <div x-show="q.type === 'date'" x-cloak class="p-2.5 bg-sky-50/80 rounded-xl border border-sky-200/80 flex items-center gap-2 text-sky-800 text-xs">
+                                            <span>📅</span>
+                                            <span>Otomatis menggunakan <strong>pemilih kalender</strong> agar penulisan tanggal seragam.</span>
                                         </div>
 
                                         <div x-show="q.type === 'select'" x-cloak class="p-3 bg-amber-50/50 rounded-xl border border-amber-200/60">

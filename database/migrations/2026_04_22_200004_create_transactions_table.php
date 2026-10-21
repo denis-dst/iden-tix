@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('customer_phone');
             $table->string('customer_nik')->nullable();
             $table->decimal('total_amount', 12, 2);
+            $table->decimal('service_fee', 12, 2)->default(0);
             $table->enum('payment_status', ['pending', 'paid', 'expired', 'failed', 'refunded'])->default('pending');
             $table->string('payment_method')->nullable();
             $table->string('payment_reference')->nullable(); // gateway reference

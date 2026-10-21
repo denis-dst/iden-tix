@@ -662,4 +662,62 @@ class EventTypeAndCustomQuestionsTest extends TestCase
         $pageResponse->assertSee('<option value="5">5</option>', false);
         $pageResponse->assertDontSee('<option value="6">6</option>', false);
     }
+
+    public function test_organizer_can_create_event_with_phone_and_date_custom_fields(): void
+    {
+        $customFields = [
+            [
+                'id' => 'no_wa_wali',
+                'label' => 'Nomor WhatsApp Wali',
+                'type' => 'phone',
+                'placeholder' => '812-3456-7890',
+                'helper_text' => 'Gunakan nomor aktif',
+                'is_required' => true,
+            ],
+            [
+                'id' => 'tgl_lahir',
+                'label' => 'Tanggal Lahir Peserta',
+                'type' => 'date',
+                'placeholder' => '',
+                'helper_text' => 'Sesuai KTP / Akta',
+                'is_required' => true,
+            ]
+        ];
+
+        $response = $this->actingAs($this->organizer)
+            ->post(route('organizer.events.store'), [
+                'name' => 'Workshop Coding Anak 2026',
+                'type' => 'seminar',
+                'event_start_date' => Carbon::now()->addDays(5)->format('Y-m-d\TH:i'),
+                'event_end_date' => Carbon::now()->addDays(5)->addHours(4)->format('Y-m-d\TH:i'),
+                'venue' => 'Digital Hub BSD',
+                'city' => 'Tangerang',
+                'status' => 'published',
+                'purchase_flow' => 'evoucher',
+                'categories' => [
+                    [
+                        'name' => 'Peserta Anak',
+                        'price' => 200000,
+                        'quota' => 50,
+                    ]
+                ],
+                'custom_fields_json' => json_encode($customFields),
+            ]);
+
+        $event = Event::where('name', 'Workshop Coding Anak 2026')->first();
+        $this->assertNotNull($event);
+        $response->assertRedirect(route('organizer.events.edit', $event->id));
+
+        $configuredFields = $event->getCustomFields();
+        $this->assertCount(2, $configuredFields);
+        $this->assertEquals('phone', $configuredFields[0]['type']);
+        $this->assertEquals('date', $configuredFields[1]['type']);
+
+        // Check show page includes the date input and phone helper
+        $showResponse = $this->get(route('events.show', $event->slug));
+        $showResponse->assertStatus(200);
+        $showResponse->assertSee('Nomor WhatsApp Wali');
+        $showResponse->assertSee('Tanggal Lahir Peserta');
+    }
 }
+

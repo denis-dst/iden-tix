@@ -44,19 +44,26 @@
 
                         @if ($event->is_free)
                             <input type="hidden" name="price" value="0">
+                            <input type="hidden" name="service_fee" value="0">
                         @endif
 
-                        <div class="grid grid-cols-2 gap-4">
-                            @if (!$event->is_free)
+                        @if (!$event->is_free)
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Price (IDR)</label>
-                                    <input type="number" name="price" value="{{ old('price') }}" required class="w-full rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition px-4 py-3">
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Harga Tiket (IDR)</label>
+                                    <input type="number" name="price" value="{{ old('price') }}" required min="0" placeholder="0" class="w-full rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition px-4 py-3">
                                 </div>
-                            @endif
-                            <div class="{{ $event->is_free ? 'col-span-2' : '' }}">
-                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Total Quota</label>
-                                <input type="number" name="quota" value="{{ old('quota') }}" required class="w-full rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition px-4 py-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Biaya Layanan (IDR)</label>
+                                    <input type="number" name="service_fee" value="{{ old('service_fee', 0) }}" min="0" placeholder="0" class="w-full rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition px-4 py-3">
+                                    <p class="text-[10px] text-gray-400 mt-1">Biaya layanan per tiket (opsional, default: 0).</p>
+                                </div>
                             </div>
+                        @endif
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Total Quota</label>
+                            <input type="number" name="quota" value="{{ old('quota') }}" required min="1" class="w-full rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition px-4 py-3">
                         </div>
                         @php
                             $isCustomWristband = $event->getEffectiveWristbandTemplate()?->isCustomMode() ?? false;

@@ -11,7 +11,7 @@ class TicketCategory extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'event_id', 'tenant_id', 'name', 'description', 'price', 'nik_restriction', 'nik_restriction_message', 'badge_text',
+        'event_id', 'tenant_id', 'name', 'description', 'price', 'service_fee', 'nik_restriction', 'nik_restriction_message', 'badge_text',
         'quota', 'sold_count', 'hex_color', 'category_image', 
         'background_image', 'layout_config', 'is_active', 
         'sale_start_at', 'sale_end_at', 'sort_order'
@@ -19,11 +19,22 @@ class TicketCategory extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'service_fee' => 'decimal:2',
         'is_active' => 'boolean',
         'layout_config' => 'array',
         'sale_start_at' => 'datetime',
         'sale_end_at' => 'datetime',
     ];
+
+    public function getServiceFeeAttribute($value): float
+    {
+        return (float) ($value ?? 0);
+    }
+
+    public function getTotalPricePerTicketAttribute(): float
+    {
+        return (float) $this->price + (float) $this->service_fee;
+    }
 
     public function setSoldCountAttribute($value): void
     {

@@ -175,7 +175,7 @@ class FanPortalController extends Controller
 
         // Create Transaction & Official Ticket Instance (Compatible with Direct Gate & Wristband Redemption)
         $referenceNo = 'TX-SP-' . strtoupper(Str::random(10));
-        $ticketCode  = 'TIX-' . strtoupper(Str::random(12));
+        $ticketCode  = Ticket::generateTicketCode();
 
         $transaction = Transaction::create([
             'tenant_id' => $event->tenant_id,

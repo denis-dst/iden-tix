@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('name'); // VIP, Festival, SVIP, etc.
             $table->text('description')->nullable();
             $table->decimal('price', 12, 2)->default(0);
+            $table->decimal('service_fee', 12, 2)->default(0);
             $table->integer('quota')->default(0);         // max tickets
             $table->integer('sold_count')->default(0);    // tickets sold
             $table->string('hex_color', 7)->default('#6366F1'); // ticket visual color

@@ -77,7 +77,7 @@ class POSController extends Controller
                 'event_id' => $event->id,
                 'transaction_id' => $transaction->id,
                 'ticket_category_id' => $category->id,
-                'ticket_code' => 'GTX-' . strtoupper(Str::random(12)),
+                'ticket_code' => Ticket::generateTicketCode(),
                 'status' => 'sold',
             ]);
 
