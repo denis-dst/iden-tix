@@ -111,6 +111,11 @@ class Event extends Model
             return $this->meta['registration_proofs'];
         }
 
+        // If custom fields are configured, do not inject legacy default Batik Umrah proofs
+        if (!empty($this->meta['custom_fields'])) {
+            return [];
+        }
+
         $proofs = [];
         if ($this->meta['proof_ig_required'] ?? true) {
             $proofs[] = [
@@ -131,6 +136,24 @@ class Event extends Model
             ];
         }
         return $proofs;
+    }
+
+    /**
+     * Get maximum tickets allowed per transaction based on tenant or event setting.
+     */
+    public function getMaxTicketsPerTransaction(): int
+    {
+        // 1. Cek pengaturan tenant jika ada (organizer/settings/terms -> max_tickets_per_person)
+        if (!empty($this->tenant?->meta['max_tickets_per_person'])) {
+            return max(1, (int) $this->tenant->meta['max_tickets_per_person']);
+        }
+
+        // 2. Cek pengaturan batas tiket pada event
+        if (!empty($this->max_tickets_per_transaction)) {
+            return max(1, (int) $this->max_tickets_per_transaction);
+        }
+
+        return 2;
     }
 
     public function getTypeLabelAttribute(): string

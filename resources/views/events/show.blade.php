@@ -213,16 +213,18 @@
             });
             this.currentAttendee = 0;
         } else {
-            if (this.nik.length < 16) {
-                alert(this.lang === 'id' ? 'NIK harus 16 digit.' : 'NIK must be 16 digits.');
-                return;
-            }
-
-            if (this.selectedCategory.nik_restriction) {
-                const allowed = this.selectedCategory.nik_restriction.split(',').map(p => p.trim());
-                if (!allowed.some(p => this.nik.startsWith(p))) {
-                    alert(this.selectedCategory.nik_restriction_message || 'NIK tidak diizinkan.');
+            if (this.customFields.length === 0) {
+                if (this.nik.length < 16) {
+                    alert(this.lang === 'id' ? 'NIK harus 16 digit.' : 'NIK must be 16 digits.');
                     return;
+                }
+
+                if (this.selectedCategory.nik_restriction) {
+                    const allowed = this.selectedCategory.nik_restriction.split(',').map(p => p.trim());
+                    if (!allowed.some(p => this.nik.startsWith(p))) {
+                        alert(this.selectedCategory.nik_restriction_message || 'NIK tidak diizinkan.');
+                        return;
+                    }
                 }
             }
         }
@@ -318,7 +320,7 @@
         if (!this.selectedCategory) return;
 
         // Validasi pertanyaan custom untuk event berbayar
-        if (Array.isArray(this.customFields)) {
+        if (Array.isArray(this.customFields) && this.customFields.length > 0) {
             for (const f of this.customFields) {
                 if (f.is_required) {
                     const ans = (this.customAnswers[f.id] ?? '').toString().trim();
@@ -327,6 +329,44 @@
                         return;
                     }
                 }
+            }
+        }
+
+        // Auto-map custom field answers to name, email, phone, nik
+        let mappedName = this.name;
+        let mappedEmail = this.email;
+        let mappedPhone = this.phone;
+        let mappedNik = this.nik;
+
+        if (Array.isArray(this.customFields) && this.customFields.length > 0) {
+            for (const f of this.customFields) {
+                const label = (f.label || '').toLowerCase();
+                const val = (this.customAnswers[f.id] ?? '').toString().trim();
+                if (!val) continue;
+
+                if (!mappedName && (/nama|name/i.test(label) || f.type === 'name')) {
+                    mappedName = val;
+                }
+                if (!mappedEmail && (/email|surel/i.test(label) || f.type === 'email' || val.includes('@'))) {
+                    mappedEmail = val;
+                }
+                if (!mappedPhone && (/wa|whatsapp|hp|phone|telepon|telp|kontak/i.test(label))) {
+                    mappedPhone = val;
+                }
+                if (!mappedNik && (/nik|ktp|identitas|kartu/i.test(label))) {
+                    mappedNik = val;
+                }
+            }
+
+            if (!mappedName) {
+                const firstVal = Object.values(this.customAnswers).find(v => (v ?? '').toString().trim() !== '');
+                mappedName = firstVal ? firstVal.toString().trim() : 'Peserta';
+            }
+            if (!mappedEmail) {
+                mappedEmail = 'peserta_' + Math.random().toString(36).substring(2, 8) + '@identix.id';
+            }
+            if (!mappedPhone) {
+                mappedPhone = '080000000000';
             }
         }
 
@@ -347,10 +387,10 @@
                 body: JSON.stringify({
                     ticket_category_id: this.selectedCategory.id,
                     quantity: this.quantity,
-                    nik: this.nik,
-                    name: this.name,
-                    phone: this.phone,
-                    email: this.email,
+                    nik: mappedNik || this.nik,
+                    name: mappedName || this.name,
+                    phone: mappedPhone || this.phone,
+                    email: mappedEmail || this.email,
                     promo_code_id: this.appliedPromoId,
                     discount_amount: this.discount,
                     notif_wa: this.notifWA,
@@ -661,15 +701,21 @@
                                                         <span x-show="lang === 'en'">Choose how many attendees you want to register</span>
                                                     </div>
                                                 </div>
+                                                @php
+                                                    $maxOrderQty = $event->getMaxTicketsPerTransaction();
+                                                @endphp
                                                 <select 
                                                     @change="selectTicket({ id: {{ $category->id }}, name: '{{ $category->name }}', price: 0, nik_restriction: '{{ $category->nik_restriction }}', nik_restriction_message: '{{ $category->nik_restriction_message }}' }, $event.target.value)"
                                                     class="w-full bg-white border border-emerald-200 rounded-xl px-4 py-3 font-black text-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none shadow-sm">
-                                                    @for($i = 0; $i <= ($event->max_tickets_per_transaction ?? 1); $i++)
+                                                    @for($i = 0; $i <= $maxOrderQty; $i++)
                                                         <option value="{{ $i }}">{{ $i }} Orang</option>
                                                     @endfor
                                                 </select>
                                             </div>
                                         @else
+                                            @php
+                                                $maxOrderQty = $event->getMaxTicketsPerTransaction();
+                                            @endphp
                                             <div class="rounded-2xl border border-blue-100 bg-blue-50/60 p-3 md:p-4">
                                                 <div class="mb-2">
                                                     <div class="text-[11px] font-black text-blue-800 uppercase tracking-wider leading-tight">
@@ -684,9 +730,9 @@
                                                 <select 
                                                     @change="selectTicket({ id: {{ $category->id }}, name: '{{ $category->name }}', price: {{ $category->price }}, nik_restriction: '{{ $category->nik_restriction }}', nik_restriction_message: '{{ $category->nik_restriction_message }}' }, $event.target.value)"
                                                     class="w-full bg-white border border-blue-200 rounded-xl px-4 py-3 font-black text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm">
-                                                    <option value="0">0</option>
-                                                    <option value="1">1</option>
-                                                    <option value="2">2</option>
+                                                    @for($i = 0; $i <= $maxOrderQty; $i++)
+                                                        <option value="{{ $i }}">{{ $i }}</option>
+                                                    @endfor
                                                 </select>
                                             </div>
                                         @endif
@@ -1137,21 +1183,24 @@
                                     </div>
                                 </div>
 
-                                <div class="space-y-3 pt-4 border-t border-slate-50">
-                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Data Pemesan (NIK)</label>
-                                    <div class="relative">
-                                        <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 012-2h2a2 2 0 012 2v1m-4 0a2 2 0 012-2h2a2 2 0 012 2v1m-6 0h6"/></svg>
+                                <template x-if="customFields.length === 0">
+                                    <div class="space-y-3 pt-4 border-t border-slate-50">
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Data Pemesan (NIK)</label>
+                                        <div class="relative">
+                                            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 012-2h2a2 2 0 012 2v1m-4 0a2 2 0 012-2h2a2 2 0 012 2v1m-6 0h6"/></svg>
+                                            </div>
+                                            <input type="text" x-model="nik" placeholder="Masukkan 16 Digit NIK" maxlength="16"
+                                                   class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 pl-12 pr-4 font-bold text-slate-700 focus:border-blue-500 focus:bg-white transition-all outline-none">
                                         </div>
-                                        <input type="text" x-model="nik" placeholder="Masukkan 16 Digit NIK" maxlength="16"
-                                               class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 pl-12 pr-4 font-bold text-slate-700 focus:border-blue-500 focus:bg-white transition-all outline-none">
                                     </div>
-                                </div>
+                                </template>
 
                                 <button @click="goToStep2" 
                                         :disabled="!selectedCategory || quantity === 0"
                                         class="w-full py-4 bg-blue-500 disabled:bg-blue-200 text-white rounded-2xl font-black shadow-lg shadow-blue-200 hover:bg-blue-600 transition-all transform active:scale-95">
-                                    Lanjut Pembayaran
+                                    <span x-show="customFields.length > 0">Lanjut Isi Data Peserta →</span>
+                                    <span x-show="customFields.length === 0">Lanjut Pembayaran</span>
                                 </button>
                             </div>
 
@@ -1161,23 +1210,24 @@
                                     <button @click="step = 1" class="p-2 hover:bg-slate-50 rounded-full transition">
                                         <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                                     </button>
-                                    <h3 class="font-bold text-slate-900 font-outfit">Detail Pembayaran</h3>
+                                    <h3 class="font-bold text-slate-900 font-outfit" x-text="customFields.length > 0 ? 'Data Peserta' : 'Detail Pembayaran'"></h3>
                                 </div>
 
                                 <form @submit.prevent="submitBooking" class="space-y-4">
-                                    <div class="space-y-3">
-                                        <input type="text" x-model="name" placeholder="Nama Lengkap" required
-                                                class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                                        <input type="text" x-model="phone" placeholder="Nomor HP / WhatsApp" required
-                                                class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                                        <input type="email" x-model="email" placeholder="Alamat Email" required
-                                                class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                                    </div>
+                                    <template x-if="customFields.length === 0">
+                                        <div class="space-y-3">
+                                            <input type="text" x-model="name" placeholder="Nama Lengkap" :required="customFields.length === 0"
+                                                    class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                            <input type="text" x-model="phone" placeholder="Nomor HP / WhatsApp" :required="customFields.length === 0"
+                                                    class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                            <input type="email" x-model="email" placeholder="Alamat Email" :required="customFields.length === 0"
+                                                    class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                        </div>
+                                    </template>
 
                                     <!-- Pertanyaan Kustom Transaksi (Paid Event) -->
                                     <template x-if="customFields.length > 0">
                                         <div class="space-y-3 pt-2">
-                                            <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest">Informasi Tambahan Pemesan</h4>
                                             <template x-for="(field, fIdx) in customFields" :key="field.id">
                                                 <div class="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-2">
                                                     <label class="block text-xs font-bold text-slate-700 text-left">
@@ -1224,22 +1274,24 @@
                                         </div>
                                     </template>
 
-                                    @if($isWaNotifEnabled || $isEmailNotifEnabled)
-                                        <div class="space-y-2 pt-2">
-                                            @if($isWaNotifEnabled)
-                                                <label class="flex items-center gap-3 cursor-pointer">
-                                                    <input type="checkbox" x-model="notifWA" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                                                    <span class="text-xs text-slate-600 font-medium">Kirim notifikasi ke WhatsApp</span>
-                                                </label>
-                                            @endif
-                                            @if($isEmailNotifEnabled)
-                                                <label class="flex items-center gap-3 cursor-pointer">
-                                                    <input type="checkbox" x-model="notifEmail" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                                                    <span class="text-xs text-slate-600 font-medium">Kirim notifikasi ke Email</span>
-                                                </label>
-                                            @endif
-                                        </div>
-                                    @endif
+                                    <template x-if="customFields.length === 0">
+                                        @if($isWaNotifEnabled || $isEmailNotifEnabled)
+                                            <div class="space-y-2 pt-2">
+                                                @if($isWaNotifEnabled)
+                                                    <label class="flex items-center gap-3 cursor-pointer">
+                                                        <input type="checkbox" x-model="notifWA" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                                        <span class="text-xs text-slate-600 font-medium">Kirim notifikasi ke WhatsApp</span>
+                                                    </label>
+                                                @endif
+                                                @if($isEmailNotifEnabled)
+                                                    <label class="flex items-center gap-3 cursor-pointer">
+                                                        <input type="checkbox" x-model="notifEmail" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                                        <span class="text-xs text-slate-600 font-medium">Kirim notifikasi ke Email</span>
+                                                    </label>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </template>
 
                                     <div class="pt-4">
                                         <div class="flex justify-between items-center mb-4 p-4 bg-slate-50 rounded-2xl">

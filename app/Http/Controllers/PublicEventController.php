@@ -455,7 +455,7 @@ class PublicEventController extends Controller
 
     public function checkout(Request $request, $slug)
     {
-        $event = Event::where('slug', $slug)->firstOrFail();
+        $event = Event::where('slug', $slug)->with('tenant')->firstOrFail();
 
         // Free event validation rules include gender and custom questions
         if ($event->is_free) {
@@ -463,20 +463,34 @@ class PublicEventController extends Controller
         }
 
         // Paid event checkout flow
-        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+        $customFields = $event->getCustomFields();
+        $hasCustomFields = !empty($customFields);
+        $maxTickets = $event->getMaxTicketsPerTransaction();
+
+        $rules = [
             'ticket_category_id' => 'required|exists:ticket_categories,id',
-            'quantity' => 'required|integer|min:1|max:10', // Increased to 10 for testing
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
-            'nik' => 'required|string|size:16',
+            'quantity' => 'required|integer|min:1|max:' . $maxTickets,
             'promo_code_id' => 'nullable|exists:promo_codes,id',
             'discount_amount' => 'nullable|numeric|min:0',
             'notif_wa' => 'nullable',
             'notif_email' => 'nullable',
             'custom_answers' => 'nullable|array',
             'custom_question_answer' => 'nullable|string|max:500',
-        ]);
+        ];
+
+        if ($hasCustomFields) {
+            $rules['name'] = 'nullable|string|max:255';
+            $rules['email'] = 'nullable|string|max:255';
+            $rules['phone'] = 'nullable|string|max:20';
+            $rules['nik'] = 'nullable|string|max:50';
+        } else {
+            $rules['name'] = 'required|string|max:255';
+            $rules['email'] = 'required|email|max:255';
+            $rules['phone'] = 'required|string|max:20';
+            $rules['nik'] = 'required|string|size:16';
+        }
+
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             if ($request->ajax() || $request->wantsJson()) {
@@ -490,8 +504,6 @@ class PublicEventController extends Controller
 
         $validated = $validator->validated();
 
-        // Custom Questions Validation for Paid Event
-        $customFields = $event->getCustomFields();
         $customAnswersInput = $request->input('custom_answers', []);
         if (!is_array($customAnswersInput)) {
             $customAnswersInput = [];
@@ -501,6 +513,7 @@ class PublicEventController extends Controller
             $customAnswersInput[$firstFieldId] = $request->input('custom_question_answer');
         }
 
+        // Custom Questions Validation for Paid Event
         foreach ($customFields as $field) {
             if (!empty($field['is_required'])) {
                 $val = trim((string) ($customAnswersInput[$field['id']] ?? ''));
@@ -514,6 +527,51 @@ class PublicEventController extends Controller
             }
         }
 
+        // If custom fields are configured, auto-map matching answers to name, email, phone, nik
+        if ($hasCustomFields) {
+            $extractedName = $validated['name'] ?? null;
+            $extractedEmail = $validated['email'] ?? null;
+            $extractedPhone = $validated['phone'] ?? null;
+            $extractedNik = $validated['nik'] ?? null;
+
+            foreach ($customFields as $field) {
+                $label = strtolower(trim($field['label'] ?? ''));
+                $val = trim((string) ($customAnswersInput[$field['id']] ?? ''));
+                if ($val === '') continue;
+
+                if (!$extractedName && (preg_match('/nama|name/i', $label) || ($field['type'] ?? '') === 'name')) {
+                    $extractedName = $val;
+                }
+                if (!$extractedEmail && (preg_match('/email|surel/i', $label) || ($field['type'] ?? '') === 'email' || filter_var($val, FILTER_VALIDATE_EMAIL))) {
+                    $extractedEmail = $val;
+                }
+                if (!$extractedPhone && (preg_match('/wa|whatsapp|hp|phone|telepon|telp|kontak/i', $label))) {
+                    $extractedPhone = preg_replace('/[^0-9]/', '', $val);
+                }
+                if (!$extractedNik && (preg_match('/nik|ktp|identitas|kartu/i', $label))) {
+                    $extractedNik = $val;
+                }
+            }
+
+            // Fallbacks for NOT NULL database columns if not collected in custom fields
+            if (empty($extractedName)) {
+                $extractedName = collect($customAnswersInput)->filter(fn($v) => trim((string)$v) !== '')->first() ?: 'Peserta';
+            }
+            if (empty($extractedEmail) || !filter_var($extractedEmail, FILTER_VALIDATE_EMAIL)) {
+                $extractedEmail = (!empty($extractedEmail) && str_contains($extractedEmail, '@')) 
+                    ? $extractedEmail 
+                    : ('guest_' . Str::random(6) . '@identix.id');
+            }
+            if (empty($extractedPhone)) {
+                $extractedPhone = '080000000000';
+            }
+
+            $validated['name'] = $extractedName;
+            $validated['email'] = $extractedEmail;
+            $validated['phone'] = $extractedPhone;
+            $validated['nik'] = $extractedNik;
+        }
+
         $primaryAnswer = null;
         if (!empty($customAnswersInput)) {
             $primaryAnswer = collect($customAnswersInput)->values()->filter(fn($v) => trim((string)$v) !== '')->implode(' | ');
@@ -523,7 +581,7 @@ class PublicEventController extends Controller
         }
 
         // Normalize phone number to Fonnte format (starts with 62)
-        if (isset($validated['phone'])) {
+        if (!empty($validated['phone'])) {
             $phone = preg_replace('/[^0-9]/', '', $validated['phone']);
             if (str_starts_with($phone, '0')) {
                 $phone = '62' . substr($phone, 1);
@@ -566,7 +624,7 @@ class PublicEventController extends Controller
         }
 
         // NIK Prefix Restriction Check
-        if ($category->nik_restriction) {
+        if ($category->nik_restriction && empty($customFields) && !empty($validated['nik'])) {
             $prefixes = array_map('trim', explode(',', $category->nik_restriction));
             $match = false;
             foreach ($prefixes as $prefix) {
@@ -688,7 +746,7 @@ class PublicEventController extends Controller
             ]);
 
             // WAGO Payment Gateway integration
-            $wagoService = new \App\Services\WagoService();
+            $wagoService = app(\App\Services\WagoService::class);
             $eventShowUrl = route('events.show', $event->slug);
             $wagoResult  = $wagoService->createPayment([
                 'order_id'        => $referenceNo,
@@ -748,7 +806,7 @@ class PublicEventController extends Controller
 
         $rules = [
             'ticket_category_id' => 'required|exists:ticket_categories,id',
-            'quantity'           => 'required|integer|min:1|max:' . ($event->max_tickets_per_transaction ?? 1),
+            'quantity'           => 'required|integer|min:1|max:' . $event->getMaxTicketsPerTransaction(),
             'phone'              => 'required|string|max:20',
             'email'              => 'required|email|max:255',
             'attendees'          => 'required|array|size:' . $request->input('quantity', 1),

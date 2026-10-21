@@ -526,4 +526,140 @@ class EventTypeAndCustomQuestionsTest extends TestCase
         $this->assertContains('GTX-COMMUNITY01', $firstRecord);
         $this->assertContains('Indo Runner', $firstRecord);
     }
+
+    public function test_paid_checkout_with_custom_fields_does_not_require_raw_nik_and_auto_extracts_contact(): void
+    {
+        $customFields = [
+            [
+                'id' => 'cf_nama',
+                'label' => 'Nama Peserta',
+                'type' => 'text',
+                'is_required' => true,
+            ],
+            [
+                'id' => 'cf_identitas',
+                'label' => 'Nomor Identitas',
+                'type' => 'text',
+                'is_required' => true,
+            ],
+            [
+                'id' => 'cf_email',
+                'label' => 'Email Peserta',
+                'type' => 'text',
+                'is_required' => true,
+            ],
+        ];
+
+        $event = Event::create([
+            'tenant_id' => $this->tenant->id,
+            'name' => 'Fun Run 5K',
+            'slug' => 'fun-run-5k',
+            'type' => 'sport',
+            'event_start_date' => Carbon::now()->addDays(5),
+            'event_end_date' => Carbon::now()->addDays(5)->addHours(4),
+            'venue' => 'Gelora',
+            'city' => 'Jakarta',
+            'status' => 'published',
+            'is_free' => false,
+            'meta' => [
+                'custom_fields' => $customFields,
+            ],
+        ]);
+
+        $category = TicketCategory::create([
+            'tenant_id' => $this->tenant->id,
+            'event_id' => $event->id,
+            'name' => 'General',
+            'price' => 50000,
+            'quota' => 100,
+        ]);
+
+        // Mock WagoService to avoid actual HTTP call
+        $this->mock(\App\Services\WagoService::class, function ($mock) {
+            $mock->shouldReceive('createPayment')
+                ->once()
+                ->andReturn([
+                    'success' => true,
+                    'payment_url' => 'https://sandbox.wago.id/pay/test',
+                    'order_id' => 'TX-TEST-01',
+                ]);
+        });
+
+        // Checkout with ONLY custom_answers, no raw 16-digit NIK
+        $response = $this->postJson(route('checkout.process', $event->slug), [
+            'ticket_category_id' => $category->id,
+            'quantity' => 1,
+            'custom_answers' => [
+                'cf_nama' => 'Rahmat Hidayat',
+                'cf_identitas' => 'SIM-987654321',
+                'cf_email' => 'rahmat@example.com',
+            ],
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'redirect_url' => 'https://sandbox.wago.id/pay/test',
+            ]);
+
+        $transaction = \App\Models\Transaction::where('event_id', $event->id)->latest()->first();
+        $this->assertNotNull($transaction);
+        $this->assertEquals('Rahmat Hidayat', $transaction->customer_name);
+        $this->assertEquals('rahmat@example.com', $transaction->customer_email);
+        $this->assertEquals('SIM-987654321', $transaction->customer_nik);
+    }
+
+    public function test_event_order_quantity_limit_adheres_to_tenant_setting(): void
+    {
+        // Set tenant max tickets to 5
+        $this->tenant->update([
+            'meta' => array_merge($this->tenant->meta ?? [], [
+                'max_tickets_per_person' => 5,
+            ])
+        ]);
+
+        $event = Event::create([
+            'tenant_id' => $this->tenant->id,
+            'name' => 'Konser Festival Musik',
+            'slug' => 'konser-festival-musik',
+            'type' => 'concert',
+            'event_start_date' => Carbon::now()->addDays(10),
+            'event_end_date' => Carbon::now()->addDays(10)->addHours(6),
+            'venue' => 'Stadion',
+            'city' => 'Jakarta',
+            'status' => 'published',
+            'is_free' => false,
+            'max_tickets_per_transaction' => 2, // Event default is 2, but tenant setting is 5
+        ]);
+
+        // Event should prioritize tenant setting
+        $this->assertEquals(5, $event->getMaxTicketsPerTransaction());
+
+        $category = TicketCategory::create([
+            'tenant_id' => $this->tenant->id,
+            'event_id' => $event->id,
+            'name' => 'Festival',
+            'price' => 100000,
+            'quota' => 100,
+        ]);
+
+        // Attempting to buy 6 tickets should fail validation (exceeds tenant max of 5)
+        $response = $this->postJson(route('checkout.process', $event->slug), [
+            'ticket_category_id' => $category->id,
+            'quantity' => 6,
+            'nik' => '1234567890123456',
+            'name' => 'Budi',
+            'email' => 'budi@example.com',
+            'phone' => '08123456789',
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertStringContainsString('quantity', strtolower($response->json('message')));
+
+        // Frontend page dropdown should render option values up to 5
+        $pageResponse = $this->get(route('events.show', $event->slug));
+        $pageResponse->assertStatus(200);
+        $pageResponse->assertSee('<option value="5">5</option>', false);
+        $pageResponse->assertDontSee('<option value="6">6</option>', false);
+    }
 }
