@@ -391,6 +391,8 @@
                                         min="60" max="300"
                                         class="w-full rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500 py-2.5 px-4 font-bold">
                                 </div>
+                            </div>
+                        </div>
                                               @php
                             $currentGender = old('attendee_gender_type', $event->getAttendeeGenderSetting());
                             $existingCustomFields = $event->getCustomFields();
@@ -643,7 +645,7 @@
                                     class="w-full rounded-xl border-slate-200 focus:border-emerald-500 focus:ring-emerald-500 transition py-2.5 px-4 font-bold">
                                 <p class="text-[10px] text-slate-400 mt-1">Batasi berapa tiket yang dapat dipesan dalam
                                     satu pendaftaran gratis.</p>
-                            </div>            </div>
+                            </div>
 
                             <!-- Verification Options (shown if is_free) -->
                             <div x-show="isFree" x-cloak

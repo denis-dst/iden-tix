@@ -236,8 +236,8 @@
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Panjang Kertas (mm)</label>
                                 <input type="number" name="thermal_paper_height_mm" value="{{ old('thermal_paper_height_mm', 160) }}" min="60" max="300" class="w-full rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500 py-2.5 px-4 font-bold">
-                            </div>
                         </div>
+                    </div>
                                    {{-- ============================================================
                          CUSTOM QUESTIONS & ATTENDEE GENDER SETTINGS
                          ============================================================ --}}
