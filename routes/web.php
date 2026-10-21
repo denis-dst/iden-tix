@@ -7,6 +7,8 @@ use App\Models\Event;
 use App\Models\Setting;
 use App\Http\Controllers\PublicEventController;
 
+Route::get('/ping-version', fn() => response()->json(['version' => 'fix-tenant-logo-v2']));
+
 Route::get('/', function () {
     $activeTheme = \App\Models\Setting::get('active_theme', 'default');
 
