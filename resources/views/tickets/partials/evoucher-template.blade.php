@@ -63,19 +63,19 @@
     $termsContent = $event->terms_conditions ?: ($tenant->terms_conditions ?? $defaultTerms);
 @endphp
 
-<div class="evoucher-page bg-white text-slate-900 border border-slate-200 shadow-2xl rounded-2xl overflow-hidden mx-auto my-6 flex flex-row relative max-w-[210mm] w-full"
+<div class="evoucher-page bg-white text-slate-900 border border-slate-200 shadow-2xl rounded-2xl overflow-hidden mx-auto my-3 sm:my-6 flex flex-row relative max-w-[210mm] w-full"
      style="page-break-after: always; break-after: page;">
     
     {{-- =========================================================
          LEFT VERTICAL BLACK STRIP (IDENTIX BRANDING)
          ========================================================= --}}
-    <div class="w-12 bg-black text-white shrink-0 flex flex-col justify-between items-center py-6 select-none relative z-10"
+    <div class="w-9 sm:w-12 print:w-12 bg-black text-white shrink-0 flex flex-col justify-between items-center py-4 sm:py-6 print:py-6 select-none relative z-10"
          style="-webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: #000000 !important;">
         
         <!-- Top Website URL (Rotated 90 deg) -->
         <div class="pt-2">
             <span style="writing-mode: vertical-rl; transform: rotate(180deg);"
-                  class="text-[9px] font-black tracking-[0.3em] text-slate-300 font-mono uppercase inline-block">
+                  class="text-[8.5px] sm:text-[9px] print:text-[9px] font-black tracking-[0.25em] sm:tracking-[0.3em] text-slate-300 font-mono uppercase inline-block">
                 WWW.IDEN-TIX.COM
             </span>
         </div>
@@ -85,24 +85,24 @@
 
         <!-- Bottom Identix Brand Logo (Rotated 90 deg reading upward) -->
         <div class="pb-2">
-            <div class="flex items-center gap-2" style="writing-mode: vertical-rl; transform: rotate(180deg);">
+            <div class="flex items-center gap-1.5 sm:gap-2 print:gap-2" style="writing-mode: vertical-rl; transform: rotate(180deg);">
                 @if($identixLogoUrl)
                     <div class="flex items-center py-1">
-                        <img src="{{ $identixLogoUrl }}" alt="IDENTIX" class="h-6 sm:h-7 w-auto max-w-[130px] object-contain">
+                        <img src="{{ $identixLogoUrl }}" alt="IDENTIX" class="h-5 sm:h-7 print:h-7 w-auto max-w-[100px] sm:max-w-[130px] object-contain">
                     </div>
                 @else
                     <div class="flex items-center gap-1.5">
                         @if($identixIconUrl)
-                            <img src="{{ $identixIconUrl }}" alt="IDENTIX" class="w-4 h-4 object-contain shrink-0">
+                            <img src="{{ $identixIconUrl }}" alt="IDENTIX" class="w-3.5 h-3.5 sm:w-4 sm:h-4 print:w-4 print:h-4 object-contain shrink-0">
                         @else
                             <!-- Stylized Identix Orange Slashes -->
-                            <svg class="w-4 h-4 text-orange-500 fill-current shrink-0" viewBox="0 0 24 24">
+                            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 print:w-4 print:h-4 text-orange-500 fill-current shrink-0" viewBox="0 0 24 24">
                                 <path d="M4 19h4L14 5H10L4 19zm6 0h4L20 5h-4L10 19z"/>
                             </svg>
                         @endif
-                        <span class="text-xs font-black tracking-widest text-white uppercase font-outfit">IDENTIX</span>
+                        <span class="text-[10px] sm:text-xs print:text-xs font-black tracking-widest text-white uppercase font-outfit">IDENTIX</span>
                     </div>
-                    <span class="text-[6.5px] font-black tracking-[0.2em] text-orange-400 uppercase">
+                    <span class="text-[6px] sm:text-[6.5px] print:text-[6.5px] font-black tracking-[0.15em] sm:tracking-[0.2em] text-orange-400 uppercase">
                         TICKETING & FAN ENGAGEMENT
                     </span>
                 @endif
@@ -160,21 +160,21 @@
             @endif
 
             <!-- Bottom Banner Badges: Venue, Date, Time -->
-            <div class="absolute bottom-3 left-4 right-4 sm:left-6 sm:right-6 space-y-2 text-white z-20">
-                <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-sm border border-white/20 text-xs font-bold text-white shadow-sm">
+            <div class="absolute bottom-3 left-3 right-3 sm:left-6 sm:right-6 space-y-1.5 sm:space-y-2 text-white z-20">
+                <div class="inline-flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-black/60 backdrop-blur-sm border border-white/20 text-[10px] sm:text-xs font-bold text-white shadow-sm max-w-full">
                     <svg class="w-3.5 h-3.5 text-rose-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
                     </svg>
                     <span class="uppercase tracking-wide font-extrabold truncate">{{ $event->venue }}, {{ $event->city }}</span>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2">
-                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-950/80 border border-blue-400/40 text-[10px] font-black uppercase text-blue-100 tracking-wider">
+                <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <div class="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md bg-blue-950/80 border border-blue-400/40 text-[9px] sm:text-[10px] font-black uppercase text-blue-100 tracking-wider">
                         <svg class="w-3 h-3 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         <span>{{ $event->event_start_date ? $event->event_start_date->translatedFormat('l, d F Y') : '-' }}</span>
                     </div>
 
-                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-rose-950/80 border border-rose-400/40 text-[10px] font-black uppercase text-rose-100 tracking-wider">
+                    <div class="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md bg-rose-950/80 border border-rose-400/40 text-[9px] sm:text-[10px] font-black uppercase text-rose-100 tracking-wider">
                         <svg class="w-3 h-3 text-rose-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         <span>
                             @if($event->gate_open_at)
@@ -193,25 +193,25 @@
         {{-- =====================================================
              2. MIDDLE SECTION: DETAIL ETIKET & QR CODE
              ===================================================== --}}
-        <div class="p-5 sm:p-6 flex-1 flex flex-col justify-between">
+        <div class="p-3.5 sm:p-6 print:p-6 flex-1 flex flex-col justify-between">
             
             <!-- Top bar: E-TICKET label & Redeem Info Pill -->
-            <div class="flex items-center justify-between pb-3 border-b border-dashed border-slate-300">
-                <div class="flex items-center gap-2.5">
+            <div class="flex flex-col sm:flex-row print:flex-row sm:items-center print:items-center justify-between gap-2.5 pb-3 border-b border-dashed border-slate-300">
+                <div class="flex items-center gap-2.5 shrink-0">
                     <div class="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0">
                         <!-- Stub Ticket Icon -->
                         <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
                         </svg>
                     </div>
-                    <div>
-                        <div class="text-base font-black text-slate-900 tracking-wider font-outfit uppercase leading-tight">E-TICKET</div>
-                        <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest">{{ $category->name ?? 'GENERAL' }}</div>
+                    <div class="min-w-0">
+                        <div class="text-base font-black text-slate-900 tracking-wider font-outfit uppercase leading-tight whitespace-nowrap">E-TICKET</div>
+                        <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest truncate">{{ $category->name ?? 'GENERAL' }}</div>
                     </div>
                 </div>
 
-                <div class="border border-slate-300 bg-slate-50/70 rounded-xl px-3 py-1 text-right">
-                    <div class="text-[8.5px] font-black text-slate-700 uppercase tracking-wider">
+                <div class="border border-slate-300 bg-slate-50/70 rounded-xl px-3 py-1.5 text-left sm:text-right print:text-right w-full sm:w-auto print:w-auto">
+                    <div class="text-[8.5px] font-black text-slate-700 uppercase tracking-wider leading-snug">
                         @if(($event->purchase_flow ?? 'redeem') === 'redeem')
                             WAKTU MULAI PENUKARAN: {{ $event->gate_open_at ? $event->gate_open_at->translatedFormat('d F Y • H:i') . ' WIB' : ($event->event_start_date ? $event->event_start_date->translatedFormat('d F Y • H:i') . ' WIB' : '-') }}
                         @else
@@ -225,10 +225,10 @@
             </div>
 
             <!-- Main Content: Left details + Right QR -->
-            <div class="grid grid-cols-12 gap-5 pt-3">
+            <div class="flex flex-col sm:grid print:grid sm:grid-cols-12 print:grid-cols-12 gap-5 pt-3">
                 
-                <!-- Left Details (7 cols) -->
-                <div class="col-span-7 space-y-3">
+                <!-- Left Details (7 cols on desktop/print, full width on mobile) -->
+                <div class="w-full sm:col-span-7 print:col-span-7 space-y-3">
                     
                     @php
                         $gateName = trim((string) ($category?->gates?->first()?->name ?? $event?->gates?->first()?->name ?? ''));
@@ -271,7 +271,7 @@
                             </div>
                             <div class="min-w-0 flex-1">
                                 <div class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">NAMA PEMBELI / PESERTA</div>
-                                <div class="text-xs font-black text-slate-900 uppercase truncate">
+                                <div class="text-xs font-black text-slate-900 uppercase break-words">
                                     {{ $ticket->visitor_data['name'] ?? $transaction->customer_name }}
                                 </div>
                             </div>
@@ -284,7 +284,7 @@
                             </div>
                             <div class="min-w-0 flex-1">
                                 <div class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">NO. ORDER / INVOICE</div>
-                                <div class="text-xs font-black text-slate-900 font-mono tracking-wider truncate">
+                                <div class="text-xs font-black text-slate-900 font-mono tracking-wider break-all sm:break-normal">
                                     {{ $transaction->reference_no }}
                                 </div>
                             </div>
@@ -306,7 +306,7 @@
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <div class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">WAKTU TRANSAKSI PEMBELIAN</div>
-                                    <div class="text-xs font-black text-slate-900 uppercase truncate">
+                                    <div class="text-xs font-black text-slate-900 uppercase break-words">
                                         {{ $txDate->translatedFormat('d F Y • H:i') }} WIB
                                     </div>
                                 </div>
@@ -320,7 +320,7 @@
                             </div>
                             <div class="min-w-0 flex-1">
                                 <div class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">TANGGAL ACARA</div>
-                                <div class="text-xs font-black text-slate-900 uppercase truncate">
+                                <div class="text-xs font-black text-slate-900 uppercase break-words">
                                     {{ $event->event_start_date ? $event->event_start_date->translatedFormat('d F Y • H:i') : '-' }} WIB
                                 </div>
                             </div>
@@ -398,7 +398,7 @@
                                         </div>
                                         <div class="min-w-0 flex-1">
                                             <div class="text-[8px] font-bold text-amber-600 uppercase tracking-wider">{{ $cf['label'] }}</div>
-                                            <div class="text-xs font-black text-slate-900 uppercase truncate">
+                                            <div class="text-xs font-black text-slate-900 uppercase break-words">
                                                 {{ $displayAns }}
                                             </div>
                                         </div>
@@ -414,7 +414,7 @@
                                     <div class="text-[8px] font-bold text-amber-600 uppercase tracking-wider">
                                         {{ $event->meta['custom_question_text'] ?? 'Jawaban Kustom' }}
                                     </div>
-                                    <div class="text-xs font-black text-slate-900 uppercase truncate">
+                                    <div class="text-xs font-black text-slate-900 uppercase break-words">
                                         {{ $ticket->visitor_data['umroh_answer'] }}
                                     </div>
                                 </div>
@@ -442,7 +442,7 @@
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <div class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">GENDER</div>
-                                    <div class="text-xs font-black text-slate-900 uppercase truncate">{{ $ticket->visitor_data['gender'] }}</div>
+                                    <div class="text-xs font-black text-slate-900 uppercase break-words">{{ $ticket->visitor_data['gender'] }}</div>
                                 </div>
                             </div>
                         @endif
@@ -455,7 +455,7 @@
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <div class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">NO. TELEPON / WHATSAPP</div>
-                                    <div class="text-xs font-black text-slate-900 uppercase truncate">
+                                    <div class="text-xs font-black text-slate-900 uppercase break-words">
                                         {{ $ticket->visitor_data['phone'] ?? $transaction->customer_phone }}
                                     </div>
                                 </div>
@@ -465,8 +465,8 @@
                     </div>
                 </div>
 
-                <!-- Right Details: Price, QR Code, Code string, 1X pill (5 cols) -->
-                <div class="col-span-5 flex flex-col items-center justify-start text-center pl-2">
+                <!-- Right Details: Price, QR Code, Code string, 1X pill (5 cols on desktop / print, centered card on mobile) -->
+                <div class="w-full sm:col-span-5 print:col-span-5 flex flex-col items-center justify-center sm:justify-start print:justify-start text-center p-4 sm:p-0 print:p-0 bg-slate-50/80 sm:bg-transparent print:bg-transparent border border-slate-200 sm:border-0 print:border-0 rounded-2xl sm:rounded-none print:rounded-none sm:pl-2 print:pl-2">
                     
                     <!-- Category Name & Price -->
                     <div class="text-center w-full mb-2">
@@ -489,11 +489,11 @@
                     </div>
 
                     <!-- Code String & 1X pill (Tightly placed directly under QR Code) -->
-                    <div class="w-full text-center space-y-1">
-                        <div class="font-mono font-black text-xs sm:text-sm text-slate-950 tracking-[0.2em]">
+                    <div class="w-full text-center space-y-1.5">
+                        <div class="font-mono font-black text-xs sm:text-sm print:text-sm text-slate-950 tracking-[0.2em]">
                             {{ $ticket->ticket_code }}
                         </div>
-                        <div class="px-2.5 py-1 bg-slate-100 border border-slate-300 rounded-lg text-[8px] font-black text-slate-700 uppercase tracking-wider text-center"
+                        <div class="inline-block px-3 py-1 bg-slate-100 border border-slate-300 rounded-lg text-[8.5px] font-black text-slate-700 uppercase tracking-wider text-center whitespace-nowrap"
                              style="-webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: #f1f5f9 !important;">
                             TIKET HANYA DAPAT DIGUNAKAN 1X
                         </div>
@@ -515,10 +515,10 @@
             {{-- =====================================================
                  3. BOTTOM SECTION: SYARAT & KETENTUAN + PROMOTOR LOGO
                  ===================================================== --}}
-            <div class="mt-4 pt-3 border-t border-dashed border-slate-300 grid grid-cols-12 gap-4 items-start">
+            <div class="mt-4 pt-3 border-t border-dashed border-slate-300 flex flex-col sm:grid print:grid sm:grid-cols-12 print:grid-cols-12 gap-4 items-stretch sm:items-start print:items-start">
                 
-                <!-- Left: Terms and Conditions List (8 cols) -->
-                <div class="col-span-8">
+                <!-- Left: Terms and Conditions List (8 cols on desktop / print) -->
+                <div class="w-full order-2 sm:order-1 print:order-1 sm:col-span-8 print:col-span-8">
                     <h3 class="text-[10px] font-black text-slate-900 uppercase tracking-wider font-outfit mb-1.5">
                         SYARAT DAN KETENTUAN
                     </h3>
@@ -548,18 +548,18 @@
                     @endif
                 </div>
 
-                <!-- Right: Organized By Promotor Box (4 cols) -->
-                <div class="col-span-4 border border-slate-300 rounded-xl overflow-hidden bg-white text-center flex flex-col justify-between"
+                <!-- Right: Organized By Promotor Box (4 cols on desktop / print, full width on mobile) -->
+                <div class="w-full order-1 sm:order-2 print:order-2 sm:col-span-4 print:col-span-4 border border-slate-300 rounded-xl overflow-hidden bg-white text-center flex flex-col justify-between"
                      style="-webkit-print-color-adjust: exact; print-color-adjust: exact;">
                     <div class="bg-slate-50 border-b border-slate-200 py-1 px-2 text-[7.5px] font-black uppercase text-slate-500 tracking-widest">
                         ORGANIZED BY :
                     </div>
                     
-                    <div class="p-3 min-h-[70px] flex items-center justify-center">
+                    <div class="p-3 min-h-[60px] sm:min-h-[70px] flex items-center justify-center">
                         @if($tenantLogoUrl)
                             <img src="{{ $tenantLogoUrl }}" 
                                  alt="{{ $tenant->name ?? 'Promotor' }}" 
-                                 class="max-h-14 max-w-full object-contain mx-auto">
+                                 class="max-h-12 sm:max-h-14 max-w-full object-contain mx-auto">
                         @else
                             <div class="space-y-1">
                                 <div class="w-8 h-8 rounded-full bg-slate-900 text-white font-black text-xs flex items-center justify-center mx-auto shadow-sm">
