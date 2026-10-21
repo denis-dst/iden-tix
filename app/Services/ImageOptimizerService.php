@@ -19,25 +19,51 @@ class ImageOptimizerService
      */
     public static function uploadAndOptimize(UploadedFile $file, string $directory = 'events/backgrounds', int $maxWidth = 1200, int $quality = 80): string
     {
-        $filename = Str::random(40) . '.webp';
         $relativeDir = trim($directory, '/');
-        $targetDir = storage_path('app/public/' . $relativeDir);
 
-        if (!file_exists($targetDir)) {
-            mkdir($targetDir, 0755, true);
+        // Attempt WebP conversion using temp file if GD and imagewebp are available
+        if (extension_loaded('gd') && function_exists('imagewebp')) {
+            $tempPath = null;
+            try {
+                $filename = Str::random(40) . '.webp';
+                $tempPath = tempnam(sys_get_temp_dir(), 'imgopt_');
+
+                $sourcePath = $file->getRealPath();
+                if ($sourcePath && file_exists($sourcePath)) {
+                    $converted = self::convertAndSaveAsWebp($sourcePath, $tempPath, $maxWidth, $quality);
+
+                    if ($converted && file_exists($tempPath) && filesize($tempPath) > 0) {
+                        $storedPath = $relativeDir . '/' . $filename;
+                        $stored = Storage::disk('public')->put($storedPath, file_get_contents($tempPath));
+                        @unlink($tempPath);
+
+                        if ($stored) {
+                            return $storedPath;
+                        }
+                    }
+                }
+
+                if ($tempPath && file_exists($tempPath)) {
+                    @unlink($tempPath);
+                }
+            } catch (\Throwable $e) {
+                if ($tempPath && file_exists($tempPath)) {
+                    @unlink($tempPath);
+                }
+                \Illuminate\Support\Facades\Log::warning('ImageOptimizerService WebP conversion skipped: ' . $e->getMessage());
+            }
         }
 
-        $targetPath = $targetDir . '/' . $filename;
-        $sourcePath = $file->getRealPath();
-
-        $converted = self::convertAndSaveAsWebp($sourcePath, $targetPath, $maxWidth, $quality);
-
-        if ($converted) {
-            return $relativeDir . '/' . $filename;
+        // Safe fallback: Standard Laravel store using Storage disk
+        try {
+            return $file->store($relativeDir, 'public');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('ImageOptimizerService fallback store failed: ' . $e->getMessage());
+            $filename = Str::random(40) . '.' . ($file->getClientOriginalExtension() ?: 'png');
+            $storedPath = $relativeDir . '/' . $filename;
+            Storage::disk('public')->putFileAs($relativeDir, $file, $filename);
+            return $storedPath;
         }
-
-        // Fallback: standard store if GD / conversion fails
-        return $file->store($relativeDir, 'public');
     }
 
     /**
@@ -45,47 +71,77 @@ class ImageOptimizerService
      */
     public static function convertAndSaveAsWebp(string $sourcePath, string $targetPath, int $maxWidth = 1200, int $quality = 80): bool
     {
+        if (!extension_loaded('gd') || !function_exists('imagewebp')) {
+            return false;
+        }
+
         if (!file_exists($sourcePath)) {
             return false;
         }
 
-        $imageInfo = @getimagesize($sourcePath);
-        if (!$imageInfo) {
-            return false;
-        }
+        try {
+            $imageInfo = @getimagesize($sourcePath);
+            if (!$imageInfo) {
+                return false;
+            }
 
-        $mime = $imageInfo['mime'];
-        $srcImg = match ($mime) {
-            'image/jpeg', 'image/jpg' => @imagecreatefromjpeg($sourcePath),
-            'image/png' => @imagecreatefrompng($sourcePath),
-            'image/webp' => @imagecreatefromwebp($sourcePath),
-            default => false,
-        };
+            $mime = $imageInfo['mime'];
+            $srcImg = match ($mime) {
+                'image/jpeg', 'image/jpg' => function_exists('imagecreatefromjpeg') ? @imagecreatefromjpeg($sourcePath) : false,
+                'image/png' => function_exists('imagecreatefrompng') ? @imagecreatefrompng($sourcePath) : false,
+                'image/webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($sourcePath) : false,
+                default => false,
+            };
 
-        if (!$srcImg) {
-            return false;
-        }
+            if (!$srcImg) {
+                return false;
+            }
 
-        $origW = imagesx($srcImg);
-        $origH = imagesy($srcImg);
+            // Ensure true color for indexed/paletted PNGs so imagewebp does not fail
+            if (function_exists('imageistruecolor') && !imageistruecolor($srcImg) && function_exists('imagepalettetotruecolor')) {
+                imagepalettetotruecolor($srcImg);
+            }
 
-        if ($origW > $maxWidth) {
-            $newW = $maxWidth;
-            $newH = (int) round($origH * ($maxWidth / $origW));
-            $dstImg = imagecreatetruecolor($newW, $newH);
+            if (function_exists('imagealphablending')) {
+                imagealphablending($srcImg, false);
+            }
+            if (function_exists('imagesavealpha')) {
+                imagesavealpha($srcImg, true);
+            }
 
-            imagealphablending($dstImg, false);
-            imagesavealpha($dstImg, true);
+            $origW = imagesx($srcImg);
+            $origH = imagesy($srcImg);
 
-            imagecopyresampled($dstImg, $srcImg, 0, 0, 0, 0, $newW, $newH, $origW, $origH);
+            if ($origW > $maxWidth && $origW > 0) {
+                $newW = $maxWidth;
+                $newH = (int) max(1, round($origH * ($maxWidth / $origW)));
+                $dstImg = imagecreatetruecolor($newW, $newH);
+
+                if (function_exists('imagealphablending')) {
+                    imagealphablending($dstImg, false);
+                }
+                if (function_exists('imagesavealpha')) {
+                    imagesavealpha($dstImg, true);
+                }
+
+                imagecopyresampled($dstImg, $srcImg, 0, 0, 0, 0, $newW, $newH, $origW, $origH);
+                imagedestroy($srcImg);
+                $srcImg = $dstImg;
+            }
+
+            // Ensure target directory exists if a direct path is provided
+            $dir = dirname($targetPath);
+            if (!file_exists($dir)) {
+                @mkdir($dir, 0755, true);
+            }
+
+            $result = @imagewebp($srcImg, $targetPath, $quality);
             imagedestroy($srcImg);
-            $srcImg = $dstImg;
+
+            return (bool) $result;
+        } catch (\Throwable $e) {
+            return false;
         }
-
-        $result = imagewebp($srcImg, $targetPath, $quality);
-        imagedestroy($srcImg);
-
-        return (bool) $result;
     }
 
     /**
@@ -97,9 +153,13 @@ class ImageOptimizerService
             return null;
         }
 
-        $webpPath = preg_replace('/\.(png|jpe?g)$/i', '.webp', $fullPath);
-        if (self::convertAndSaveAsWebp($fullPath, $webpPath, $maxWidth, $quality)) {
-            return $webpPath;
+        try {
+            $webpPath = preg_replace('/\.(png|jpe?g)$/i', '.webp', $fullPath);
+            if (self::convertAndSaveAsWebp($fullPath, $webpPath, $maxWidth, $quality)) {
+                return $webpPath;
+            }
+        } catch (\Throwable $e) {
+            return null;
         }
 
         return null;

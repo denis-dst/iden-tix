@@ -37,7 +37,7 @@
         <label for="logo" class="block font-medium text-sm text-gray-700 mb-1">Organizer / Home Club Logo</label>
         @if(isset($tenant) && $tenant->logo)
             <div class="mb-3 h-20 w-32 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center p-2">
-                <img src="{{ Storage::url($tenant->logo) }}" class="max-h-full max-w-full object-contain">
+                <img src="{{ str_starts_with($tenant->logo, 'http') ? $tenant->logo : Storage::url($tenant->logo) }}" class="max-h-full max-w-full object-contain" alt="Tenant Logo">
             </div>
         @endif
         <input type="file" name="logo" id="logo"

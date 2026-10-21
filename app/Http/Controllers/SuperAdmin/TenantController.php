@@ -31,13 +31,22 @@ class TenantController extends Controller
             'phone' => 'nullable|string|max:50',
             'address' => 'nullable|string',
             'status' => 'required|in:active,inactive,suspended',
-            'logo' => 'nullable|image|max:1024',
+            'logo' => 'nullable|image|max:5120',
             'password' => 'required|string|min:8', // Added password field for the initial user
         ]);
 
+        if ($validated['status'] === 'inactive') {
+            $validated['status'] = 'suspended';
+        }
+
         $validated['slug'] = \Illuminate\Support\Str::slug($validated['name']);
         if ($request->hasFile('logo')) {
-            $validated['logo'] = \App\Services\ImageOptimizerService::uploadAndOptimize($request->file('logo'), 'tenants/logos', 400, 85);
+            try {
+                $validated['logo'] = \App\Services\ImageOptimizerService::uploadAndOptimize($request->file('logo'), 'tenants/logos', 400, 85);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Tenant logo upload failed: ' . $e->getMessage());
+                $validated['logo'] = $request->file('logo')->store('tenants/logos', 'public');
+            }
         }
 
         \Illuminate\Support\Facades\DB::transaction(function () use ($validated) {
@@ -76,7 +85,7 @@ class TenantController extends Controller
      */
     public function show(Tenant $tenant)
     {
-        return view('superadmin.tenants.show', compact('tenant'));
+        return redirect()->route('superadmin.tenants.edit', $tenant);
     }
 
     /**
@@ -98,18 +107,27 @@ class TenantController extends Controller
             'phone' => 'nullable|string|max:50',
             'address' => 'nullable|string',
             'status' => 'required|in:active,inactive,suspended',
-            'logo' => 'nullable|image|max:1024',
+            'logo' => 'nullable|image|max:5120',
         ]);
+
+        if ($validated['status'] === 'inactive') {
+            $validated['status'] = 'suspended';
+        }
 
         if ($tenant->name !== $validated['name']) {
             $validated['slug'] = \Illuminate\Support\Str::slug($validated['name']);
         }
 
         if ($request->hasFile('logo')) {
-            if ($tenant->logo) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($tenant->logo);
+            try {
+                if ($tenant->logo) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($tenant->logo);
+                }
+                $validated['logo'] = \App\Services\ImageOptimizerService::uploadAndOptimize($request->file('logo'), 'tenants/logos', 400, 85);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Tenant logo upload failed: ' . $e->getMessage());
+                $validated['logo'] = $request->file('logo')->store('tenants/logos', 'public');
             }
-            $validated['logo'] = \App\Services\ImageOptimizerService::uploadAndOptimize($request->file('logo'), 'tenants/logos', 400, 85);
         }
 
         $tenant->update($validated);
