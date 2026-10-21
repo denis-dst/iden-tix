@@ -7,7 +7,11 @@ use App\Models\Event;
 use App\Models\Setting;
 use App\Http\Controllers\PublicEventController;
 
-Route::get('/', function () {
+Route::match(['get', 'post'], '/', function () {
+    if (request()->isMethod('post') && (request()->has('order_id') || request()->has('event') || request()->expectsJson() || request()->has('status'))) {
+        return response()->json(['status' => 'ok', 'message' => 'IdenTix service is active'], 200);
+    }
+
     $activeTheme = \App\Models\Setting::get('active_theme', 'default');
 
     $events = Event::with(['ticketCategories', 'tenant'])
@@ -29,11 +33,20 @@ Route::get('/', function () {
 Route::get('/event/{slug}', [PublicEventController::class, 'show'])->name('events.show');
 Route::get('/promo/validate', [PublicEventController::class, 'validatePromo'])->name('promo.validate');
 Route::post('/event/{slug}/checkout', [PublicEventController::class, 'checkout'])->name('checkout.process');
-Route::match(['get', 'post'], '/wago/notification', [PublicEventController::class, 'handleWagoNotification'])->name('wago.notification');
-Route::match(['get', 'post'], '/api/wago-webhook', [PublicEventController::class, 'handleWagoNotification'])->name('wago.webhook.api');
-Route::match(['get', 'post'], '/wago/webhook', [PublicEventController::class, 'handleWagoNotification'])->name('wago.webhook');
+Route::any('/wago/notification', [PublicEventController::class, 'handleWagoNotification'])->name('wago.notification');
+Route::any('/api/wago-webhook', [PublicEventController::class, 'handleWagoNotification'])->name('wago.webhook.api');
+Route::any('/wago/webhook', [PublicEventController::class, 'handleWagoNotification'])->name('wago.webhook');
+Route::any('/wago-webhook', [PublicEventController::class, 'handleWagoNotification']);
+Route::any('/api/wago/notification', [PublicEventController::class, 'handleWagoNotification']);
 Route::post('/ipaymu/notification', [PublicEventController::class, 'handleIPaymuNotification'])->name('ipaymu.notification');
-Route::get('/checkout/success/{reference}', [App\Http\Controllers\PublicEventController::class, 'success'])->name('checkout.success');
+Route::match(['get', 'post'], '/checkout/success/{reference}', [App\Http\Controllers\PublicEventController::class, 'success'])->name('checkout.success');
+Route::match(['get', 'post'], '/checkout/success', function(\Illuminate\Http\Request $request) {
+    $ref = $request->input('order_id') ?? $request->input('ref') ?? $request->query('order_id') ?? $request->query('ref') ?? session('last_checkout_reference');
+    if (!empty($ref)) {
+        return redirect()->route('checkout.success', $ref);
+    }
+    return response()->json(['status' => 'ok', 'message' => 'Checkout portal is active'], 200);
+});
 Route::get('/checkout/status/{reference}', [App\Http\Controllers\PublicEventController::class, 'checkStatus'])->name('checkout.status');
 Route::get('/evoucher/{reference}', [App\Http\Controllers\PublicEventController::class, 'evoucher'])->name('evoucher.public');
 

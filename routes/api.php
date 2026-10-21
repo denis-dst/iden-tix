@@ -65,3 +65,11 @@ Route::middleware(['auth:sanctum', 'role:Superadmin|Penyedia Event|Petugas Gate|
     // Alias upload-data → syncLogs (digunakan oleh tombol "Upload Data" di app)
     Route::post('/gate/upload-data', [GateController::class, 'syncLogs']);
 });
+
+/**
+ * Public Webhook Endpoints (WAGO / Payment Gateways)
+ */
+Route::any('/wago/notification', [App\Http\Controllers\PublicEventController::class, 'handleWagoNotification']);
+Route::any('/wago-webhook', [App\Http\Controllers\PublicEventController::class, 'handleWagoNotification']);
+Route::any('/wago/webhook', [App\Http\Controllers\PublicEventController::class, 'handleWagoNotification']);
+Route::any('/ipaymu/notification', [App\Http\Controllers\PublicEventController::class, 'handleIPaymuNotification']);

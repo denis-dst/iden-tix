@@ -15,9 +15,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
 
         $middleware->validateCsrfTokens(except: [
+            'wago/*',
             'wago/notification',
             'wago/webhook',
+            'wago-webhook',
+            'api/wago/*',
             'api/wago-webhook',
+            'api/wago/notification',
+            'checkout/success*',
             'ipaymu/notification',
             'impersonate/leave',
         ]);

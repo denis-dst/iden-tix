@@ -124,8 +124,8 @@ class PublicEventController extends Controller
             ?: $request->header('X-WAGO-Timestamp')
             ?: (string) $request->input('t', '');
 
-        // If accessed by browser (e.g. user redirected back or clicked link)
-        if ($request->isMethod('GET') && ($request->acceptsHtml() || !$request->expectsJson())) {
+        // If accessed by browser (e.g. user redirected back or clicked link via GET)
+        if ($request->isMethod('GET')) {
             $eventSlug = session('last_checkout_event_slug');
 
             if (!empty($orderId)) {
@@ -174,6 +174,14 @@ class PublicEventController extends Controller
                 }
             }
 
+            // Test ping or json inspection via GET
+            if ($event === 'test' || $event === 'ping' || $request->boolean('test') || $request->expectsJson()) {
+                return response()->json([
+                    'status'  => 'ok',
+                    'message' => 'WAGO Webhook endpoint is active and listening',
+                ], 200);
+            }
+
             if ($eventSlug) {
                 return redirect()->route('events.show', $eventSlug)
                     ->with('error', 'Pembayaran dibatalkan atau belum selesai. Silakan ulangi pemesanan tiket Anda.');
@@ -182,7 +190,7 @@ class PublicEventController extends Controller
             return redirect('/');
         }
 
-        // Handle "Test Webhook" ping from WAGO dashboard (must be explicit test event/parameter)
+        // Handle "Test Webhook" ping from WAGO dashboard (or generic test event/parameter)
         $isTestPing = ($event === 'test' || $event === 'ping' || $request->boolean('test') || $orderId === 'test' || $orderId === 'ping');
 
         if ($isTestPing) {
@@ -194,10 +202,7 @@ class PublicEventController extends Controller
         }
 
         if (empty($orderId)) {
-            \Log::warning('WAGO notification received without order_id', $body);
-            if ($request->isMethod('GET') || $request->acceptsHtml()) {
-                return redirect('/');
-            }
+            \Log::info('WAGO notification received without order_id (acknowledged)', $body);
             return response()->json([
                 'status'  => 'ok',
                 'message' => 'Notification acknowledged (no order_id provided)',
@@ -221,12 +226,9 @@ class PublicEventController extends Controller
 
         if (!$dbTransaction) {
             \Log::warning("Transaction not found for WAGO order_id: {$orderId}");
-            if ($request->isMethod('GET') || $request->acceptsHtml()) {
-                return redirect()->route('checkout.success', $orderId);
-            }
             return response()->json([
                 'status'  => 'ok',
-                'message' => 'Transaction not found or already processed',
+                'message' => 'Transaction not found or sample test acknowledged',
             ], 200);
         }
 
@@ -274,11 +276,6 @@ class PublicEventController extends Controller
                 'payment_method' => $paymentMethod,
             ]);
             \Log::info("WAGO transaction {$orderId} marked as EXPIRED.");
-        }
-
-        // If accessed via browser (GET redirect from Wago payment page), direct to checkout success popup
-        if ($request->isMethod('GET') || $request->acceptsHtml()) {
-            return redirect()->route('checkout.success', $dbTransaction->reference_no);
         }
 
         // Response format as per WAGO docs for server-to-server webhook: HTTP 200 JSON {"status": "ok"}
