@@ -72,6 +72,44 @@
                 </div>
                 @endif
                 
+                <!-- Transaction & Booking Limit Settings -->
+                <div class="p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" /></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-black text-slate-700 uppercase tracking-widest">Batas Pemesanan Tiket</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">Atur batasan jumlah tiket yang dapat dipesan per orang pada halaman transaksi/checkout event berbayar.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="max-w-sm pt-2 space-y-2">
+                        <label for="max_tickets_per_person" class="block text-xs font-black text-slate-700 uppercase tracking-wider">
+                            Jumlah Pemesanan / Orang (Maksimal Tiket)
+                        </label>
+                        <div class="relative">
+                            <input type="number" 
+                                   id="max_tickets_per_person" 
+                                   name="max_tickets_per_person" 
+                                   min="1" 
+                                   max="100" 
+                                   value="{{ old('max_tickets_per_person', $tenant->meta['max_tickets_per_person'] ?? 2) }}"
+                                   class="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 text-sm font-black text-slate-800 focus:border-orange-500 focus:ring-0 transition"
+                                   placeholder="Contoh: 2">
+                            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-xs font-bold text-slate-400">
+                                Tiket / Orang
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-500 font-medium">
+                            Secara default nilainya adalah 2. Anda dapat menyesuaikannya (misal: 1, 4, 5, 10, dsb).
+                        </p>
+                        @error('max_tickets_per_person')
+                            <p class="text-rose-500 text-xs font-bold mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+                
                 <div class="space-y-4">
                     <label for="terms_conditions" class="block text-sm font-black text-slate-700 uppercase tracking-widest">Konten Syarat & Ketentuan</label>
                     <input id="terms_conditions_input" type="hidden" name="terms_conditions" value="{{ old('terms_conditions', $tenant->terms_conditions) }}">

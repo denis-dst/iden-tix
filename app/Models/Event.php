@@ -11,7 +11,7 @@ class Event extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'tenant_id', 'name', 'slug', 'description', 'terms_conditions', 'venue', 'city', 'google_maps_url',
+        'tenant_id', 'name', 'type', 'slug', 'description', 'terms_conditions', 'venue', 'city', 'google_maps_url',
         'background_image', 'banner_image', 'event_start_date', 
         'event_end_date', 'gate_open_at', 'gate_close_at', 'status', 'meta', 'security_code',
         'is_free', 'max_tickets_per_transaction', 'umroh_question_enabled', 'evoucher_info',
@@ -132,4 +132,86 @@ class Event extends Model
         }
         return $proofs;
     }
+
+    public function getTypeLabelAttribute(): string
+    {
+        return match ($this->type) {
+            'sport' => 'Olahraga & Pertandingan',
+            'festival' => 'Festival & Expo',
+            'seminar' => 'Seminar & Workshop',
+            'other' => 'Lainnya',
+            default => 'Konser Musik',
+        };
+    }
+
+    public function getTypeIconAttribute(): string
+    {
+        return match ($this->type) {
+            'sport' => '⚽',
+            'festival' => '🎪',
+            'seminar' => '🎓',
+            'other' => '✨',
+            default => '🎵',
+        };
+    }
+
+    /**
+     * Get the attendee gender setting: 'disabled', 'general', or 'islamic'.
+     */
+    public function getAttendeeGenderSetting(): string
+    {
+        if (isset($this->meta['attendee_gender_type'])) {
+            return $this->meta['attendee_gender_type'];
+        }
+
+        // Backward compatibility: If legacy umroh question was enabled, default to 'islamic'
+        if ($this->umroh_question_enabled) {
+            return 'islamic';
+        }
+
+        return 'general';
+    }
+
+    /**
+     * Get the customizable transaction questions for participants.
+     */
+    public function getCustomFields(): array
+    {
+        if (isset($this->meta['custom_fields']) && is_array($this->meta['custom_fields']) && !empty($this->meta['custom_fields'])) {
+            return array_map(function ($f) {
+                return [
+                    'id' => $f['id'] ?? ('cf_' . \Illuminate\Support\Str::random(6)),
+                    'label' => $f['label'] ?? '',
+                    'type' => $f['type'] ?? 'text',
+                    'placeholder' => $f['placeholder'] ?? '',
+                    'helper_text' => $f['helper_text'] ?? '',
+                    'options' => $f['options'] ?? [],
+                    'is_required' => !empty($f['is_required']),
+                ];
+            }, $this->meta['custom_fields']);
+        }
+
+        if ($this->umroh_question_enabled || !empty($this->meta['custom_question_text'])) {
+            $label = $this->meta['custom_question_text'] ?? 'Pertanyaan Custom';
+            $type = $this->meta['custom_question_type'] ?? 'text';
+            $options = $this->meta['custom_question_options'] ?? [];
+            $helper = $this->meta['custom_question_helper'] ?? ($label === 'Alumni Grup Keberangkatan Tanggal Berapa?' ? 'Jika lebih dari 1X, Maka bisa diisi keberangkatan paling terakhir' : '');
+            $placeholder = $this->meta['custom_question_placeholder'] ?? ($label === 'Alumni Grup Keberangkatan Tanggal Berapa?' ? 'Contoh: 13 Januari 2024' : '');
+
+            return [
+                [
+                    'id' => 'umroh_answer',
+                    'label' => $label,
+                    'type' => $type,
+                    'placeholder' => $placeholder,
+                    'helper_text' => $helper,
+                    'options' => $options,
+                    'is_required' => false,
+                ]
+            ];
+        }
+
+        return [];
+    }
 }
+

@@ -270,7 +270,23 @@
                                         <span class="text-slate-800 font-bold capitalize">{{ $t->visitor_data['gender'] }}</span>
                                     </div>
                                     @endif
-                                    @if(isset($t->visitor_data['umroh_answer']) && $t->visitor_data['umroh_answer'])
+                                    @php
+                                        $ticketCustomFields = method_exists($ticket->event, 'getCustomFields') ? $ticket->event->getCustomFields() : [];
+                                        $tAnswers = is_array($t->visitor_data['custom_answers'] ?? null) ? $t->visitor_data['custom_answers'] : [];
+                                    @endphp
+                                    @if(!empty($ticketCustomFields))
+                                        @foreach($ticketCustomFields as $cf)
+                                            @php
+                                                $cfVal = $tAnswers[$cf['id']] ?? ($t->visitor_data['umroh_answer'] ?? null);
+                                            @endphp
+                                            @if($cfVal)
+                                                <div class="flex justify-between text-sm">
+                                                    <span class="text-slate-400 font-bold uppercase tracking-wider text-[10px]">{{ $cf['label'] }}</span>
+                                                    <span class="text-slate-800 font-bold uppercase">{{ is_array($cfVal) ? implode(', ', $cfVal) : $cfVal }}</span>
+                                                </div>
+                                            @endif
+                                        @endforeach
+                                    @elseif(isset($t->visitor_data['umroh_answer']) && $t->visitor_data['umroh_answer'])
                                     <div class="flex justify-between text-sm">
                                         <span class="text-slate-400 font-bold uppercase tracking-wider text-[10px]">{{ $ticket->event->meta['custom_question_text'] ?? 'Jawaban Khusus' }}</span>
                                         <span class="text-slate-800 font-bold uppercase">{{ $t->visitor_data['umroh_answer'] }}</span>
@@ -486,6 +502,28 @@
                                     <span class="text-slate-400 font-bold uppercase tracking-wider text-[10px]">No. WhatsApp</span>
                                     <span class="text-slate-800 font-bold">{{ $ticket->transaction->customer_phone }}</span>
                                 </div>
+                                @php
+                                    $singleCustomFields = method_exists($ticket->event, 'getCustomFields') ? $ticket->event->getCustomFields() : [];
+                                    $singleAnswers = is_array($ticket->visitor_data['custom_answers'] ?? null) ? $ticket->visitor_data['custom_answers'] : [];
+                                @endphp
+                                @if(!empty($singleCustomFields))
+                                    @foreach($singleCustomFields as $cf)
+                                        @php
+                                            $cfVal = $singleAnswers[$cf['id']] ?? ($ticket->visitor_data['umroh_answer'] ?? ($ticket->transaction->customer_umroh_answer ?? null));
+                                        @endphp
+                                        @if($cfVal)
+                                            <div class="flex justify-between text-sm">
+                                                <span class="text-slate-400 font-bold uppercase tracking-wider text-[10px]">{{ $cf['label'] }}</span>
+                                                <span class="text-slate-800 font-bold uppercase">{{ is_array($cfVal) ? implode(', ', $cfVal) : $cfVal }}</span>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                @elseif(!empty($ticket->visitor_data['umroh_answer']) || !empty($ticket->transaction->customer_umroh_answer))
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-slate-400 font-bold uppercase tracking-wider text-[10px]">{{ $ticket->event->meta['custom_question_text'] ?? 'Jawaban Khusus' }}</span>
+                                        <span class="text-slate-800 font-bold uppercase">{{ $ticket->visitor_data['umroh_answer'] ?? $ticket->transaction->customer_umroh_answer }}</span>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -542,7 +580,22 @@
                                                 </span>
                                             </div>
                                         @endif
-                                        @if(isset($t->visitor_data['umroh_answer']) && $t->visitor_data['umroh_answer'])
+                                        @php
+                                            $compactCustomFields = method_exists($ticket->event, 'getCustomFields') ? $ticket->event->getCustomFields() : [];
+                                            $compactAnswers = is_array($t->visitor_data['custom_answers'] ?? null) ? $t->visitor_data['custom_answers'] : [];
+                                        @endphp
+                                        @if(!empty($compactCustomFields))
+                                            @foreach($compactCustomFields as $cf)
+                                                @php
+                                                    $cVal = $compactAnswers[$cf['id']] ?? ($t->visitor_data['umroh_answer'] ?? null);
+                                                @endphp
+                                                @if($cVal)
+                                                    <div class="text-[10px] text-slate-600 leading-relaxed font-bold">
+                                                        {{ $cf['label'] }}: <span class="text-slate-800 font-black uppercase block mt-0.5">{{ is_array($cVal) ? implode(', ', $cVal) : $cVal }}</span>
+                                                    </div>
+                                                @endif
+                                            @endforeach
+                                        @elseif(isset($t->visitor_data['umroh_answer']) && $t->visitor_data['umroh_answer'])
                                             <div class="text-[10px] text-slate-600 leading-relaxed font-bold">
                                                 {{ $ticket->event->meta['custom_question_text'] ?? 'Keberangkatan' }}: <span class="text-slate-800 font-black uppercase block mt-0.5">{{ $t->visitor_data['umroh_answer'] }}</span>
                                             </div>

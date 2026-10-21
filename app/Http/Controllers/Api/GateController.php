@@ -742,13 +742,35 @@ class GateController extends Controller
     private function customQuestionPayload(?Event $event, array $visitorData, ?string $fallbackAnswer = null): array
     {
         $label = '-';
-
-        if ($event && $event->umroh_question_enabled) {
-            $eventLabel = trim((string) ($event->meta['custom_question_text'] ?? ''));
-            $label = $eventLabel !== '' ? $eventLabel : 'Pertanyaan Custom';
-        }
-
         $answer = $visitorData['umroh_answer'] ?? $fallbackAnswer;
+
+        if ($event) {
+            $customFields = method_exists($event, 'getCustomFields') ? $event->getCustomFields() : [];
+            if (!empty($customFields)) {
+                $customAnswers = is_array($visitorData['custom_answers'] ?? null) ? $visitorData['custom_answers'] : [];
+                $labels = [];
+                $answers = [];
+
+                foreach ($customFields as $field) {
+                    $labels[] = $field['label'] ?? 'Pertanyaan Custom';
+                    $val = $customAnswers[$field['id']] ?? null;
+                    if ($val === null || $val === '') {
+                        $val = $visitorData['umroh_answer'] ?? $fallbackAnswer;
+                    }
+                    $answers[] = $val ?: '-';
+                }
+
+                return [
+                    'label' => implode(' | ', $labels),
+                    'answer' => implode(' | ', $answers),
+                ];
+            }
+
+            if ($event->umroh_question_enabled) {
+                $eventLabel = trim((string) ($event->meta['custom_question_text'] ?? ''));
+                $label = $eventLabel !== '' ? $eventLabel : 'Pertanyaan Custom';
+            }
+        }
 
         return [
             'label' => $label,

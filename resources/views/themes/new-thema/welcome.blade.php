@@ -409,6 +409,13 @@
                         class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-150 flex items-center gap-2">
                     <span>🎓 Seminar & Workshop</span>
                 </button>
+
+                <!-- Acara Lainnya -->
+                <button @click="selectedCategory = 'lainnya'"
+                        :class="selectedCategory === 'lainnya' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'"
+                        class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-150 flex items-center gap-2">
+                    <span>✨ Acara Lainnya</span>
+                </button>
             </div>
         </section>
 
@@ -443,14 +450,25 @@
                         }
                         
                         $isUpcoming = $event->event_start_date->isFuture() || $event->event_start_date->isToday();
-                        $categoryTag = 'festival';
-                        $lowerName = strtolower($event->name . ' ' . $event->description);
-                        if (str_contains($lowerName, 'musik') || str_contains($lowerName, 'konser') || str_contains($lowerName, 'sound') || str_contains($lowerName, 'band')) {
-                            $categoryTag = 'musik';
-                        } elseif (str_contains($lowerName, 'olahraga') || str_contains($lowerName, 'bola') || str_contains($lowerName, 'bhayangkara') || str_contains($lowerName, 'match') || str_contains($lowerName, 'fc')) {
-                            $categoryTag = 'olahraga';
-                        } elseif (str_contains($lowerName, 'seminar') || str_contains($lowerName, 'workshop') || str_contains($lowerName, 'conference')) {
-                            $categoryTag = 'seminar';
+
+                        $typeMap = [
+                            'concert' => 'musik',
+                            'sport' => 'olahraga',
+                            'festival' => 'festival',
+                            'seminar' => 'seminar',
+                            'other' => 'lainnya',
+                        ];
+                        $categoryTag = $typeMap[$event->type ?? ''] ?? null;
+                        if (!$categoryTag) {
+                            $categoryTag = 'festival';
+                            $lowerName = strtolower($event->name . ' ' . $event->description);
+                            if (str_contains($lowerName, 'musik') || str_contains($lowerName, 'konser') || str_contains($lowerName, 'sound') || str_contains($lowerName, 'band')) {
+                                $categoryTag = 'musik';
+                            } elseif (str_contains($lowerName, 'olahraga') || str_contains($lowerName, 'bola') || str_contains($lowerName, 'bhayangkara') || str_contains($lowerName, 'match') || str_contains($lowerName, 'fc')) {
+                                $categoryTag = 'olahraga';
+                            } elseif (str_contains($lowerName, 'seminar') || str_contains($lowerName, 'workshop') || str_contains($lowerName, 'conference')) {
+                                $categoryTag = 'seminar';
+                            }
                         }
 
                         $minPrice = $event->ticketCategories->count() > 0 ? $event->ticketCategories->min('price') : 0;
@@ -470,6 +488,12 @@
                             <!-- City Pill Overlay -->
                             <div class="absolute top-3 left-3 bg-slate-900/80 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-1 rounded-lg">
                                 📍 {{ $event->city ?? 'Indonesia' }}
+                            </div>
+
+                            <!-- Event Type Overlay -->
+                            <div class="absolute top-3 right-3 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
+                                <span>{{ $event->type_icon }}</span>
+                                <span>{{ $event->type_label }}</span>
                             </div>
 
                             @if(!$isUpcoming)

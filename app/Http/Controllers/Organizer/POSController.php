@@ -190,9 +190,9 @@ class POSController extends Controller
             $category->increment('sold_count', $validated['quantity']);
         });
 
-        foreach ($tickets as $ticket) {
+        if ($tickets->isNotEmpty()) {
             try {
-                app(TicketNotificationService::class)->sendEVoucher($ticket);
+                app(TicketNotificationService::class)->sendEVoucher($tickets->first());
             } catch (\Throwable $e) {
                 report($e);
             }
@@ -220,16 +220,30 @@ class POSController extends Controller
             $eventName = $event->name;
             $url = route('tickets.view', $ticketCode);
             $phone = $validated['customer_phone'];
-            
-            $waMessage = "*E-Voucher {$eventName}*\n\n"
-                . "Halo, terima kasih telah melakukan pembelian tiket.\n\n"
-                . "Detail Tiket:\n"
-                . "Kategori: {$categoryName}\n"
-                . "Kode Tiket: {$ticketCode}\n\n"
-                . "Silakan tunjukkan QR Code pada link berikut:\n"
-                . "{$url}\n\n"
-                . "Sampai jumpa di lokasi!";
-            
+            $customerName = $validated['customer_name'];
+            $quantity = (int) $validated['quantity'];
+
+            if ($quantity > 1) {
+                $waMessage = "*E-Voucher {$eventName}*\n\n"
+                    . "Halo {$customerName}, terima kasih atas pemesanan tiket Anda.\n\n"
+                    . "Detail Pemesanan:\n"
+                    . "No. Invoice: {$transaction->reference_no}\n"
+                    . "Kategori: {$categoryName}\n"
+                    . "Jumlah: {$quantity} Tiket\n\n"
+                    . "Silakan buka link E-Voucher berikut untuk melihat semua tiket Anda:\n"
+                    . "{$url}\n\n"
+                    . "Sampai jumpa di lokasi acara!";
+            } else {
+                $waMessage = "*E-Voucher {$eventName}*\n\n"
+                    . "Halo {$customerName}, terima kasih telah melakukan pembelian tiket.\n\n"
+                    . "Detail Tiket:\n"
+                    . "Kategori: {$categoryName}\n"
+                    . "Kode Tiket: {$ticketCode}\n\n"
+                    . "Silakan tunjukkan QR Code pada link berikut:\n"
+                    . "{$url}\n\n"
+                    . "Sampai jumpa di lokasi!";
+            }
+
             $waUrl = "https://api.whatsapp.com/send?phone=" . urlencode($phone) . "&text=" . urlencode($waMessage);
         }
 

@@ -405,6 +405,8 @@ class PublicEventController extends Controller
                         'email' => $transaction->customer_email,
                         'phone' => $transaction->customer_phone,
                         'nik' => $transaction->customer_nik,
+                        'umroh_answer' => $transaction->customer_umroh_answer,
+                        'custom_answers' => $notifPrefs['custom_answers'] ?? null,
                     ], $notifPrefs),
                 ]);
 
@@ -472,6 +474,8 @@ class PublicEventController extends Controller
             'discount_amount' => 'nullable|numeric|min:0',
             'notif_wa' => 'nullable',
             'notif_email' => 'nullable',
+            'custom_answers' => 'nullable|array',
+            'custom_question_answer' => 'nullable|string|max:500',
         ]);
 
         if ($validator->fails()) {
@@ -485,6 +489,38 @@ class PublicEventController extends Controller
         }
 
         $validated = $validator->validated();
+
+        // Custom Questions Validation for Paid Event
+        $customFields = $event->getCustomFields();
+        $customAnswersInput = $request->input('custom_answers', []);
+        if (!is_array($customAnswersInput)) {
+            $customAnswersInput = [];
+        }
+        if (empty($customAnswersInput) && $request->filled('custom_question_answer') && !empty($customFields)) {
+            $firstFieldId = $customFields[0]['id'] ?? 'umroh_answer';
+            $customAnswersInput[$firstFieldId] = $request->input('custom_question_answer');
+        }
+
+        foreach ($customFields as $field) {
+            if (!empty($field['is_required'])) {
+                $val = trim((string) ($customAnswersInput[$field['id']] ?? ''));
+                if ($val === '') {
+                    $errMsg = "Pertanyaan '" . $field['label'] . "' wajib diisi.";
+                    if ($request->ajax() || $request->wantsJson()) {
+                        return response()->json(['success' => false, 'message' => $errMsg], 422);
+                    }
+                    return back()->with('error', $errMsg);
+                }
+            }
+        }
+
+        $primaryAnswer = null;
+        if (!empty($customAnswersInput)) {
+            $primaryAnswer = collect($customAnswersInput)->values()->filter(fn($v) => trim((string)$v) !== '')->implode(' | ');
+        }
+        if (empty($primaryAnswer) && $request->filled('custom_question_answer')) {
+            $primaryAnswer = $request->input('custom_question_answer');
+        }
 
         // Normalize phone number to Fonnte format (starts with 62)
         if (isset($validated['phone'])) {
@@ -566,36 +602,38 @@ class PublicEventController extends Controller
             return back()->with('error', $message);
         }
 
-        return DB::transaction(function () use ($event, $category, $validated, $promo, $discount) {
+        return DB::transaction(function () use ($event, $category, $validated, $promo, $discount, $primaryAnswer, $customAnswersInput) {
             $subtotal = $category->price * $validated['quantity'];
             $totalAmount = max(0, $subtotal - $discount);
             $referenceNo = 'TX-' . date('Ymd') . '-' . strtoupper(Str::random(6));
 
             $notifPrefs = [
-                'notif_wa'    => filter_var($validated['notif_wa'] ?? true, FILTER_VALIDATE_BOOLEAN),
-                'notif_email' => filter_var($validated['notif_email'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                'notif_wa'       => filter_var($validated['notif_wa'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                'notif_email'    => filter_var($validated['notif_email'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                'custom_answers' => $customAnswersInput,
             ];
 
             // If 100% Promo Discount or 0 Rupiah, issue E-Voucher directly without payment gateway
             if ($totalAmount <= 0) {
                 $transaction = Transaction::create([
-                    'tenant_id'          => $event->tenant_id,
-                    'event_id'           => $event->id,
-                    'ticket_category_id' => $category->id,
-                    'quantity'           => $validated['quantity'],
-                    'promo_code_id'      => $promo?->id,
-                    'reference_no'       => $referenceNo,
-                    'customer_name'      => $validated['name'],
-                    'customer_email'     => $validated['email'],
-                    'customer_phone'     => $validated['phone'],
-                    'customer_nik'       => $validated['nik'],
-                    'discount_amount'    => $discount,
-                    'total_amount'       => 0,
-                    'payment_status'     => 'paid',
-                    'payment_method'     => 'promo',
-                    'payment_reference'  => json_encode($notifPrefs),
-                    'paid_at'            => now(),
-                    'channel'            => 'online',
+                    'tenant_id'             => $event->tenant_id,
+                    'event_id'              => $event->id,
+                    'ticket_category_id'    => $category->id,
+                    'quantity'              => $validated['quantity'],
+                    'promo_code_id'         => $promo?->id,
+                    'reference_no'          => $referenceNo,
+                    'customer_name'         => $validated['name'],
+                    'customer_email'        => $validated['email'],
+                    'customer_phone'        => $validated['phone'],
+                    'customer_nik'          => $validated['nik'],
+                    'customer_umroh_answer' => $primaryAnswer,
+                    'discount_amount'       => $discount,
+                    'total_amount'          => 0,
+                    'payment_status'        => 'paid',
+                    'payment_method'        => 'promo',
+                    'payment_reference'     => json_encode($notifPrefs),
+                    'paid_at'               => now(),
+                    'channel'               => 'online',
                 ]);
 
                 if ($promo) {
@@ -620,22 +658,23 @@ class PublicEventController extends Controller
 
             // Create Transaction Record (Status: Pending for paid transactions)
             $transaction = Transaction::create([
-                'tenant_id' => $event->tenant_id,
-                'event_id' => $event->id,
-                'ticket_category_id' => $category->id,
-                'quantity' => $validated['quantity'],
-                'promo_code_id' => $promo?->id,
-                'reference_no' => $referenceNo,
-                'customer_name' => $validated['name'],
-                'customer_email' => $validated['email'],
-                'customer_phone' => $validated['phone'],
-                'customer_nik' => $validated['nik'],
-                'discount_amount' => $discount,
-                'total_amount' => $totalAmount,
-                'payment_status'       => 'pending', // Initial status
-                'payment_method'       => 'WAGO',
-                'payment_reference'    => json_encode($notifPrefs),
-                'channel'              => 'online',
+                'tenant_id'             => $event->tenant_id,
+                'event_id'              => $event->id,
+                'ticket_category_id'    => $category->id,
+                'quantity'              => $validated['quantity'],
+                'promo_code_id'         => $promo?->id,
+                'reference_no'          => $referenceNo,
+                'customer_name'         => $validated['name'],
+                'customer_email'        => $validated['email'],
+                'customer_phone'        => $validated['phone'],
+                'customer_nik'          => $validated['nik'],
+                'customer_umroh_answer' => $primaryAnswer,
+                'discount_amount'       => $discount,
+                'total_amount'          => $totalAmount,
+                'payment_status'        => 'pending', // Initial status
+                'payment_method'        => 'WAGO',
+                'payment_reference'     => json_encode($notifPrefs),
+                'channel'               => 'online',
             ]);
 
             if ($promo) {
@@ -700,6 +739,12 @@ class PublicEventController extends Controller
         }
 
         $proofs = $event->getRegistrationProofs();
+        $genderSetting = $event->getAttendeeGenderSetting();
+        $genderRule = match ($genderSetting) {
+            'disabled' => 'nullable|string|max:50',
+            'general'  => 'required|in:laki-laki,perempuan,ikhwan,akhwat,male,female',
+            default    => 'required|in:ikhwan,akhwat,laki-laki,perempuan',
+        };
 
         $rules = [
             'ticket_category_id' => 'required|exists:ticket_categories,id',
@@ -708,8 +753,9 @@ class PublicEventController extends Controller
             'email'              => 'required|email|max:255',
             'attendees'          => 'required|array|size:' . $request->input('quantity', 1),
             'attendees.*.name'   => 'required|string|max:255',
-            'attendees.*.gender' => 'required|in:ikhwan,akhwat',
+            'attendees.*.gender' => $genderRule,
             'attendees.*.umroh_answer' => 'nullable|string|max:500',
+            'attendees.*.custom_answers' => 'nullable|array',
         ];
 
         $messages = [];
@@ -731,6 +777,29 @@ class PublicEventController extends Controller
         }
 
         $validated = $validator->validated();
+
+        // Custom Questions Validation per attendee for Free Event
+        $customFields = $event->getCustomFields();
+        foreach ($validated['attendees'] as $aIdx => $attendee) {
+            $attCustom = $attendee['custom_answers'] ?? [];
+            if (!is_array($attCustom)) $attCustom = [];
+            if (empty($attCustom) && !empty($attendee['umroh_answer']) && !empty($customFields)) {
+                $firstId = $customFields[0]['id'] ?? 'umroh_answer';
+                $attCustom[$firstId] = $attendee['umroh_answer'];
+            }
+            foreach ($customFields as $field) {
+                if (!empty($field['is_required'])) {
+                    $val = trim((string) ($attCustom[$field['id']] ?? ''));
+                    if ($val === '') {
+                        $pesertaNo = $aIdx + 1;
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Peserta {$pesertaNo}: Pertanyaan '{$field['label']}' wajib diisi."
+                        ], 422);
+                    }
+                }
+            }
+        }
 
         // Normalize phone number to Fonnte format (starts with 62)
         if (isset($validated['phone'])) {
@@ -789,6 +858,11 @@ class PublicEventController extends Controller
             $referenceNo = 'FREE-' . date('Ymd') . '-' . strtoupper(Str::random(6));
 
             $firstAttendee = $validated['attendees'][0];
+            $firstAttCustom = $firstAttendee['custom_answers'] ?? [];
+            if (!is_array($firstAttCustom)) $firstAttCustom = [];
+            $firstAttSummary = !empty($firstAttCustom)
+                ? collect($firstAttCustom)->values()->filter(fn($v) => trim((string)$v) !== '')->implode(' | ')
+                : ($firstAttendee['umroh_answer'] ?? null);
 
             // Create Transaction: immediately paid (free event)
             $transaction = Transaction::create([
@@ -801,8 +875,8 @@ class PublicEventController extends Controller
                 'customer_email'       => $validated['email'],
                 'customer_phone'       => $validated['phone'],
                 'customer_nik'         => null,
-                'customer_gender'      => $firstAttendee['gender'],
-                'customer_umroh_answer'=> $firstAttendee['umroh_answer'] ?? null,
+                'customer_gender'      => $firstAttendee['gender'] ?? null,
+                'customer_umroh_answer'=> $firstAttSummary,
                 'discount_amount'      => 0,
                 'total_amount'         => 0,
                 'payment_status'       => 'paid',
@@ -814,6 +888,12 @@ class PublicEventController extends Controller
             // Create Tickets immediately
             for ($i = 0; $i < $validated['quantity']; $i++) {
                 $attendee = $validated['attendees'][$i];
+                $attCustom = $attendee['custom_answers'] ?? [];
+                if (!is_array($attCustom)) $attCustom = [];
+                $attSummary = !empty($attCustom)
+                    ? collect($attCustom)->values()->filter(fn($v) => trim((string)$v) !== '')->implode(' | ')
+                    : ($attendee['umroh_answer'] ?? null);
+
                 $ticket = Ticket::create([
                     'tenant_id'          => $event->tenant_id,
                     'event_id'           => $event->id,
@@ -822,14 +902,15 @@ class PublicEventController extends Controller
                     'ticket_code'        => 'GTX-' . strtoupper(Str::random(10)),
                     'status'             => 'sold',
                     'visitor_data'       => [
-                        'name'         => $attendee['name'],
-                        'gender'       => $attendee['gender'],
-                        'umroh_answer' => $attendee['umroh_answer'] ?? null,
-                        'email'        => $validated['email'],
-                        'phone'        => $validated['phone'],
-                        'proof_ig'     => $proofIgPath,
-                        'proof_review' => $proofReviewPath,
-                        'proofs'       => $uploadedProofs,
+                        'name'           => $attendee['name'],
+                        'gender'         => $attendee['gender'] ?? null,
+                        'umroh_answer'   => $attSummary,
+                        'custom_answers' => $attCustom,
+                        'email'          => $validated['email'],
+                        'phone'          => $validated['phone'],
+                        'proof_ig'       => $proofIgPath,
+                        'proof_review'   => $proofReviewPath,
+                        'proofs'         => $uploadedProofs,
                     ]
                 ]);
 

@@ -265,7 +265,23 @@
                                 <span class="text-slate-700 font-bold capitalize">{{ $ticket->visitor_data['gender'] }}</span>
                             </div>
                             @endif
-                            @if(isset($ticket->visitor_data['umroh_answer']) && $ticket->visitor_data['umroh_answer'])
+                            @php
+                                $evoCustomFields = method_exists($transaction->event, 'getCustomFields') ? $transaction->event->getCustomFields() : [];
+                                $evoAnswers = is_array($ticket->visitor_data['custom_answers'] ?? null) ? $ticket->visitor_data['custom_answers'] : [];
+                            @endphp
+                            @if(!empty($evoCustomFields))
+                                @foreach($evoCustomFields as $cf)
+                                    @php
+                                        $cfVal = $evoAnswers[$cf['id']] ?? ($ticket->visitor_data['umroh_answer'] ?? ($transaction->customer_umroh_answer ?? null));
+                                    @endphp
+                                    @if($cfVal)
+                                        <div class="flex justify-between items-center text-xs">
+                                            <span class="text-slate-400 font-medium">{{ $cf['label'] }}</span>
+                                            <span class="text-slate-700 font-bold">{{ is_array($cfVal) ? implode(', ', $cfVal) : $cfVal }}</span>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            @elseif(isset($ticket->visitor_data['umroh_answer']) && $ticket->visitor_data['umroh_answer'])
                             <div class="flex justify-between items-center text-xs">
                                 <span class="text-slate-400 font-medium">{{ $transaction->event->meta['custom_question_text'] ?? 'Umroh Batik Travel' }}</span>
                                 <span class="text-slate-700 font-bold">{{ $ticket->visitor_data['umroh_answer'] }}</span>

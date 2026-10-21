@@ -246,7 +246,13 @@
                                                  class="w-full h-full object-cover">
                                         </div>
                                         <div class="min-w-0">
-                                            <div class="font-bold text-slate-900 text-sm truncate event-title-{{ $event->id }}">{{ $event->name }}</div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-bold text-slate-900 text-sm truncate event-title-{{ $event->id }}">{{ $event->name }}</span>
+                                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 shrink-0 border border-slate-200">
+                                                    <span>{{ $event->type_icon }}</span>
+                                                    <span>{{ $event->type_label }}</span>
+                                                </span>
+                                            </div>
                                             <div class="flex items-center gap-2 text-[11px] text-slate-400 font-semibold mt-0.5">
                                                 <span>ID: #{{ $event->id }}</span>
                                                 <span>&bull;</span>

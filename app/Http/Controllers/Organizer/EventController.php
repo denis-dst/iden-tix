@@ -77,13 +77,17 @@ class EventController extends Controller
             'event_start_date' => 'required|date',
             'event_end_date' => 'required|date|after_or_equal:event_start_date',
             'background_image' => 'nullable|image|max:10240',
+            'type' => 'nullable|string|in:concert,sport,festival,seminar,other',
             'security_code' => 'nullable|string|size:6',
             'is_free' => 'nullable|boolean',
             'max_tickets_per_transaction' => 'nullable|integer|min:1',
+            'custom_question_enabled' => 'nullable|boolean',
             'umroh_question_enabled' => 'nullable|boolean',
             'custom_question_text' => 'nullable|string|max:255',
             'custom_question_type' => 'nullable|in:text,select',
             'custom_question_options' => 'nullable|string',
+            'attendee_gender_type' => 'nullable|in:disabled,general,islamic',
+            'custom_fields_json' => 'nullable|string',
             'evoucher_info' => 'nullable|string',
             'purchase_flow' => 'required|in:redeem,evoucher,print,both',
             'thermal_paper_width_mm' => 'nullable|integer|min:40|max:120',
@@ -104,12 +108,11 @@ class EventController extends Controller
             'evoucher_page_mode' => 'nullable|in:1_page,multi_page',
         ]);
 
+        $validated['type'] = $request->input('type', 'concert');
         $validated['is_free'] = $request->boolean('is_free');
         $validated['max_tickets_per_transaction'] = $request->input('is_free') ? $request->integer('max_tickets_per_transaction', 1) : 1;
-        $validated['umroh_question_enabled'] = $request->boolean('umroh_question_enabled');
         $validated['thermal_paper_width_mm'] = $request->integer('thermal_paper_width_mm', 80);
         $validated['thermal_paper_height_mm'] = $request->integer('thermal_paper_height_mm', 160);
-
 
         $validated['tenant_id'] = auth()->user()->tenant_id;
         $validated['status'] = 'draft';
@@ -120,18 +123,21 @@ class EventController extends Controller
         $meta['registration_proofs'] = $proofs;
         $meta['proof_ig_required'] = collect($proofs)->first(fn($p) => $p['id'] === 'proof_ig')['is_required'] ?? false;
         $meta['proof_review_required'] = collect($proofs)->first(fn($p) => $p['id'] === 'proof_review')['is_required'] ?? false;
-        if ($validated['umroh_question_enabled']) {
-            $meta['custom_question_text'] = $request->input('custom_question_text', 'Alumni Grup Keberangkatan Tanggal Berapa?');
-            $meta['custom_question_type'] = $request->input('custom_question_type', 'text');
-            if ($meta['custom_question_type'] === 'select') {
-                $optionsStr = $request->input('custom_question_options', '');
-                $optionsArray = collect(explode("\n", $optionsStr))
-                    ->map(fn($o) => trim($o))
-                    ->filter()
-                    ->values()
-                    ->all();
-                $meta['custom_question_options'] = $optionsArray;
-            }
+
+        $customFields = $this->parseCustomFields($request);
+        $meta['custom_fields'] = $customFields;
+        $meta['attendee_gender_type'] = $request->input('attendee_gender_type', 'general');
+
+        if (!empty($customFields)) {
+            $validated['umroh_question_enabled'] = true;
+            $meta['custom_question_text'] = $customFields[0]['label'];
+            $meta['custom_question_type'] = $customFields[0]['type'];
+            $meta['custom_question_placeholder'] = $customFields[0]['placeholder'] ?? '';
+            $meta['custom_question_helper'] = $customFields[0]['helper_text'] ?? '';
+            $meta['custom_question_options'] = $customFields[0]['options'] ?? [];
+        } else {
+            $validated['umroh_question_enabled'] = false;
+            unset($meta['custom_question_text'], $meta['custom_question_type'], $meta['custom_question_placeholder'], $meta['custom_question_helper'], $meta['custom_question_options']);
         }
         $validated['meta'] = $meta;
         unset(
@@ -145,7 +151,9 @@ class EventController extends Controller
             $validated['wristband_custom_background_base64'],
             $validated['wristband_columns_json'],
             $validated['proof_ig_required'],
-            $validated['proof_review_required']
+            $validated['proof_review_required'],
+            $validated['attendee_gender_type'],
+            $validated['custom_fields_json']
         );
         
         if (empty($validated['security_code'])) {
@@ -188,13 +196,17 @@ class EventController extends Controller
             'event_end_date' => 'required|date|after_or_equal:event_start_date',
             'status' => 'required|in:draft,published,cancelled',
             'background_image' => 'nullable|image|max:10240',
+            'type' => 'nullable|string|in:concert,sport,festival,seminar,other',
             'security_code' => 'required|string|size:6',
             'is_free' => 'nullable|boolean',
             'max_tickets_per_transaction' => 'nullable|integer|min:1',
+            'custom_question_enabled' => 'nullable|boolean',
             'umroh_question_enabled' => 'nullable|boolean',
             'custom_question_text' => 'nullable|string|max:255',
             'custom_question_type' => 'nullable|in:text,select',
             'custom_question_options' => 'nullable|string',
+            'custom_fields_json' => 'nullable|string',
+            'attendee_gender_type' => 'nullable|in:disabled,general,islamic',
             'evoucher_info' => 'nullable|string',
             'purchase_flow' => 'required|in:redeem,evoucher,print,both',
             'thermal_paper_width_mm' => 'nullable|integer|min:40|max:120',
@@ -215,9 +227,9 @@ class EventController extends Controller
             'evoucher_page_mode' => 'nullable|in:1_page,multi_page',
         ]);
 
+        $validated['type'] = $request->input('type', $event->type ?? 'concert');
         $validated['is_free'] = $request->boolean('is_free');
         $validated['max_tickets_per_transaction'] = $request->input('is_free') ? $request->integer('max_tickets_per_transaction', 1) : 1;
-        $validated['umroh_question_enabled'] = $request->boolean('umroh_question_enabled');
         $validated['thermal_paper_width_mm'] = $request->integer('thermal_paper_width_mm', 80);
         $validated['thermal_paper_height_mm'] = $request->integer('thermal_paper_height_mm', 160);
 
@@ -226,22 +238,21 @@ class EventController extends Controller
         $meta['registration_proofs'] = $proofs;
         $meta['proof_ig_required'] = collect($proofs)->first(fn($p) => $p['id'] === 'proof_ig')['is_required'] ?? false;
         $meta['proof_review_required'] = collect($proofs)->first(fn($p) => $p['id'] === 'proof_review')['is_required'] ?? false;
-        if ($validated['umroh_question_enabled']) {
-            $meta['custom_question_text'] = $request->input('custom_question_text', 'Alumni Grup Keberangkatan Tanggal Berapa?');
-            $meta['custom_question_type'] = $request->input('custom_question_type', 'text');
-            if ($meta['custom_question_type'] === 'select') {
-                $optionsStr = $request->input('custom_question_options', '');
-                $optionsArray = collect(explode("\n", $optionsStr))
-                    ->map(fn($o) => trim($o))
-                    ->filter()
-                    ->values()
-                    ->all();
-                $meta['custom_question_options'] = $optionsArray;
-            } else {
-                unset($meta['custom_question_options']);
-            }
+
+        $customFields = $this->parseCustomFields($request);
+        $meta['custom_fields'] = $customFields;
+        $meta['attendee_gender_type'] = $request->input('attendee_gender_type', 'general');
+
+        if (!empty($customFields)) {
+            $validated['umroh_question_enabled'] = true;
+            $meta['custom_question_text'] = $customFields[0]['label'];
+            $meta['custom_question_type'] = $customFields[0]['type'];
+            $meta['custom_question_placeholder'] = $customFields[0]['placeholder'] ?? '';
+            $meta['custom_question_helper'] = $customFields[0]['helper_text'] ?? '';
+            $meta['custom_question_options'] = $customFields[0]['options'] ?? [];
         } else {
-            unset($meta['custom_question_text'], $meta['custom_question_type'], $meta['custom_question_options']);
+            $validated['umroh_question_enabled'] = false;
+            unset($meta['custom_question_text'], $meta['custom_question_type'], $meta['custom_question_placeholder'], $meta['custom_question_helper'], $meta['custom_question_options']);
         }
         $validated['meta'] = $meta;
         unset(
@@ -253,7 +264,11 @@ class EventController extends Controller
             $validated['wristband_mode'],
             $validated['wristband_custom_background'],
             $validated['wristband_custom_background_base64'],
-            $validated['wristband_columns_json']
+            $validated['wristband_columns_json'],
+            $validated['proof_ig_required'],
+            $validated['proof_review_required'],
+            $validated['attendee_gender_type'],
+            $validated['custom_fields_json']
         );
 
         if ($request->hasFile('background_image')) {
@@ -355,6 +370,67 @@ class EventController extends Controller
         }
         return $proofs;
     }
+
+    /**
+     * Parse customizable registration/transaction questions from the request.
+     */
+    private function parseCustomFields(Request $request): array
+    {
+        $customFields = [];
+        if ($request->filled('custom_fields_json')) {
+            $decoded = json_decode($request->input('custom_fields_json'), true);
+            if (is_array($decoded)) {
+                foreach ($decoded as $idx => $field) {
+                    $label = trim((string) ($field['label'] ?? ''));
+                    if ($label === '') {
+                        continue;
+                    }
+                    $fType = in_array($field['type'] ?? 'text', ['text', 'textarea', 'select', 'number'], true) ? $field['type'] : 'text';
+                    $options = [];
+                    if ($fType === 'select') {
+                        $optsRaw = $field['options'] ?? '';
+                        if (is_array($optsRaw)) {
+                            $options = array_values(array_filter(array_map('trim', $optsRaw)));
+                        } else {
+                            $options = array_values(array_filter(array_map('trim', explode("\n", (string) $optsRaw))));
+                        }
+                    }
+                    $customFields[] = [
+                        'id' => !empty($field['id']) ? $field['id'] : ('cf_' . ($idx + 1) . '_' . \Illuminate\Support\Str::random(4)),
+                        'label' => $label,
+                        'type' => $fType,
+                        'placeholder' => trim((string) ($field['placeholder'] ?? '')),
+                        'helper_text' => trim((string) ($field['helper_text'] ?? '')),
+                        'options' => $options,
+                        'is_required' => isset($field['is_required']) ? filter_var($field['is_required'], FILTER_VALIDATE_BOOLEAN) : false,
+                    ];
+                }
+                return $customFields;
+            }
+        }
+
+        if (($request->boolean('umroh_question_enabled') || $request->boolean('custom_question_enabled')) && $request->filled('custom_question_text')) {
+            $label = $request->input('custom_question_text');
+            $fType = in_array($request->input('custom_question_type', 'text'), ['text', 'textarea', 'select', 'number'], true) ? $request->input('custom_question_type', 'text') : 'text';
+            $options = [];
+            if ($fType === 'select') {
+                $optionsStr = $request->input('custom_question_options', '');
+                $options = array_values(array_filter(array_map('trim', explode("\n", $optionsStr))));
+            }
+            $customFields[] = [
+                'id' => 'umroh_answer',
+                'label' => $label,
+                'type' => $fType,
+                'placeholder' => trim((string) $request->input('custom_question_placeholder', '')),
+                'helper_text' => trim((string) $request->input('custom_question_helper', '')),
+                'options' => $options,
+                'is_required' => false,
+            ];
+        }
+
+        return $customFields;
+    }
+
 
     /**
      * Internal helper to perform a complete duplication of an event and all its related entities:

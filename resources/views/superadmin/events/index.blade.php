@@ -53,7 +53,13 @@
                                     @endif
                                 </div>
                                 <div class="min-w-0">
-                                    <div class="font-black text-slate-800 text-sm font-outfit truncate group-hover:text-orange-600 transition-colors">{{ $event->name }}</div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="font-black text-slate-800 text-sm font-outfit truncate group-hover:text-orange-600 transition-colors">{{ $event->name }}</span>
+                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 shrink-0 border border-slate-200">
+                                            <span>{{ $event->type_icon }}</span>
+                                            <span>{{ $event->type_label }}</span>
+                                        </span>
+                                    </div>
                                     <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate mt-0.5">{{ $event->city }}, {{ $event->venue }}</div>
                                 </div>
                             </div>

@@ -128,6 +128,69 @@
                                 class="w-full rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition">
                         </div>
 
+                        <!-- Tipe Event -->
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Tipe Event *</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" x-data="{ selectedType: '{{ old('type', $event->type ?? 'concert') }}' }">
+                                <input type="hidden" name="type" :value="selectedType">
+                                
+                                <!-- Konser Musik -->
+                                <button type="button" @click="selectedType = 'concert'"
+                                        :class="selectedType === 'concert' ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-200 text-orange-950 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'"
+                                        class="p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between h-24">
+                                    <span class="text-2xl">🎵</span>
+                                    <div>
+                                        <p class="text-xs font-black">Konser Musik</p>
+                                        <p class="text-[10px] text-slate-400 font-medium">Live, Band, Festival</p>
+                                    </div>
+                                </button>
+
+                                <!-- Olahraga -->
+                                <button type="button" @click="selectedType = 'sport'"
+                                        :class="selectedType === 'sport' ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-200 text-orange-950 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'"
+                                        class="p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between h-24">
+                                    <span class="text-2xl">⚽</span>
+                                    <div>
+                                        <p class="text-xs font-black">Olahraga</p>
+                                        <p class="text-[10px] text-slate-400 font-medium">Pertandingan & Liga</p>
+                                    </div>
+                                </button>
+
+                                <!-- Festival & Expo -->
+                                <button type="button" @click="selectedType = 'festival'"
+                                        :class="selectedType === 'festival' ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-200 text-orange-950 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'"
+                                        class="p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between h-24">
+                                    <span class="text-2xl">🎪</span>
+                                    <div>
+                                        <p class="text-xs font-black">Festival & Expo</p>
+                                        <p class="text-[10px] text-slate-400 font-medium">Pameran & Bazaar</p>
+                                    </div>
+                                </button>
+
+                                <!-- Seminar & Workshop -->
+                                <button type="button" @click="selectedType = 'seminar'"
+                                        :class="selectedType === 'seminar' ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-200 text-orange-950 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'"
+                                        class="p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between h-24">
+                                    <span class="text-2xl">🎓</span>
+                                    <div>
+                                        <p class="text-xs font-black">Seminar</p>
+                                        <p class="text-[10px] text-slate-400 font-medium">Workshop & Talkshow</p>
+                                    </div>
+                                </button>
+
+                                <!-- Lainnya -->
+                                <button type="button" @click="selectedType = 'other'"
+                                        :class="selectedType === 'other' ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-200 text-orange-950 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'"
+                                        class="p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between h-24 col-span-2 sm:col-span-1">
+                                    <span class="text-2xl">✨</span>
+                                    <div>
+                                        <p class="text-xs font-black">Acara Lainnya</p>
+                                        <p class="text-[10px] text-slate-400 font-medium">Gathering, Religi, dsb</p>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Event
                                 Description</label>
@@ -328,11 +391,220 @@
                                         min="60" max="300"
                                         class="w-full rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500 py-2.5 px-4 font-bold">
                                 </div>
+                                              @php
+                            $currentGender = old('attendee_gender_type', $event->getAttendeeGenderSetting());
+                            $existingCustomFields = $event->getCustomFields();
+                            $rawCustomFields = old('custom_fields_json') ? json_decode(old('custom_fields_json'), true) : $existingCustomFields;
+                            if (!is_array($rawCustomFields)) {
+                                $rawCustomFields = [];
+                            }
+                            $formattedExistingFields = array_map(function($f) {
+                                return [
+                                    'id' => $f['id'] ?? ('cf_' . \Illuminate\Support\Str::random(6)),
+                                    'label' => $f['label'] ?? '',
+                                    'type' => $f['type'] ?? 'text',
+                                    'placeholder' => $f['placeholder'] ?? '',
+                                    'helper_text' => $f['helper_text'] ?? '',
+                                    'options' => is_array($f['options'] ?? null) ? implode("\n", $f['options']) : ($f['options'] ?? ''),
+                                    'is_required' => !empty($f['is_required']),
+                                ];
+                            }, $rawCustomFields);
+
+                            if (empty($formattedExistingFields) && old('custom_question_text')) {
+                                $formattedExistingFields = [[
+                                    'id' => 'cf_1',
+                                    'label' => old('custom_question_text', ''),
+                                    'type' => old('custom_question_type', 'text'),
+                                    'placeholder' => old('custom_question_placeholder', ''),
+                                    'helper_text' => old('custom_question_helper', ''),
+                                    'options' => old('custom_question_options', ''),
+                                    'is_required' => false,
+                                ]];
+                            }
+                        @endphp
+
+                        {{-- ============================================================
+                             CUSTOM QUESTIONS & ATTENDEE GENDER SETTINGS
+                             ============================================================ --}}
+                        <div class="pt-6 border-t-2 border-dashed border-amber-200 space-y-4"
+                             x-data="{
+                                questionEnabled: {{ old('custom_question_enabled', ($event->umroh_question_enabled || !empty($formattedExistingFields)) ? 1 : 0) ? 'true' : 'false' }},
+                                genderSetting: '{{ $currentGender }}',
+                                questions: @js($formattedExistingFields),
+                                addQuestion() {
+                                    this.questions.push({
+                                        id: 'cf_' + Math.random().toString(36).substr(2, 7),
+                                        label: '',
+                                        type: 'text',
+                                        placeholder: '',
+                                        helper_text: '',
+                                        options: '',
+                                        is_required: true
+                                    });
+                                },
+                                removeQuestion(idx) {
+                                    this.questions.splice(idx, 1);
+                                }
+                             }">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="text-sm font-black text-slate-700 uppercase tracking-[0.18em]">📋 Kustomisasi Data & Pertanyaan Peserta</h4>
+                                    <p class="text-xs text-slate-400 mt-0.5">Atur pilihan gender dan pertanyaan kustom mandiri yang harus diisi peserta saat checkout.</p>
+                                </div>
+                            </div>
+
+                            <!-- Pengaturan Format Gender Peserta -->
+                            <div class="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                                <div>
+                                    <h4 class="text-xs font-black text-slate-800 uppercase tracking-widest font-outfit flex items-center gap-2">
+                                        <span>👥</span> Pilihan Gender Peserta
+                                    </h4>
+                                    <p class="text-xs text-slate-500 mt-0.5">Tentukan bagaimana pilihan gender ditampilkan pada form pendaftaran tiket:</p>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                                    <!-- Option: general -->
+                                    <label class="relative flex flex-col p-3.5 border-2 rounded-xl cursor-pointer transition hover:border-slate-400 select-none"
+                                           :class="genderSetting === 'general' ? 'border-emerald-600 bg-emerald-50/60 shadow-sm' : 'border-slate-200 bg-white'">
+                                        <div class="flex items-center gap-2.5 mb-1.5">
+                                            <input type="radio" name="attendee_gender_type" value="general" x-model="genderSetting" class="sr-only">
+                                            <div class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0"
+                                                 :class="genderSetting === 'general' ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300 bg-white'">
+                                                <div class="w-1.5 h-1.5 rounded-full bg-white" x-show="genderSetting === 'general'"></div>
+                                            </div>
+                                            <span class="text-xs font-black text-slate-800">👨 / 👩 Umum</span>
+                                        </div>
+                                        <p class="text-[11px] text-slate-500 leading-snug pl-6.5">Laki-laki & Perempuan (Cocok untuk seminar, festival, konser, expo).</p>
+                                    </label>
+
+                                    <!-- Option: islamic -->
+                                    <label class="relative flex flex-col p-3.5 border-2 rounded-xl cursor-pointer transition hover:border-slate-400 select-none"
+                                           :class="genderSetting === 'islamic' ? 'border-amber-600 bg-amber-50/60 shadow-sm' : 'border-slate-200 bg-white'">
+                                        <div class="flex items-center gap-2.5 mb-1.5">
+                                            <input type="radio" name="attendee_gender_type" value="islamic" x-model="genderSetting" class="sr-only">
+                                            <div class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0"
+                                                 :class="genderSetting === 'islamic' ? 'border-amber-600 bg-amber-600' : 'border-slate-300 bg-white'">
+                                                <div class="w-1.5 h-1.5 rounded-full bg-white" x-show="genderSetting === 'islamic'"></div>
+                                            </div>
+                                            <span class="text-xs font-black text-slate-800">🧔 / 🧕 Islami</span>
+                                        </div>
+                                        <p class="text-[11px] text-slate-500 leading-snug pl-6.5">Ikhwan & Akhwat (Khusus kajian, majelis taklim, atau kegiatan Islami).</p>
+                                    </label>
+
+                                    <!-- Option: disabled -->
+                                    <label class="relative flex flex-col p-3.5 border-2 rounded-xl cursor-pointer transition hover:border-slate-400 select-none"
+                                           :class="genderSetting === 'disabled' ? 'border-indigo-600 bg-indigo-50/60 shadow-sm' : 'border-slate-200 bg-white'">
+                                        <div class="flex items-center gap-2.5 mb-1.5">
+                                            <input type="radio" name="attendee_gender_type" value="disabled" x-model="genderSetting" class="sr-only">
+                                            <div class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0"
+                                                 :class="genderSetting === 'disabled' ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300 bg-white'">
+                                                <div class="w-1.5 h-1.5 rounded-full bg-white" x-show="genderSetting === 'disabled'"></div>
+                                            </div>
+                                            <span class="text-xs font-black text-slate-800">🚫 Dinonaktifkan</span>
+                                        </div>
+                                        <p class="text-[11px] text-slate-500 leading-snug pl-6.5">Tidak menanyakan gender (Cocok untuk lomba hewan, kontes, komunitas).</p>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Custom Question Toggle -->
+                            <label class="flex items-center gap-4 p-5 border-2 rounded-2xl cursor-pointer transition hover:border-amber-400"
+                                   :class="questionEnabled ? 'border-amber-500 bg-amber-50/70' : 'border-slate-200 bg-slate-50'">
+                                <div class="relative shrink-0">
+                                    <input type="checkbox" name="custom_question_enabled" id="custom_question_enabled_edit" value="1" 
+                                           x-model="questionEnabled"
+                                           class="sr-only">
+                                    <div :class="questionEnabled ? 'bg-amber-500' : 'bg-slate-300'" class="w-12 h-6 rounded-full transition-colors duration-200">
+                                        <div :class="questionEnabled ? 'translate-x-6' : 'translate-x-1'" class="w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-200 mt-1"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-black text-slate-800">Aktifkan Pertanyaan Custom Data Peserta</p>
+                                    <p class="text-xs text-slate-500">Customer mengisi data pertanyaan tambahan saat registrasi (misal: NIK, Ukuran Kaos, Asal Instansi, Nama Hewan, dsb)</p>
+                                </div>
+                            </label>
+
+                            <input type="hidden" name="custom_fields_json" :value="questionEnabled ? JSON.stringify(questions) : '[]'">
+                            <input type="hidden" name="umroh_question_enabled" :value="questionEnabled && questions.length > 0 ? 1 : 0">
+
+                            <!-- Question List Cards -->
+                            <div x-show="questionEnabled" x-cloak class="p-5 bg-amber-50/60 border border-amber-200 rounded-2xl space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-black text-amber-900 uppercase tracking-wider font-outfit">Daftar Pertanyaan Peserta</span>
+                                    <button type="button" 
+                                            @click="addQuestion()"
+                                            class="px-3.5 py-1.5 bg-amber-600 text-white rounded-xl text-xs font-black uppercase hover:bg-amber-700 transition flex items-center gap-1 shadow-sm">
+                                        <span>+ Tambah Pertanyaan</span>
+                                    </button>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <template x-for="(q, idx) in questions" :key="q.id || idx">
+                                        <div class="p-4 bg-white border border-amber-200 rounded-2xl space-y-3 relative shadow-xs">
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-xs font-black text-slate-800 uppercase tracking-wider" x-text="'Pertanyaan #' + (idx + 1)"></span>
+                                                <button type="button" 
+                                                        @click="removeQuestion(idx)" 
+                                                        class="text-slate-400 hover:text-rose-600 transition text-xs font-bold flex items-center gap-1">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                    <span>Hapus</span>
+                                                </button>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                <div class="md:col-span-2">
+                                                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Teks / Label Pertanyaan <span class="text-rose-500">*</span></label>
+                                                    <input type="text" x-model="q.label" placeholder="Contoh: Ukuran Kaos / Asal Komunitas / Nama & Ras Kucing" class="w-full text-xs rounded-xl border-slate-200 focus:border-amber-500 focus:ring-amber-500 font-bold py-2.5 px-3 text-slate-800">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Tipe Input</label>
+                                                    <select x-model="q.type" class="w-full text-xs rounded-xl border-slate-200 focus:border-amber-500 focus:ring-amber-500 font-bold py-2.5 px-3 text-slate-800 bg-white">
+                                                        <option value="text">Teks Singkat (Input)</option>
+                                                        <option value="textarea">Teks Panjang (Textarea)</option>
+                                                        <option value="select">Pilihan Dropdown (Select)</option>
+                                                        <option value="number">Angka (Number)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div x-show="q.type === 'select'" x-cloak class="p-3 bg-amber-50/50 rounded-xl border border-amber-200/60">
+                                                <label class="block text-[10px] font-black text-amber-900 uppercase tracking-widest mb-1">Pilihan Dropdown (Satu opsi per baris)</label>
+                                                <textarea x-model="q.options" rows="3" placeholder="Contoh:&#10;S (Small)&#10;M (Medium)&#10;L (Large)&#10;XL (Extra Large)" class="w-full text-xs rounded-xl border-slate-200 focus:border-amber-500 focus:ring-amber-500 font-medium py-2 px-3 text-slate-800"></textarea>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div>
+                                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Teks Placeholder (Opsional)</label>
+                                                    <input type="text" x-model="q.placeholder" placeholder="Contoh: Tuliskan jawaban Anda..." class="w-full text-xs rounded-xl border-slate-200 focus:border-amber-500 focus:ring-amber-500 font-medium py-2 px-3 text-slate-600">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Petunjuk Tambahan (Opsional)</label>
+                                                    <input type="text" x-model="q.helper_text" placeholder="Contoh: Wajib diisi sesuai KTP" class="w-full text-xs rounded-xl border-slate-200 focus:border-amber-500 focus:ring-amber-500 font-medium py-2 px-3 text-slate-600">
+                                                </div>
+                                            </div>
+
+                                            <div class="pt-1">
+                                                <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                                                    <input type="checkbox" x-model="q.is_required" class="w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500">
+                                                    <span class="text-xs font-bold text-slate-700">Wajib diisi oleh customer saat transaksi</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    <div x-show="questions.length === 0" class="p-6 text-center border-2 border-dashed border-amber-200 rounded-2xl bg-white/70">
+                                        <p class="text-xs text-slate-400 font-medium">Belum ada pertanyaan kustom ditambahkan.</p>
+                                        <button type="button" @click="addQuestion()" class="mt-2 text-xs font-bold text-amber-600 hover:underline">Tambah Pertanyaan Pertama</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
+                        {{-- ============================================================
+                             FREE EVENT OPTIONS
+                             ============================================================ --}}
                         <div class="pt-4 border-t-2 border-dashed border-emerald-100 space-y-4"
-                            x-data="{ isFree: {{ $event->is_free ? 'true' : 'false' }}, questionEnabled: {{ old('umroh_question_enabled', $event->umroh_question_enabled ?? 0) ? 'true' : 'false' }}, questionType: '{{ old('custom_question_type', $event->meta['custom_question_type'] ?? 'text') }}' }">
+                            x-data="{ isFree: {{ $event->is_free ? 'true' : 'false' }} }">
                             <div>
                                 <h3 class="text-sm font-black text-slate-700 uppercase tracking-[0.18em]">⚡ Mode Event
                                 </h3>
@@ -371,53 +643,7 @@
                                     class="w-full rounded-xl border-slate-200 focus:border-emerald-500 focus:ring-emerald-500 transition py-2.5 px-4 font-bold">
                                 <p class="text-[10px] text-slate-400 mt-1">Batasi berapa tiket yang dapat dipesan dalam
                                     satu pendaftaran gratis.</p>
-                            </div>
-
-                            <!-- Umroh Question Option (shown if is_free) -->
-                            <div x-show="isFree" x-cloak
-                                class="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-4">
-                                <label class="flex items-start gap-4 cursor-pointer">
-                                    <input type="checkbox" name="umroh_question_enabled"
-                                        id="umroh_question_enabled_edit" value="1" x-model="questionEnabled" {{ $event->umroh_question_enabled ? 'checked' : '' }}
-                                        class="w-5 h-5 mt-0.5 rounded border-amber-300 text-amber-600 focus:ring-amber-500">
-                                    <div>
-                                        <p class="text-sm font-black text-amber-800">🕌 Aktifkan Pertanyaan Custom
-                                            (Alumni Umroh / Lainnya)</p>
-                                        <p class="text-xs text-amber-600 mt-0.5">Tambahkan pertanyaan tambahan dinamis
-                                            untuk diisi peserta saat mendaftar.</p>
-                                    </div>
-                                </label>
-
-                                <div x-show="questionEnabled" x-cloak
-                                    class="pt-4 border-t border-amber-200/50 space-y-4">
-                                    <div>
-                                        <label
-                                            class="block text-xs font-bold text-amber-800 uppercase tracking-widest mb-1.5 font-outfit">Teks
-                                            Pertanyaan</label>
-                                        <input type="text" name="custom_question_text"
-                                            value="{{ old('custom_question_text', $event->meta['custom_question_text'] ?? 'Alumni Grup Keberangkatan Tanggal Berapa?') }}"
-                                            class="w-full rounded-xl border-slate-200 focus:border-amber-500 focus:ring-amber-500 py-2.5 px-4 font-bold text-sm text-slate-700">
-                                    </div>
-                                    <div>
-                                        <label
-                                            class="block text-xs font-bold text-amber-800 uppercase tracking-widest mb-1.5 font-outfit">Tipe
-                                            Jawaban</label>
-                                        <select name="custom_question_type" x-model="questionType"
-                                            class="w-full rounded-xl border-slate-200 focus:border-amber-500 focus:ring-amber-500 text-sm font-bold py-2.5 px-4 text-slate-700">
-                                            <option value="text">Teks Bebas (Text Input)</option>
-                                            <option value="select">Pilihan List (Dropdown)</option>
-                                        </select>
-                                    </div>
-                                    <div x-show="questionType === 'select'" x-cloak>
-                                        <label
-                                            class="block text-xs font-bold text-amber-800 uppercase tracking-widest mb-1.5 font-outfit">Pilihan
-                                            List (Satu per baris)</label>
-                                        <textarea name="custom_question_options" rows="3"
-                                            placeholder="Contoh:&#10;Keberangkatan Januari 2026&#10;Keberangkatan Februari 2026&#10;Belum Pernah Umroh"
-                                            class="w-full rounded-xl border-slate-200 focus:border-amber-500 focus:ring-amber-500 py-2.5 px-4 font-bold text-sm text-slate-700">{{ old('custom_question_options', isset($event->meta['custom_question_options']) ? implode("\n", $event->meta['custom_question_options']) : '') }}</textarea>
-                                    </div>
-                                </div>
-                            </div>
+                            </div>            </div>
 
                             <!-- Verification Options (shown if is_free) -->
                             <div x-show="isFree" x-cloak

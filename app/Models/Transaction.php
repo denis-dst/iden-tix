@@ -25,6 +25,25 @@ class Transaction extends Model
         'paid_at' => 'datetime',
     ];
 
+    protected static function booted()
+    {
+        static::updated(function ($transaction) {
+            $syncData = [];
+            if ($transaction->wasChanged('event_id')) {
+                $syncData['event_id'] = $transaction->event_id;
+            }
+            if ($transaction->wasChanged('ticket_category_id')) {
+                $syncData['ticket_category_id'] = $transaction->ticket_category_id;
+            }
+            if ($transaction->wasChanged('tenant_id')) {
+                $syncData['tenant_id'] = $transaction->tenant_id;
+            }
+            if (!empty($syncData)) {
+                $transaction->tickets()->update($syncData);
+            }
+        });
+    }
+
     public function category()
     {
         return $this->belongsTo(TicketCategory::class, 'ticket_category_id');

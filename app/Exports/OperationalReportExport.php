@@ -10,29 +10,85 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 
 class OperationalReportExport implements FromCollection, WithHeadings, WithTitle, ShouldAutoSize
 {
+    private Collection $rows;
+    private string $title;
+    private array $customQuestionLabels;
+
     public function __construct(
-        private readonly Collection $rows,
-        private readonly string $title = 'Laporan Pendaftar',
-    ) {}
+        Collection $rows,
+        string $title = 'Laporan Pendaftar',
+    ) {
+        $this->rows = $rows;
+        $this->title = $title;
+
+        // Extract all unique custom question labels configured across the rows
+        $this->customQuestionLabels = $this->rows->flatMap(function (array $row) {
+            return collect($row['custom_fields'] ?? [])->pluck('label');
+        })->unique()->filter()->values()->all();
+    }
 
     public function collection(): Collection
     {
         return $this->rows->values()->map(function (array $row, int $index) {
-            return [
+            $record = [
                 $index + 1,
+                $row['ticket_code'] ?? '-',
+                $row['reference_no'] ?? '-',
                 $row['name'] ?? '-',
                 $this->formatGender($row['gender'] ?? null),
                 $row['phone'] ?? '-',
                 $row['email'] ?? '-',
-                $row['custom_question_label'] ?? '-',
-                $row['umroh_answer'] ?? '-',
             ];
+
+            if (!empty($this->customQuestionLabels)) {
+                $customMap = collect($row['custom_fields'] ?? [])->pluck('value', 'label');
+                foreach ($this->customQuestionLabels as $label) {
+                    $val = $customMap->get($label);
+                    $record[] = ($val !== null && $val !== '') ? $val : '-';
+                }
+            } else {
+                $record[] = $row['custom_question_label'] ?? '-';
+                $record[] = $row['umroh_answer'] ?? '-';
+            }
+
+            $record[] = $row['event_name'] ?? '-';
+            $record[] = $row['category_name'] ?? '-';
+            $record[] = strtoupper((string) ($row['status'] ?? '-'));
+            $record[] = !empty($row['first_checkin_at']) && method_exists($row['first_checkin_at'], 'format')
+                ? $row['first_checkin_at']->format('d/m/Y H:i')
+                : '-';
+
+            return $record;
         });
     }
 
     public function headings(): array
     {
-        return ['Nomor', 'Nama', 'Gender', 'No WA', 'Email', 'Pertanyaan Custom', 'Jawaban Custom'];
+        $headers = [
+            'Nomor',
+            'Kode Tiket',
+            'No Invoice',
+            'Nama Peserta',
+            'Gender',
+            'No WA',
+            'Email',
+        ];
+
+        if (!empty($this->customQuestionLabels)) {
+            foreach ($this->customQuestionLabels as $label) {
+                $headers[] = $label;
+            }
+        } else {
+            $headers[] = 'Pertanyaan Custom';
+            $headers[] = 'Jawaban Custom';
+        }
+
+        $headers[] = 'Event';
+        $headers[] = 'Kategori Tiket';
+        $headers[] = 'Status';
+        $headers[] = 'Waktu Checkin';
+
+        return $headers;
     }
 
     public function title(): string
@@ -42,14 +98,17 @@ class OperationalReportExport implements FromCollection, WithHeadings, WithTitle
 
     private function formatGender(?string $gender): string
     {
-        if ($gender === 'ikhwan') {
-            return 'Ikhwan';
+        if (!$gender) {
+            return '-';
         }
 
-        if ($gender === 'akhwat') {
-            return 'Akhwat';
-        }
-
-        return $gender ? ucfirst($gender) : '-';
+        $g = strtolower(trim($gender));
+        return match ($g) {
+            'ikhwan' => 'Ikhwan',
+            'akhwat' => 'Akhwat',
+            'laki-laki', 'male' => 'Laki-laki',
+            'perempuan', 'female' => 'Perempuan',
+            default => ucfirst($gender),
+        };
     }
 }

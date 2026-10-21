@@ -60,10 +60,11 @@ class EventController extends Controller
             'wristband_mode' => 'nullable|in:default,custom',
             'wristband_custom_background' => 'nullable|image|max:10240',
             'wristband_custom_background_base64' => 'nullable|string',
-            'wristband_columns_json' => 'nullable|string',
+            'type' => 'nullable|string|in:concert,sport,festival,seminar,other',
             'terms_conditions' => 'nullable|string',
         ]);
 
+        $validated['type'] = $request->input('type', 'concert');
         $validated['slug'] = Str::slug($validated['name']) . '-' . rand(1000, 9999);
         $validated['meta'] = $this->buildWristbandMeta($request);
         unset(
@@ -127,9 +128,10 @@ class EventController extends Controller
             'wristband_mode' => 'nullable|in:default,custom',
             'wristband_custom_background' => 'nullable|image|max:10240',
             'wristband_custom_background_base64' => 'nullable|string',
-            'wristband_columns_json' => 'nullable|string',
+            'type' => 'nullable|string|in:concert,sport,festival,seminar,other',
             'terms_conditions' => 'nullable|string',
         ]);
+        $validated['type'] = $request->input('type', $event->type ?? 'concert');
         $validated['meta'] = $this->buildWristbandMeta($request, $event->meta ?? []);
         unset(
             $validated['wristband_league_name'],

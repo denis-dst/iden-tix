@@ -298,18 +298,19 @@ class GateController extends Controller
                 ->get();
 
             if ($ticketsInGroup->count() > 1) {
-                $attendeesList = $ticketsInGroup->map(function ($t) {
+                $attendeesList = $ticketsInGroup->map(function ($t) use ($event, $transaction) {
                     $tLastLog = $t->gateLogs->first();
                     $isCheckedIn = $tLastLog && $tLastLog->type === 'IN';
                     return [
                         'ticket_id' => $t->id,
                         'ticket_code' => $t->ticket_code,
-                        'name' => $t->visitor_data['name'] ?? $t->transaction->customer_name,
+                        'name' => $t->visitor_data['name'] ?? $transaction->customer_name,
                         'gender' => $t->visitor_data['gender'] ?? null,
                         'is_checked_in' => $isCheckedIn,
                         'category' => $t->category->name ?? '-',
                         'checked_in_at' => ($isCheckedIn && $tLastLog->scanned_at) ? $tLastLog->scanned_at->timezone('Asia/Jakarta')->format('H:i:s d-m-Y') : null,
                         'checked_in_by' => ($isCheckedIn && $tLastLog->scanner) ? $tLastLog->scanner->name : ($tLastLog->gate_name ?? null),
+                        'custom_fields' => $this->formatCustomFields($event, $t),
                     ];
                 });
 
@@ -361,6 +362,9 @@ class GateController extends Controller
                 'message' => 'Berhasil ' . ($request->mode === 'IN' ? 'Check-in' : 'Check-out'),
                 'customer' => $ticket->visitor_data['name'] ?? $ticket->transaction->customer_name,
                 'category' => $ticket->category->name ?? '-',
+                'ticket_code' => $ticket->ticket_code,
+                'reference_no' => $ticket->transaction->reference_no ?? null,
+                'custom_fields' => $this->formatCustomFields($event, $ticket),
                 'in_count' => $inCount,
                 'out_count' => $outCount,
                 'occupancy' => max(0, $inCount - $outCount)
@@ -395,6 +399,7 @@ class GateController extends Controller
                 ->groupBy('ticket_id');
 
             $insertRows = [];
+            $redeemedTicketIds = [];
 
             foreach ($ticketIds as $ticketId) {
                 $ticketLogs = $existingLogs->get($ticketId);
@@ -405,6 +410,7 @@ class GateController extends Controller
                     if ($alreadyInState) {
                         continue;
                     }
+                    $redeemedTicketIds[] = $ticketId;
                 } else {
                     $hasIn = $ticketLogs && $ticketLogs->contains('type', 'IN');
                     if (!$hasIn || $alreadyInState) {
@@ -428,8 +434,17 @@ class GateController extends Controller
             }
 
             if (!empty($insertRows)) {
-                DB::transaction(function () use ($insertRows) {
+                DB::transaction(function () use ($insertRows, $redeemedTicketIds, $now) {
                     GateLog::insert($insertRows);
+
+                    if (!empty($redeemedTicketIds)) {
+                        Ticket::whereIn('id', $redeemedTicketIds)
+                            ->where('status', 'sold')
+                            ->update([
+                                'status' => 'redeemed',
+                                'redeemed_at' => $now,
+                            ]);
+                    }
                 });
             }
 
@@ -458,5 +473,154 @@ class GateController extends Controller
                 'message' => 'Error: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Format all participant registration data and custom fields for gate scanner display.
+     */
+    private function formatCustomFields(Event $event, Ticket $ticket): array
+    {
+        $visitorData = is_array($ticket->visitor_data) ? $ticket->visitor_data : [];
+        $customAnswers = $visitorData['custom_answers'] ?? [];
+        $transaction = $ticket->transaction;
+        $formatted = [];
+
+        // 1. WhatsApp / Phone
+        $phone = $visitorData['phone'] ?? ($transaction->customer_phone ?? null);
+        if (!empty($phone) && $phone !== '-') {
+            $formatted[] = [
+                'label' => 'WhatsApp / No. HP',
+                'value' => (string) $phone,
+            ];
+        }
+
+        // 2. Email
+        $email = $visitorData['email'] ?? ($transaction->customer_email ?? null);
+        if (!empty($email) && $email !== '-') {
+            $formatted[] = [
+                'label' => 'Email',
+                'value' => (string) $email,
+            ];
+        }
+
+        // 3. NIK / No. Identitas
+        $nik = $visitorData['nik'] ?? ($transaction->customer_nik ?? null);
+        if (!empty($nik) && $nik !== '-') {
+            $formatted[] = [
+                'label' => 'NIK / Identitas',
+                'value' => (string) $nik,
+            ];
+        }
+
+        // 4. Gender (if enabled and present)
+        $genderSetting = $event->getAttendeeGenderSetting();
+        $gender = $visitorData['gender'] ?? ($transaction->customer_gender ?? null);
+        if ($genderSetting !== 'disabled' && !empty($gender)) {
+            $g = strtolower(trim($gender));
+            $genderLabel = match($g) {
+                'ikhwan' => '🧔 Ikhwan',
+                'akhwat' => '🧕 Akhwat',
+                'laki-laki' => '👨 Laki-laki',
+                'perempuan' => '👩 Perempuan',
+                default => ucfirst($gender)
+            };
+            $formatted[] = [
+                'label' => 'Gender',
+                'value' => $genderLabel
+            ];
+        }
+
+        // 5. Dynamic Custom Registration Fields (e.g. Nama Kucing, Ras, Umur, etc.)
+        $processedFieldIds = [];
+        $customFields = $event->getCustomFields();
+        if (!empty($customFields)) {
+            foreach ($customFields as $field) {
+                $fId = $field['id'];
+                $processedFieldIds[] = $fId;
+                $val = $customAnswers[$fId] ?? null;
+                if (($val === null || $val === '') && $fId === 'umroh_answer') {
+                    $val = $visitorData['umroh_answer'] ?? ($transaction->customer_umroh_answer ?? null);
+                }
+                if ($val !== null && $val !== '') {
+                    $formatted[] = [
+                        'label' => $field['label'],
+                        'value' => is_array($val) ? implode(', ', $val) : (string) $val
+                    ];
+                }
+            }
+        } elseif (!empty($visitorData['umroh_answer']) || !empty($transaction->customer_umroh_answer)) {
+            $ans = $visitorData['umroh_answer'] ?? $transaction->customer_umroh_answer;
+            $formatted[] = [
+                'label' => $event->meta['custom_question_text'] ?? 'Jawaban Khusus',
+                'value' => (string) $ans
+            ];
+            $processedFieldIds[] = 'umroh_answer';
+        }
+
+        // 6. Any other custom answers in visitor_data not explicitly defined in customFields
+        if (is_array($customAnswers)) {
+            foreach ($customAnswers as $key => $val) {
+                if (!in_array($key, $processedFieldIds) && $val !== null && $val !== '') {
+                    $label = ucwords(str_replace(['_', '-'], ' ', $key));
+                    $formatted[] = [
+                        'label' => $label,
+                        'value' => is_array($val) ? implode(', ', $val) : (string) $val
+                    ];
+                }
+            }
+        }
+
+        // 7. Uploaded Proofs (e.g. Bukti Review Google, Bukti Follow IG)
+        $proofs = $visitorData['proofs'] ?? [];
+        if (!empty($proofs) && is_array($proofs)) {
+            foreach ($proofs as $pKey => $pPath) {
+                if (!empty($pPath)) {
+                    $label = match($pKey) {
+                        'proof_ig' => 'Bukti Follow IG',
+                        'proof_review' => 'Bukti Review Google',
+                        default => ucwords(str_replace(['_', '-'], ' ', $pKey))
+                    };
+                    $formatted[] = [
+                        'label' => $label,
+                        'value' => basename($pPath),
+                        'url' => asset('storage/' . $pPath),
+                        'is_file' => true,
+                    ];
+                }
+            }
+        } else {
+            if (!empty($visitorData['proof_ig'])) {
+                $formatted[] = [
+                    'label' => 'Bukti Follow IG',
+                    'value' => basename($visitorData['proof_ig']),
+                    'url' => asset('storage/' . $visitorData['proof_ig']),
+                    'is_file' => true,
+                ];
+            }
+            if (!empty($visitorData['proof_review'])) {
+                $formatted[] = [
+                    'label' => 'Bukti Review Google',
+                    'value' => basename($visitorData['proof_review']),
+                    'url' => asset('storage/' . $visitorData['proof_review']),
+                    'is_file' => true,
+                ];
+            }
+        }
+
+        // 8. Ticket Code & Invoice Reference
+        if (!empty($ticket->ticket_code)) {
+            $formatted[] = [
+                'label' => 'Kode Tiket',
+                'value' => $ticket->ticket_code,
+            ];
+        }
+        if (!empty($transaction?->reference_no)) {
+            $formatted[] = [
+                'label' => 'No. Invoice',
+                'value' => $transaction->reference_no,
+            ];
+        }
+
+        return $formatted;
     }
 }

@@ -77,7 +77,10 @@
 </head>
 <body class="text-slate-800" x-data="{
     isFreeEvent: {{ $event->is_free ? 'true' : 'false' }},
+    attendeeGenderType: '{{ $event->getAttendeeGenderSetting() }}',
     umrohQuestionEnabled: {{ $event->umroh_question_enabled ? 'true' : 'false' }},
+    customFields: @js($event->getCustomFields()),
+    customAnswers: {},
     proofs: @js($event->getRegistrationProofs()),
     step: 1,
     selectedCategory: null,
@@ -194,7 +197,20 @@
                 alert(this.lang === 'id' ? 'Silakan masukkan nomor WhatsApp.' : 'Please enter WhatsApp number.');
                 return;
             }
-            this.attendees = Array.from({length: this.quantity}, () => ({name: '', gender: '', umroh_answer: ''}));
+            this.attendees = Array.from({length: this.quantity}, () => {
+                const defaultAnswers = {};
+                if (Array.isArray(this.customFields)) {
+                    this.customFields.forEach(f => {
+                        defaultAnswers[f.id] = '';
+                    });
+                }
+                return {
+                    name: '',
+                    gender: '',
+                    umroh_answer: '',
+                    custom_answers: defaultAnswers
+                };
+            });
             this.currentAttendee = 0;
         } else {
             if (this.nik.length < 16) {
@@ -220,12 +236,47 @@
         if (!this.email) { return; }
         const missingProof = this.proofs.some(p => p.is_required && !this.uploadedProofs[p.id]);
         if (missingProof) { return; }
-        const invalid = this.attendees.some((a) => !a.name || !a.gender);
+
+        const invalid = this.attendees.some((a) => {
+            if (!a.name) return true;
+            if (this.attendeeGenderType !== 'disabled' && !a.gender) return true;
+            if (Array.isArray(this.customFields)) {
+                for (const f of this.customFields) {
+                    if (f.is_required) {
+                        const ans = (a.custom_answers?.[f.id] ?? '').toString().trim();
+                        if (!ans) return true;
+                    }
+                }
+            }
+            return false;
+        });
+
         if (invalid) {
-            const firstIdx = this.attendees.findIndex(a => !a.name || !a.gender);
+            const firstIdx = this.attendees.findIndex((a) => {
+                if (!a.name) return true;
+                if (this.attendeeGenderType !== 'disabled' && !a.gender) return true;
+                if (Array.isArray(this.customFields)) {
+                    for (const f of this.customFields) {
+                        if (f.is_required) {
+                            const ans = (a.custom_answers?.[f.id] ?? '').toString().trim();
+                            if (!ans) return true;
+                        }
+                    }
+                }
+                return false;
+            });
             if (firstIdx !== -1) this.currentAttendee = firstIdx;
             return;
         }
+
+        // Keep umroh_answer synced with first custom field for backwards compatibility
+        this.attendees.forEach(a => {
+            if (Array.isArray(this.customFields) && this.customFields.length > 0) {
+                const firstId = this.customFields[0].id;
+                a.umroh_answer = a.custom_answers?.[firstId] || a.umroh_answer || '';
+            }
+        });
+
         this.isSubmitting = true;
         try {
             const formData = new FormData();
@@ -265,8 +316,26 @@
 
     async submitBooking() {
         if (!this.selectedCategory) return;
+
+        // Validasi pertanyaan custom untuk event berbayar
+        if (Array.isArray(this.customFields)) {
+            for (const f of this.customFields) {
+                if (f.is_required) {
+                    const ans = (this.customAnswers[f.id] ?? '').toString().trim();
+                    if (!ans) {
+                        alert((f.label || 'Pertanyaan') + ' wajib diisi.');
+                        return;
+                    }
+                }
+            }
+        }
+
         this.isSubmitting = true;
         try {
+            const firstAnswer = (Array.isArray(this.customFields) && this.customFields.length > 0)
+                ? (this.customAnswers[this.customFields[0].id] || '')
+                : '';
+
             const response = await fetch('{{ route('checkout.process', $event->slug) }}', {
                 method: 'POST',
                 headers: {
@@ -285,7 +354,9 @@
                     promo_code_id: this.appliedPromoId,
                     discount_amount: this.discount,
                     notif_wa: this.notifWA,
-                    notif_email: this.notifEmail
+                    notif_email: this.notifEmail,
+                    custom_answers: this.customAnswers,
+                    custom_question_answer: firstAnswer
                 })
             });
 
@@ -395,7 +466,11 @@
                             class="w-full aspect-[2/1] object-contain rounded-3xl shadow-2xl shadow-purple-200 transition duration-500 group-hover:scale-[1.02] bg-slate-100" alt="{{ $event->name }}">
                        
                         
-                        <div class="absolute top-4 left-4">
+                        <div class="absolute top-4 left-4 flex flex-wrap items-center gap-2">
+                            <span class="px-3 py-1 bg-slate-900/85 backdrop-blur-md text-white text-[10px] font-black rounded-lg shadow-lg flex items-center gap-1.5 border border-white/10">
+                                <span>{{ $event->type_icon }}</span>
+                                <span>{{ $event->type_label }}</span>
+                            </span>
                             @if($event->is_free)
                                 <span class="px-3 py-1 bg-emerald-500 text-white text-[10px] font-black rounded-lg shadow-lg flex items-center gap-1">
                                     <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
@@ -410,6 +485,12 @@
                         </div>
                     </div>
                     <div class="flex-1 space-y-4">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                <span>{{ $event->type_icon }}</span>
+                                <span>{{ $event->type_label }}</span>
+                            </span>
+                        </div>
                         <div class="flex justify-between items-start">
                             <h1 class="text-2xl lg:text-3xl font-black text-slate-900 font-outfit">{{ $event->name }}</h1>
                             <div class="flex gap-2">
@@ -779,65 +860,165 @@
                                         </div>
 
                                         <!-- Gender -->
-                                        <div>
-                                            <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="formTouched && !attendees[currentAttendee].gender ? 'text-rose-500' : 'text-slate-400'">Gender *</label>
-                                            <div class="grid grid-cols-2 gap-3">
-                                                <!-- Ikhwan -->
-                                                <label :class="attendees[currentAttendee].gender === 'ikhwan' ? 'border-blue-500 bg-blue-50 text-blue-700' : (formTouched && !attendees[currentAttendee].gender ? 'border-rose-300 bg-rose-50/30 text-slate-600' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-blue-300')"
-                                                       class="flex items-center gap-3 p-3 border-2 rounded-xl cursor-pointer transition-all">
-                                                    <input type="radio" x-model="attendees[currentAttendee].gender" value="ikhwan" class="sr-only">
-                                                    <div :class="attendees[currentAttendee].gender === 'ikhwan' ? 'bg-blue-500' : 'bg-slate-200'" class="w-4 h-4 rounded-full flex items-center justify-center shrink-0 transition-all">
-                                                        <div x-show="attendees[currentAttendee].gender === 'ikhwan'" class="w-2 h-2 bg-white rounded-full"></div>
-                                                    </div>
-                                                    <div>
-                                                        <div class="text-sm font-black">🧔 Ikhwan</div>
-                                                        <div class="text-[9px] font-medium opacity-60">Laki-laki</div>
-                                                    </div>
-                                                </label>
-                                                <!-- Akhwat -->
-                                                <label :class="attendees[currentAttendee].gender === 'akhwat' ? 'border-pink-500 bg-pink-50 text-pink-700' : (formTouched && !attendees[currentAttendee].gender ? 'border-rose-300 bg-rose-50/30 text-slate-600' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-pink-300')"
-                                                       class="flex items-center gap-3 p-3 border-2 rounded-xl cursor-pointer transition-all">
-                                                    <input type="radio" x-model="attendees[currentAttendee].gender" value="akhwat" class="sr-only">
-                                                    <div :class="attendees[currentAttendee].gender === 'akhwat' ? 'bg-pink-500' : 'bg-slate-200'" class="w-4 h-4 rounded-full flex items-center justify-center shrink-0 transition-all">
-                                                        <div x-show="attendees[currentAttendee].gender === 'akhwat'" class="w-2 h-2 bg-white rounded-full"></div>
-                                                    </div>
-                                                    <div>
-                                                        <div class="text-sm font-black">🧕 Akhwat</div>
-                                                        <div class="text-[9px] font-medium opacity-60">Perempuan</div>
-                                                    </div>
-                                                </label>
-                                            </div>
+                                        <div x-show="attendeeGenderType !== 'disabled'">
+                                            <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="formTouched && !attendees[currentAttendee].gender ? 'text-rose-500' : 'text-slate-400'">Pilihan Gender *</label>
+
+                                            <!-- Islamic Gender Options -->
+                                            <template x-if="attendeeGenderType === 'islamic'">
+                                                <div class="grid grid-cols-2 gap-3">
+                                                    <!-- Ikhwan -->
+                                                    <label :class="attendees[currentAttendee].gender === 'ikhwan' ? 'border-amber-500 bg-amber-50 text-amber-800' : (formTouched && !attendees[currentAttendee].gender ? 'border-rose-300 bg-rose-50/30 text-slate-600' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-amber-300')"
+                                                           class="flex items-center gap-3 p-3 border-2 rounded-xl cursor-pointer transition-all">
+                                                        <input type="radio" x-model="attendees[currentAttendee].gender" value="ikhwan" class="sr-only">
+                                                        <div :class="attendees[currentAttendee].gender === 'ikhwan' ? 'bg-amber-600' : 'bg-slate-200'" class="w-4 h-4 rounded-full flex items-center justify-center shrink-0 transition-all">
+                                                            <div x-show="attendees[currentAttendee].gender === 'ikhwan'" class="w-2 h-2 bg-white rounded-full"></div>
+                                                        </div>
+                                                        <div>
+                                                            <div class="text-sm font-black">🧔 Ikhwan</div>
+                                                            <div class="text-[9px] font-medium opacity-60">Laki-laki</div>
+                                                        </div>
+                                                    </label>
+                                                    <!-- Akhwat -->
+                                                    <label :class="attendees[currentAttendee].gender === 'akhwat' ? 'border-pink-500 bg-pink-50 text-pink-700' : (formTouched && !attendees[currentAttendee].gender ? 'border-rose-300 bg-rose-50/30 text-slate-600' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-pink-300')"
+                                                           class="flex items-center gap-3 p-3 border-2 rounded-xl cursor-pointer transition-all">
+                                                        <input type="radio" x-model="attendees[currentAttendee].gender" value="akhwat" class="sr-only">
+                                                        <div :class="attendees[currentAttendee].gender === 'akhwat' ? 'bg-pink-500' : 'bg-slate-200'" class="w-4 h-4 rounded-full flex items-center justify-center shrink-0 transition-all">
+                                                            <div x-show="attendees[currentAttendee].gender === 'akhwat'" class="w-2 h-2 bg-white rounded-full"></div>
+                                                        </div>
+                                                        <div>
+                                                            <div class="text-sm font-black">🧕 Akhwat</div>
+                                                            <div class="text-[9px] font-medium opacity-60">Perempuan</div>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            </template>
+
+                                            <!-- General Gender Options -->
+                                            <template x-if="attendeeGenderType === 'general'">
+                                                <div class="grid grid-cols-2 gap-3">
+                                                    <!-- Laki-laki -->
+                                                    <label :class="attendees[currentAttendee].gender === 'laki-laki' ? 'border-blue-500 bg-blue-50 text-blue-700' : (formTouched && !attendees[currentAttendee].gender ? 'border-rose-300 bg-rose-50/30 text-slate-600' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-blue-300')"
+                                                           class="flex items-center gap-3 p-3 border-2 rounded-xl cursor-pointer transition-all">
+                                                        <input type="radio" x-model="attendees[currentAttendee].gender" value="laki-laki" class="sr-only">
+                                                        <div :class="attendees[currentAttendee].gender === 'laki-laki' ? 'bg-blue-500' : 'bg-slate-200'" class="w-4 h-4 rounded-full flex items-center justify-center shrink-0 transition-all">
+                                                            <div x-show="attendees[currentAttendee].gender === 'laki-laki'" class="w-2 h-2 bg-white rounded-full"></div>
+                                                        </div>
+                                                        <div>
+                                                            <div class="text-sm font-black">👨 Laki-laki</div>
+                                                            <div class="text-[9px] font-medium opacity-60">Pria</div>
+                                                        </div>
+                                                    </label>
+                                                    <!-- Perempuan -->
+                                                    <label :class="attendees[currentAttendee].gender === 'perempuan' ? 'border-pink-500 bg-pink-50 text-pink-700' : (formTouched && !attendees[currentAttendee].gender ? 'border-rose-300 bg-rose-50/30 text-slate-600' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-pink-300')"
+                                                           class="flex items-center gap-3 p-3 border-2 rounded-xl cursor-pointer transition-all">
+                                                        <input type="radio" x-model="attendees[currentAttendee].gender" value="perempuan" class="sr-only">
+                                                        <div :class="attendees[currentAttendee].gender === 'perempuan' ? 'bg-pink-500' : 'bg-slate-200'" class="w-4 h-4 rounded-full flex items-center justify-center shrink-0 transition-all">
+                                                            <div x-show="attendees[currentAttendee].gender === 'perempuan'" class="w-2 h-2 bg-white rounded-full"></div>
+                                                        </div>
+                                                        <div>
+                                                            <div class="text-sm font-black">👩 Perempuan</div>
+                                                            <div class="text-[9px] font-medium opacity-60">Wanita</div>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            </template>
+
                                             <p x-show="formTouched && !attendees[currentAttendee].gender" x-cloak class="mt-2 text-[10px] font-bold text-rose-500 flex items-center gap-1">
                                                 <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
                                                 Pilih gender wajib
                                             </p>
                                         </div>
 
-                                        <!-- Pertanyaan Umroh (conditional) -->
-                                        <div x-show="umrohQuestionEnabled" class="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-2">
-                                            @php
-                                                $qText = $event->meta['custom_question_text'] ?? 'Alumni Grup Keberangkatan Tanggal Berapa?';
-                                                $qType = $event->meta['custom_question_type'] ?? 'text';
-                                                $qOptions = $event->meta['custom_question_options'] ?? [];
-                                            @endphp
-                                            <label class="block text-[10px] font-black text-amber-700 uppercase tracking-widest text-left">
-                                                🕌 {{ $qText }}
-                                            </label>
-                                            @if($qType === 'select')
-                                                <select x-model="attendees[currentAttendee].umroh_answer"
-                                                        class="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-amber-400 outline-none transition text-slate-800">
-                                                    <option value="" disabled selected>Pilih salah satu...</option>
-                                                    @foreach($qOptions as $opt)
-                                                        <option value="{{ $opt }}">{{ $opt }}</option>
-                                                    @endforeach
-                                                </select>
-                                            @else
-                                                <p class="text-[10px] text-amber-600 text-left">Jika lebih dari 1X, Maka bisa diisi keberangkatan paling terakhir</p>
-                                                <input type="text" x-model="attendees[currentAttendee].umroh_answer"
-                                                       placeholder="Contoh: 13 Januari 2024"
-                                                       class="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-amber-400 outline-none transition text-slate-800">
-                                            @endif
-                                        </div>
+                                        <!-- Pertanyaan Kustom Transaksi / Tambahan Peserta -->
+                                        <template x-if="customFields.length > 0">
+                                            <div class="space-y-3 pt-2">
+                                                <template x-for="(field, fIdx) in customFields" :key="field.id">
+                                                    <div class="p-4 bg-amber-50/70 border border-amber-200/80 rounded-2xl space-y-2">
+                                                        <label class="block text-xs font-black text-amber-900 tracking-wide text-left">
+                                                            <span x-text="field.label"></span>
+                                                            <span x-show="field.is_required" class="text-rose-500 font-bold">*</span>
+                                                        </label>
+
+                                                        <p x-show="field.helper_text" class="text-[11px] text-amber-800/80 italic -mt-1 text-left" x-text="field.helper_text"></p>
+
+                                                        <!-- Select Dropdown -->
+                                                        <template x-if="field.type === 'select'">
+                                                            <select x-model="attendees[currentAttendee].custom_answers[field.id]"
+                                                                    :required="field.is_required"
+                                                                    @change="if(fIdx === 0) attendees[currentAttendee].umroh_answer = $event.target.value"
+                                                                    class="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-amber-400 outline-none transition text-slate-800">
+                                                                <option value="" disabled selected>Pilih salah satu...</option>
+                                                                <template x-for="opt in (field.options || [])" :key="opt">
+                                                                    <option :value="opt" x-text="opt"></option>
+                                                                </template>
+                                                            </select>
+                                                        </template>
+
+                                                        <!-- Textarea -->
+                                                        <template x-if="field.type === 'textarea'">
+                                                            <textarea x-model="attendees[currentAttendee].custom_answers[field.id]"
+                                                                      :required="field.is_required"
+                                                                      @input="if(fIdx === 0) attendees[currentAttendee].umroh_answer = $event.target.value"
+                                                                      :placeholder="field.placeholder || 'Jawaban Anda...'"
+                                                                      rows="3"
+                                                                      class="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-amber-400 outline-none transition text-slate-800"></textarea>
+                                                        </template>
+
+                                                        <!-- Number -->
+                                                        <template x-if="field.type === 'number'">
+                                                            <input type="number" x-model="attendees[currentAttendee].custom_answers[field.id]"
+                                                                   :required="field.is_required"
+                                                                   @input="if(fIdx === 0) attendees[currentAttendee].umroh_answer = $event.target.value"
+                                                                   :placeholder="field.placeholder || '0'"
+                                                                   class="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-amber-400 outline-none transition text-slate-800">
+                                                        </template>
+
+                                                        <!-- Text (Default) -->
+                                                        <template x-if="field.type === 'text' || !field.type">
+                                                            <input type="text" x-model="attendees[currentAttendee].custom_answers[field.id]"
+                                                                   :required="field.is_required"
+                                                                   @input="if(fIdx === 0) attendees[currentAttendee].umroh_answer = $event.target.value"
+                                                                   :placeholder="field.placeholder || 'Jawaban Anda...'"
+                                                                   class="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-amber-400 outline-none transition text-slate-800">
+                                                        </template>
+
+                                                        <p x-show="formTouched && field.is_required && (!attendees[currentAttendee].custom_answers || !attendees[currentAttendee].custom_answers[field.id] || !attendees[currentAttendee].custom_answers[field.id].toString().trim())" 
+                                                           x-cloak class="mt-1 text-[10px] font-bold text-rose-500 flex items-center gap-1">
+                                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                                                            <span x-text="field.label + ' wajib diisi'"></span>
+                                                        </p>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+
+                                        <!-- Legacy Umroh Question (Fallback if customFields is empty but umrohQuestionEnabled is true) -->
+                                        <template x-if="customFields.length === 0 && umrohQuestionEnabled">
+                                            <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-2">
+                                                @php
+                                                    $qText = $event->meta['custom_question_text'] ?? 'Alumni Grup Keberangkatan Tanggal Berapa?';
+                                                    $qType = $event->meta['custom_question_type'] ?? 'text';
+                                                    $qOptions = $event->meta['custom_question_options'] ?? [];
+                                                @endphp
+                                                <label class="block text-[10px] font-black text-amber-700 uppercase tracking-widest text-left">
+                                                    🕌 {{ $qText }}
+                                                </label>
+                                                @if($qType === 'select')
+                                                    <select x-model="attendees[currentAttendee].umroh_answer"
+                                                            class="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-amber-400 outline-none transition text-slate-800">
+                                                        <option value="" disabled selected>Pilih salah satu...</option>
+                                                        @foreach($qOptions as $opt)
+                                                            <option value="{{ $opt }}">{{ $opt }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                @else
+                                                    <p class="text-[10px] text-amber-600 text-left">Jika lebih dari 1X, Maka bisa diisi keberangkatan paling terakhir</p>
+                                                    <input type="text" x-model="attendees[currentAttendee].umroh_answer"
+                                                           placeholder="Contoh: 13 Januari 2024"
+                                                           class="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-amber-400 outline-none transition text-slate-800">
+                                                @endif
+                                            </div>
+                                        </template>
                                     </div>
 
                                     <!-- Navigation buttons within form -->
@@ -866,7 +1047,7 @@
                                         </div>
 
                                         <!-- Validation Error Summary -->
-                                        <div x-show="formTouched && (!email || proofs.some(p => p.is_required && !uploadedProofs[p.id]) || attendees.some(a => !a.name || !a.gender))" 
+                                        <div x-show="formTouched && (!email || proofs.some(p => p.is_required && !uploadedProofs[p.id]) || attendees.some(a => !a.name || (attendeeGenderType !== 'disabled' && !a.gender) || customFields.some(f => f.is_required && (!a.custom_answers || !a.custom_answers[f.id] || !a.custom_answers[f.id].toString().trim()))))" 
                                              x-cloak
                                              class="p-3 bg-rose-50 border border-rose-200 rounded-2xl mb-4 space-y-1">
                                             <div class="flex items-center gap-2 mb-1">
@@ -879,12 +1060,15 @@
                                                     <li x-text="proof.label"></li>
                                                 </template>
                                                 <template x-for="(attendee, idx) in attendees" :key="idx">
-                                                    <template x-if="!attendee.name || !attendee.gender">
+                                                    <template x-if="!attendee.name || (attendeeGenderType !== 'disabled' && !attendee.gender) || customFields.some(f => f.is_required && (!attendee.custom_answers || !attendee.custom_answers[f.id] || !attendee.custom_answers[f.id].toString().trim()))">
                                                         <li>
                                                             <span x-text="'Peserta ' + (idx + 1) + ': '"></span>
                                                             <span x-show="!attendee.name">Nama</span>
-                                                            <span x-show="!attendee.name && !attendee.gender">, </span>
-                                                            <span x-show="!attendee.gender">Gender</span>
+                                                            <span x-show="!attendee.name && attendeeGenderType !== 'disabled' && !attendee.gender">, </span>
+                                                            <span x-show="attendeeGenderType !== 'disabled' && !attendee.gender">Gender</span>
+                                                            <template x-for="f in customFields.filter(f => f.is_required && (!attendee.custom_answers || !attendee.custom_answers[f.id] || !attendee.custom_answers[f.id].toString().trim()))" :key="f.id">
+                                                                <span x-text="', ' + f.label"></span>
+                                                            </template>
                                                         </li>
                                                     </template>
                                                 </template>
@@ -989,6 +1173,56 @@
                                         <input type="email" x-model="email" placeholder="Alamat Email" required
                                                 class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                                     </div>
+
+                                    <!-- Pertanyaan Kustom Transaksi (Paid Event) -->
+                                    <template x-if="customFields.length > 0">
+                                        <div class="space-y-3 pt-2">
+                                            <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest">Informasi Tambahan Pemesan</h4>
+                                            <template x-for="(field, fIdx) in customFields" :key="field.id">
+                                                <div class="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-2">
+                                                    <label class="block text-xs font-bold text-slate-700 text-left">
+                                                        <span x-text="field.label"></span>
+                                                        <span x-show="field.is_required" class="text-rose-500 font-bold">*</span>
+                                                    </label>
+
+                                                    <p x-show="field.helper_text" class="text-[11px] text-slate-500 italic -mt-1 text-left" x-text="field.helper_text"></p>
+
+                                                    <template x-if="field.type === 'select'">
+                                                        <select x-model="customAnswers[field.id]"
+                                                                :required="field.is_required"
+                                                                class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition text-slate-800">
+                                                            <option value="" disabled selected>Pilih salah satu...</option>
+                                                            <template x-for="opt in (field.options || [])" :key="opt">
+                                                                <option :value="opt" x-text="opt"></option>
+                                                            </template>
+                                                        </select>
+                                                    </template>
+
+                                                    <template x-if="field.type === 'textarea'">
+                                                        <textarea x-model="customAnswers[field.id]"
+                                                                  :required="field.is_required"
+                                                                  :placeholder="field.placeholder || 'Jawaban Anda...'"
+                                                                  rows="3"
+                                                                  class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition text-slate-800"></textarea>
+                                                    </template>
+
+                                                    <template x-if="field.type === 'number'">
+                                                        <input type="number" x-model="customAnswers[field.id]"
+                                                               :required="field.is_required"
+                                                               :placeholder="field.placeholder || '0'"
+                                                               class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition text-slate-800">
+                                                    </template>
+
+                                                    <template x-if="field.type === 'text' || !field.type">
+                                                        <input type="text" x-model="customAnswers[field.id]"
+                                                               :required="field.is_required"
+                                                               :placeholder="field.placeholder || 'Jawaban Anda...'"
+                                                               class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition text-slate-800">
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
 
                                     @if($isWaNotifEnabled || $isEmailNotifEnabled)
                                         <div class="space-y-2 pt-2">

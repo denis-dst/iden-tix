@@ -25,6 +25,11 @@ class TicketCategory extends Model
         'sale_end_at' => 'datetime',
     ];
 
+    public function setSoldCountAttribute($value): void
+    {
+        $this->attributes['sold_count'] = max(0, (int) $value);
+    }
+
     public function event()
     {
         return $this->belongsTo(Event::class);
