@@ -3,6 +3,12 @@
     $transaction = $transaction ?? $ticket->transaction;
     $category = $category ?? $ticket->category;
     $tenant = $event->tenant ?? $transaction->tenant ?? null;
+    if (!$tenant && !empty($event->tenant_id)) {
+        $tenant = \App\Models\Tenant::find($event->tenant_id);
+    }
+
+    $organizerName = $tenant->name ?? ($event->tenant->name ?? ($event->home_team_name ?? 'PROMOTOR'));
+    $organizerLogo = $tenant->logo ?? ($event->home_team_logo ?? ($event->meta['wristband_home_club_logo'] ?? null));
 
     $isPromo100 = $transaction->payment_method === 'promo' || ($transaction->total_amount == 0 && ($transaction->discount_amount ?? 0) > 0);
     $isFree = $transaction->payment_method === 'free' || $isPromo100 || (bool) $event->is_free;
@@ -18,10 +24,10 @@
         $bannerUrl = asset('images/concert.webp');
     }
 
-    // Tenant / Promotor logo
+    // Tenant / Promotor / Home Club logo
     $tenantLogoUrl = null;
-    if ($tenant && $tenant->logo) {
-        $tenantLogoUrl = str_starts_with($tenant->logo, 'http') ? $tenant->logo : asset('storage/' . $tenant->logo);
+    if ($organizerLogo) {
+        $tenantLogoUrl = str_starts_with($organizerLogo, 'http') ? $organizerLogo : asset('storage/' . $organizerLogo);
     }
 
     // Identix brand logo & icon from settings
@@ -550,27 +556,27 @@
                 </div>
 
                 <!-- Right: Organized By Promotor Box (4 cols on desktop / print, full width on mobile) -->
-                <div class="w-full order-1 sm:order-2 print:order-2 sm:col-span-4 print:col-span-4 border border-slate-300 rounded-xl overflow-hidden bg-white text-center flex flex-col justify-between"
+                <div class="w-full order-1 sm:order-2 print:order-2 sm:col-span-4 print:col-span-4 border border-slate-300 rounded-xl overflow-hidden bg-white text-center flex flex-col justify-between self-stretch"
                      style="-webkit-print-color-adjust: exact; print-color-adjust: exact;">
-                    <div class="bg-slate-50 border-b border-slate-200 py-1 px-2 text-[7.5px] font-black uppercase text-slate-500 tracking-widest">
+                    <div class="bg-slate-50 border-b border-slate-200 py-1.5 px-2 text-[7.5px] font-black uppercase text-slate-500 tracking-widest text-center">
                         ORGANIZED BY :
                     </div>
                     
-                    <div class="p-3 min-h-[60px] sm:min-h-[70px] flex items-center justify-center">
+                    <div class="p-3 flex-1 flex flex-col items-center justify-center text-center gap-1.5 min-h-[75px] sm:min-h-[85px]">
                         @if($tenantLogoUrl)
                             <img src="{{ $tenantLogoUrl }}" 
-                                 alt="{{ $tenant->name ?? 'Promotor' }}" 
-                                 class="max-h-12 sm:max-h-14 max-w-full object-contain mx-auto">
+                                 alt="{{ $organizerName }}" 
+                                 class="max-h-11 sm:max-h-12 max-w-[125px] object-contain mx-auto"
+                                 onerror="this.style.display='none'">
                         @else
-                            <div class="space-y-1">
-                                <div class="w-8 h-8 rounded-full bg-slate-900 text-white font-black text-xs flex items-center justify-center mx-auto shadow-sm">
-                                    {{ strtoupper(substr($tenant->name ?? 'ORG', 0, 2)) }}
-                                </div>
-                                <div class="text-[9px] font-black text-slate-900 uppercase font-outfit truncate px-1">
-                                    {{ $tenant->name ?? ($event->tenant->name ?? 'PROMOTOR') }}
-                                </div>
+                            <div class="w-8 h-8 rounded-full bg-slate-900 text-white font-black text-xs flex items-center justify-center mx-auto shadow-xs">
+                                {{ strtoupper(substr($organizerName, 0, 2)) }}
                             </div>
                         @endif
+
+                        <div class="text-[9px] sm:text-[9.5px] font-black text-slate-900 uppercase font-outfit tracking-wide leading-tight px-1 line-clamp-2">
+                            {{ $organizerName }}
+                        </div>
                     </div>
                 </div>
             </div>
