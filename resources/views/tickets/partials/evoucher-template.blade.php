@@ -556,25 +556,27 @@
                 </div>
 
                 <!-- Right: Organized By Promotor Box (4 cols on desktop / print, full width on mobile) -->
-                <div class="w-full order-1 sm:order-2 print:order-2 sm:col-span-4 print:col-span-4 border border-slate-300 rounded-xl overflow-hidden bg-white text-center flex flex-col justify-between self-stretch"
-                     style="-webkit-print-color-adjust: exact; print-color-adjust: exact;">
-                    <div class="bg-slate-50 border-b border-slate-200 py-1.5 px-2 text-[7.5px] font-black uppercase text-slate-500 tracking-widest text-center">
+                <div class="w-full order-1 sm:order-2 print:order-2 sm:col-span-4 print:col-span-4 border border-slate-800 rounded-xl overflow-hidden bg-slate-900 text-center flex flex-col justify-between self-stretch shadow-xs"
+                     style="-webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: #0f172a !important;">
+                    <div class="border-b border-slate-800 py-1.5 px-2 text-[7.5px] font-black uppercase text-slate-400 tracking-widest text-center"
+                         style="-webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: #020617 !important;">
                         ORGANIZED BY :
                     </div>
                     
-                    <div class="p-3 flex-1 flex flex-col items-center justify-center text-center gap-1.5 min-h-[75px] sm:min-h-[85px]">
+                    <div class="p-3 flex-1 flex flex-col items-center justify-center text-center gap-1.5 min-h-[75px] sm:min-h-[85px]"
+                         style="-webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: #0f172a !important;">
                         @if($tenantLogoUrl)
                             <img src="{{ $tenantLogoUrl }}" 
                                  alt="{{ $organizerName }}" 
-                                 class="max-h-11 sm:max-h-12 max-w-[125px] object-contain mx-auto"
+                                 class="max-h-11 sm:max-h-12 max-w-[125px] object-contain mx-auto drop-shadow-sm"
                                  onerror="this.style.display='none'">
                         @else
-                            <div class="w-8 h-8 rounded-full bg-slate-900 text-white font-black text-xs flex items-center justify-center mx-auto shadow-xs">
+                            <div class="w-8 h-8 rounded-full bg-slate-800 text-orange-400 border border-slate-700 font-black text-xs flex items-center justify-center mx-auto shadow-xs">
                                 {{ strtoupper(substr($organizerName, 0, 2)) }}
                             </div>
                         @endif
 
-                        <div class="text-[9px] sm:text-[9.5px] font-black text-slate-900 uppercase font-outfit tracking-wide leading-tight px-1 line-clamp-2">
+                        <div class="text-[9px] sm:text-[9.5px] font-black text-white uppercase font-outfit tracking-wide leading-tight px-1 line-clamp-2">
                             {{ $organizerName }}
                         </div>
                     </div>
