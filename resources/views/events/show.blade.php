@@ -76,6 +76,7 @@
 @endphp
 </head>
 <body class="text-slate-800" x-data="{
+    isEventFinished: {{ $event->status === 'finished' ? 'true' : 'false' }},
     isFreeEvent: {{ $event->is_free ? 'true' : 'false' }},
     attendeeGenderType: '{{ $event->getAttendeeGenderSetting() }}',
     umrohQuestionEnabled: {{ $event->umroh_question_enabled ? 'true' : 'false' }},
@@ -193,6 +194,11 @@
     },
     
     selectTicket(cat, qty) {
+        if (this.isEventFinished) {
+            this.selectedCategory = null;
+            this.quantity = 0;
+            return;
+        }
         let q = parseInt(qty);
         if (q > 0) {
             this.selectedCategory = cat;
@@ -267,6 +273,10 @@
     },
 
     goToStep2() {
+        if (this.isEventFinished) {
+            alert(this.lang === 'id' ? 'Acara telah selesai (Finished). Pendaftaran dan pembelian tiket ditutup.' : 'Event has finished. Ticket sales and registration are closed.');
+            return;
+        }
         if (!this.selectedCategory || this.quantity === 0) {
             alert(this.lang === 'id' ? 'Silakan pilih tiket.' : 'Please select ticket.');
             return;
@@ -311,6 +321,10 @@
     },
 
     async submitFreeRegistration() {
+        if (this.isEventFinished) {
+            alert(this.lang === 'id' ? 'Acara telah selesai (Finished). Pendaftaran ditutup.' : 'Event has finished. Registration is closed.');
+            return;
+        }
         this.formTouched = true;
         if (!this.selectedCategory) return;
         if (!this.phone) { return; }
@@ -396,6 +410,10 @@
     },
 
     async submitBooking() {
+        if (this.isEventFinished) {
+            alert(this.lang === 'id' ? 'Acara telah selesai (Finished). Penjualan tiket ditutup.' : 'Event has finished. Ticket sales are closed.');
+            return;
+        }
         if (!this.selectedCategory) return;
 
         // Validasi persetujuan syarat dan ketentuan
@@ -725,6 +743,23 @@
                         </button>
                     </div>
 
+                    @if($event->status === 'finished')
+                        <div class="p-5 rounded-2xl bg-amber-50 border border-amber-200/90 flex items-start gap-3.5 shadow-xs">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <div class="space-y-1">
+                                <h4 class="text-sm md:text-base font-extrabold text-amber-950 flex items-center gap-1.5">
+                                    <span>🏁</span>
+                                    <span>Acara Ini Telah Selesai (Finished)</span>
+                                </h4>
+                                <p class="text-xs md:text-sm text-amber-900 leading-relaxed">
+                                    Pemesanan tiket dan pendaftaran peserta untuk acara ini telah ditutup. Informasi acara tetap dapat Anda lihat sebagai arsip dokumentasi.
+                                </p>
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="space-y-4">
                         @foreach($event->ticketCategories as $category)
                             <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm transition hover:shadow-md">
@@ -790,7 +825,19 @@
                                     </div>
 
                                     <div class="w-full md:w-[230px] md:shrink-0">
-                                        @if($event->is_free)
+                                        @if($event->status === 'finished')
+                                            <div class="rounded-2xl border border-slate-200 bg-slate-100 p-3 md:p-4 text-center">
+                                                <div class="text-[11px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                                                    <span x-show="lang === 'id'">Status Tiket</span>
+                                                    <span x-show="lang === 'en'">Ticket Status</span>
+                                                </div>
+                                                <div class="text-xs font-bold text-slate-600 flex items-center justify-center gap-1.5 py-1">
+                                                    <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                                                    <span x-show="lang === 'id'">Acara Selesai (Ditutup)</span>
+                                                    <span x-show="lang === 'en'">Event Finished (Closed)</span>
+                                                </div>
+                                            </div>
+                                        @elseif($event->is_free)
                                             <div class="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3 md:p-4">
                                                 <div class="mb-2">
                                                     <div class="text-[11px] font-black text-emerald-800 uppercase tracking-wider leading-tight">
@@ -896,12 +943,22 @@
                                     </div>
                                 </div>
 
-                                <button @click="goToStep2" 
-                                        id="btn-lanjut-free"
-                                        :disabled="!selectedCategory || quantity === 0 || !phone"
-                                        class="w-full py-4 bg-emerald-500 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-2xl font-black shadow-lg shadow-emerald-200 hover:bg-emerald-600 transition-all transform active:scale-95">
-                                    Lanjut Isi Data Diri →
-                                </button>
+                                @if($event->status === 'finished')
+                                    <button type="button" 
+                                            id="btn-lanjut-free"
+                                            disabled
+                                            class="w-full py-4 bg-slate-200 text-slate-500 rounded-2xl font-black cursor-not-allowed text-xs uppercase tracking-wider flex items-center justify-center gap-2">
+                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                        <span>Acara Telah Selesai (Pendaftaran Ditutup)</span>
+                                    </button>
+                                @else
+                                    <button @click="goToStep2" 
+                                            id="btn-lanjut-free"
+                                            :disabled="!selectedCategory || quantity === 0 || !phone"
+                                            class="w-full py-4 bg-emerald-500 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-2xl font-black shadow-lg shadow-emerald-200 hover:bg-emerald-600 transition-all transform active:scale-95">
+                                        Lanjut Isi Data Diri →
+                                    </button>
+                                @endif
                             </div>
 
                             {{-- Free Event: Step 2 (Form Data Diri) --}}
@@ -1372,12 +1429,21 @@
                                     </div>
                                 </template>
 
-                                <button @click="goToStep2" 
-                                        :disabled="!selectedCategory || quantity === 0"
-                                        class="w-full py-4 bg-blue-500 disabled:bg-blue-200 text-white rounded-2xl font-black shadow-lg shadow-blue-200 hover:bg-blue-600 transition-all transform active:scale-95">
-                                    <span x-show="customFields.length > 0">Lanjut Isi Data Peserta →</span>
-                                    <span x-show="customFields.length === 0">Lanjut Pembayaran</span>
-                                </button>
+                                @if($event->status === 'finished')
+                                    <button type="button" 
+                                            disabled
+                                            class="w-full py-4 bg-slate-200 text-slate-500 rounded-2xl font-black cursor-not-allowed text-xs uppercase tracking-wider flex items-center justify-center gap-2">
+                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                        <span>Acara Telah Selesai (Penjualan Ditutup)</span>
+                                    </button>
+                                @else
+                                    <button @click="goToStep2" 
+                                            :disabled="!selectedCategory || quantity === 0"
+                                            class="w-full py-4 bg-blue-500 disabled:bg-blue-200 text-white rounded-2xl font-black shadow-lg shadow-blue-200 hover:bg-blue-600 transition-all transform active:scale-95">
+                                        <span x-show="customFields.length > 0">Lanjut Isi Data Peserta →</span>
+                                        <span x-show="customFields.length === 0">Lanjut Pembayaran</span>
+                                    </button>
+                                @endif
                             </div>
 
                             <!-- Step 2: Customer Details & Payment -->

@@ -256,6 +256,7 @@
                                     class="w-full rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition text-sm font-bold text-slate-800">
                                     <option value="draft" {{ $event->status == 'draft' ? 'selected' : '' }}>📝 Draft</option>
                                     <option value="published" {{ $event->status == 'published' ? 'selected' : '' }}>🌐 Published (Publik - Tampil di Beranda)</option>
+                                    <option value="finished" {{ $event->status == 'finished' ? 'selected' : '' }}>🏁 Finished (Acara Selesai - Tetap Tampil di Beranda)</option>
                                     <option value="private" {{ $event->status == 'private' ? 'selected' : '' }}>🔒 Private (Hanya via Link, Tidak Tampil di Beranda)</option>
                                     <option value="cancelled" {{ $event->status == 'cancelled' ? 'selected' : '' }}>❌ Cancelled</option>
                                 </select>

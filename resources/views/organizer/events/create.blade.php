@@ -151,6 +151,7 @@
                             <select name="status" class="w-full rounded-2xl border-slate-200 focus:border-purple-500 focus:ring-purple-500 transition py-3 px-5 text-sm font-bold text-slate-800">
                                 <option value="draft" {{ old('status', 'draft') == 'draft' ? 'selected' : '' }}>📝 Draft (Disimpan Belum Dipublikasikan)</option>
                                 <option value="published" {{ old('status') == 'published' ? 'selected' : '' }}>🌐 Published (Publik - Tampil di Beranda)</option>
+                                <option value="finished" {{ old('status') == 'finished' ? 'selected' : '' }}>🏁 Finished (Acara Selesai - Tetap Tampil di Beranda)</option>
                                 <option value="private" {{ old('status') == 'private' ? 'selected' : '' }}>🔒 Private (Hanya yang Punya Link, Tidak Tampil di Beranda)</option>
                             </select>
                             <p class="text-[10px] text-slate-400 mt-1.5 italic px-1">Status <strong>Private</strong> membuat event hanya dapat diakses & dipesan via tautan langsung (URL), tanpa muncul di halaman depan.</p>

@@ -156,6 +156,11 @@ class Event extends Model
         return 2;
     }
 
+    public function isFinished(): bool
+    {
+        return $this->status === 'finished';
+    }
+
     public function getTypeLabelAttribute(): string
     {
         return match ($this->type) {

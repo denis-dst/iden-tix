@@ -267,11 +267,19 @@
                             <!-- Soft gradient vignette -->
                             <div class="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/60 to-transparent flex items-center">
                                 <div class="px-6 sm:px-12 lg:px-16 max-w-2xl text-white space-y-3">
-                                    <div class="inline-flex items-center gap-2 bg-blue-600/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-white">
-                                        <span>★ Event Unggulan</span>
-                                        <span class="text-white/60">&bull;</span>
-                                        <span>{{ $slideEvent->city ?? 'Indonesia' }}</span>
-                                    </div>
+                                    @if($slideEvent->status === 'finished')
+                                        <div class="inline-flex items-center gap-2 bg-rose-600/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-white">
+                                            <span>🏁 Finished</span>
+                                            <span class="text-white/60">&bull;</span>
+                                            <span>{{ $slideEvent->city ?? 'Indonesia' }}</span>
+                                        </div>
+                                    @else
+                                        <div class="inline-flex items-center gap-2 bg-blue-600/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-white">
+                                            <span>★ Event Unggulan</span>
+                                            <span class="text-white/60">&bull;</span>
+                                            <span>{{ $slideEvent->city ?? 'Indonesia' }}</span>
+                                        </div>
+                                    @endif
                                     <h2 class="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight line-clamp-2">
                                         {{ $slideEvent->name }}
                                     </h2>
@@ -280,12 +288,18 @@
                                         <span>{{ $slideEvent->event_start_date->isoFormat('dddd, D MMMM Y • HH:mm') }} WIB</span>
                                     </p>
                                     <div class="pt-2 flex items-center gap-3">
-                                        <a href="{{ route('events.show', $slideEvent->slug) }}" class="px-6 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs sm:text-sm font-bold shadow-lg shadow-orange-600/30 transition transform hover:-translate-y-0.5">
-                                            Beli Tiket Sekarang
-                                        </a>
-                                        <a href="{{ route('events.show', $slideEvent->slug) }}" class="px-5 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-xs sm:text-sm font-bold transition">
-                                            Detail Event
-                                        </a>
+                                        @if($slideEvent->status === 'finished')
+                                            <a href="{{ route('events.show', $slideEvent->slug) }}" class="px-6 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold shadow-lg transition transform hover:-translate-y-0.5">
+                                                Lihat Arsip Event
+                                            </a>
+                                        @else
+                                            <a href="{{ route('events.show', $slideEvent->slug) }}" class="px-6 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs sm:text-sm font-bold shadow-lg shadow-orange-600/30 transition transform hover:-translate-y-0.5">
+                                                Beli Tiket Sekarang
+                                            </a>
+                                            <a href="{{ route('events.show', $slideEvent->slug) }}" class="px-5 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-xs sm:text-sm font-bold transition">
+                                                Detail Event
+                                            </a>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -450,7 +464,8 @@
                             }
                         }
                         
-                        $isUpcoming = $event->event_start_date->isFuture() || $event->event_start_date->isToday();
+                        $isUpcoming = ($event->event_start_date->isFuture() || $event->event_start_date->isToday()) && $event->status !== 'finished';
+                        $isFinished = $event->status === 'finished' || !$isUpcoming;
 
                         $typeMap = [
                             'concert' => 'musik',
@@ -498,10 +513,11 @@
                                 <span>{{ $event->type_label }}</span>
                             </div>
 
-                            @if(!$isUpcoming)
+                            @if($isFinished)
                                 <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-[1px] flex items-center justify-center">
-                                    <span class="bg-rose-600 text-white text-xs font-black uppercase tracking-wider px-3 py-1 rounded-lg shadow">
-                                        Event Selesai
+                                    <span class="bg-rose-600 text-white text-xs font-black uppercase tracking-wider px-3.5 py-1.5 rounded-lg shadow flex items-center gap-1.5">
+                                        <span>🏁</span>
+                                        <span>Finished</span>
                                     </span>
                                 </div>
                             @endif
@@ -539,24 +555,36 @@
                             <!-- Price & CTA Button (TiketMart Style) -->
                             <div class="pt-4 border-t border-slate-100 flex items-center justify-between gap-2 mt-auto">
                                 <div>
-                                    <span class="text-[10px] text-slate-600 block uppercase font-bold tracking-wider">Mulai dari</span>
-                                    <span class="text-sm sm:text-base font-black text-slate-900">
-                                        @if($hasTickets)
-                                            @if($minPrice == 0)
-                                                <span class="text-emerald-600 font-bold">GRATIS</span>
+                                    @if($event->status === 'finished')
+                                        <span class="text-[10px] text-rose-500 block uppercase font-bold tracking-wider">Status Acara</span>
+                                        <span class="text-sm font-black text-rose-600">Finished</span>
+                                    @else
+                                        <span class="text-[10px] text-slate-600 block uppercase font-bold tracking-wider">Mulai dari</span>
+                                        <span class="text-sm sm:text-base font-black text-slate-900">
+                                            @if($hasTickets)
+                                                @if($minPrice == 0)
+                                                    <span class="text-emerald-600 font-bold">GRATIS</span>
+                                                @else
+                                                    <span class="text-blue-700">Rp {{ number_format($minPrice, 0, ',', '.') }}</span>
+                                                @endif
                                             @else
-                                                <span class="text-blue-700">Rp {{ number_format($minPrice, 0, ',', '.') }}</span>
+                                                <span class="text-slate-400 text-xs">Segera Hadir</span>
                                             @endif
-                                        @else
-                                            <span class="text-slate-400 text-xs">Segera Hadir</span>
-                                        @endif
-                                    </span>
+                                        </span>
+                                    @endif
                                 </div>
 
-                                <a href="{{ route('events.show', $event->slug) }}" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm hover:shadow flex items-center gap-1 shrink-0">
-                                    <span>Beli Tiket</span>
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                </a>
+                                @if($event->status === 'finished')
+                                    <a href="{{ route('events.show', $event->slug) }}" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1 shrink-0">
+                                        <span>Lihat Acara</span>
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                    </a>
+                                @else
+                                    <a href="{{ route('events.show', $event->slug) }}" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm hover:shadow flex items-center gap-1 shrink-0">
+                                        <span>Beli Tiket</span>
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                    </a>
+                                @endif
                             </div>
                         </div>
                     </div>

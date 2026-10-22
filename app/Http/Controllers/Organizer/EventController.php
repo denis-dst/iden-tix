@@ -50,6 +50,7 @@ class EventController extends Controller
         $statusCounts = [
             'all' => Event::where('tenant_id', $tenantId)->count(),
             'published' => Event::where('tenant_id', $tenantId)->where('status', 'published')->count(),
+            'finished' => Event::where('tenant_id', $tenantId)->where('status', 'finished')->count(),
             'private' => Event::where('tenant_id', $tenantId)->where('status', 'private')->count(),
             'draft' => Event::where('tenant_id', $tenantId)->where('status', 'draft')->count(),
             'cancelled' => Event::where('tenant_id', $tenantId)->where('status', 'cancelled')->count(),
@@ -107,7 +108,7 @@ class EventController extends Controller
             'proof_review_required' => 'nullable|boolean',
             'registration_proofs_json' => 'nullable|string',
             'evoucher_page_mode' => 'nullable|in:1_page,multi_page',
-            'status' => 'nullable|string|in:draft,published,private,cancelled',
+            'status' => 'nullable|string|in:draft,published,private,cancelled,finished',
         ]);
 
         $validated['type'] = $request->input('type', 'concert');
@@ -117,7 +118,7 @@ class EventController extends Controller
         $validated['thermal_paper_height_mm'] = $request->integer('thermal_paper_height_mm', 160);
 
         $validated['tenant_id'] = auth()->user()->tenant_id;
-        $validated['status'] = in_array($request->input('status'), ['draft', 'published', 'private', 'cancelled']) ? $request->input('status') : 'draft';
+        $validated['status'] = in_array($request->input('status'), ['draft', 'published', 'private', 'cancelled', 'finished']) ? $request->input('status') : 'draft';
         $validated['slug'] = \Illuminate\Support\Str::slug($validated['name']) . '-' . rand(1000, 9999);
         
         $meta = $this->buildWristbandMeta($request);
@@ -196,7 +197,7 @@ class EventController extends Controller
             'terms_conditions' => 'nullable|string',
             'event_start_date' => 'required|date',
             'event_end_date' => 'required|date|after_or_equal:event_start_date',
-            'status' => 'required|in:draft,published,private,cancelled',
+            'status' => 'required|in:draft,published,private,cancelled,finished',
             'background_image' => 'nullable|image|max:10240',
             'type' => 'nullable|string|in:concert,sport,festival,seminar,other',
             'security_code' => 'required|string|size:6',
@@ -234,7 +235,7 @@ class EventController extends Controller
         $validated['max_tickets_per_transaction'] = $request->input('is_free') ? $request->integer('max_tickets_per_transaction', 1) : 1;
         $validated['thermal_paper_width_mm'] = $request->integer('thermal_paper_width_mm', 80);
         $validated['thermal_paper_height_mm'] = $request->integer('thermal_paper_height_mm', 160);
-        if ($request->filled('status') && in_array($request->input('status'), ['draft', 'published', 'private', 'cancelled'])) {
+        if ($request->filled('status') && in_array($request->input('status'), ['draft', 'published', 'private', 'cancelled', 'finished'])) {
             $validated['status'] = $request->input('status');
         }
 

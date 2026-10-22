@@ -117,6 +117,14 @@
                         {{ $statusCounts['published'] ?? 0 }}
                     </span>
                 </a>
+                <a href="{{ route('organizer.events.index', array_merge(request()->except('status', 'page'), ['status' => 'finished'])) }}"
+                   class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 {{ $status === 'finished' ? 'bg-white text-blue-800 shadow-xs' : 'text-slate-600 hover:text-blue-700' }}">
+                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                    <span>Finished</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] {{ $status === 'finished' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-700' }}">
+                        {{ $statusCounts['finished'] ?? 0 }}
+                    </span>
+                </a>
                 <a href="{{ route('organizer.events.index', array_merge(request()->except('status', 'page'), ['status' => 'private'])) }}"
                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 {{ $status === 'private' ? 'bg-white text-purple-800 shadow-xs' : 'text-slate-600 hover:text-purple-700' }}">
                     <span class="w-2 h-2 rounded-full bg-purple-500"></span>
@@ -293,6 +301,7 @@
                                     @php
                                         $statusClasses = [
                                             'published' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                            'finished' => 'bg-blue-50 text-blue-700 border-blue-200',
                                             'private' => 'bg-purple-50 text-purple-700 border-purple-200',
                                             'draft' => 'bg-slate-100 text-slate-600 border-slate-200',
                                             'cancelled' => 'bg-rose-50 text-rose-700 border-rose-200',
@@ -529,6 +538,10 @@
                             <label class="inline-flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
                                 <input type="radio" name="status" value="published" x-model="status" class="text-indigo-600 focus:ring-indigo-500">
                                 <span>Published (Buka Publik)</span>
+                            </label>
+                            <label class="inline-flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                                <input type="radio" name="status" value="finished" x-model="status" class="text-blue-600 focus:ring-blue-500">
+                                <span class="text-blue-900">Finished (Acara Selesai)</span>
                             </label>
                             <label class="inline-flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
                                 <input type="radio" name="status" value="private" x-model="status" class="text-purple-600 focus:ring-purple-500">

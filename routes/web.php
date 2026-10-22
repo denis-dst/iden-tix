@@ -15,8 +15,9 @@ Route::match(['get', 'post'], '/', function () {
     $activeTheme = \App\Models\Setting::get('active_theme', 'default');
 
     $events = Event::with(['ticketCategories', 'tenant'])
-        ->where('status', 'published')
-        ->orderBy('event_start_date', 'asc')
+        ->whereIn('status', ['published', 'finished'])
+        ->orderBy('created_at', 'desc')
+        ->orderBy('event_start_date', 'desc')
         ->get();
     
     $settings = \Illuminate\Support\Facades\Cache::remember('public_settings_map', 3600, function () {

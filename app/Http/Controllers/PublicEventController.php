@@ -443,7 +443,7 @@ class PublicEventController extends Controller
     public function show($slug)
     {
         $event = Event::where('slug', $slug)
-            ->whereIn('status', ['published', 'private'])
+            ->whereIn('status', ['published', 'private', 'finished'])
             ->with(['ticketCategories' => function($query) {
                 $query->where('is_active', true)->orderBy('price', 'asc');
             }, 'tenant'])
@@ -465,9 +465,19 @@ class PublicEventController extends Controller
     public function checkout(Request $request, $slug)
     {
         $event = Event::where('slug', $slug)
-            ->whereIn('status', ['published', 'private'])
+            ->whereIn('status', ['published', 'private', 'finished'])
             ->with('tenant')
             ->firstOrFail();
+
+        if ($event->status === 'finished') {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Event ini telah selesai (Finished). Penjualan tiket dan pendaftaran sudah ditutup.'
+                ], 422);
+            }
+            return back()->with('error', 'Event ini telah selesai (Finished). Penjualan tiket dan pendaftaran sudah ditutup.');
+        }
 
         // Free event validation rules include gender and custom questions
         if ($event->is_free) {
@@ -804,6 +814,16 @@ class PublicEventController extends Controller
      */
     private function processFreeCheckout(Request $request, Event $event)
     {
+        if ($event->status === 'finished') {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Event ini telah selesai (Finished). Pendaftaran sudah ditutup.'
+                ], 422);
+            }
+            return back()->with('error', 'Event ini telah selesai (Finished). Pendaftaran sudah ditutup.');
+        }
+
         if (is_string($request->input('attendees'))) {
             $attendees = json_decode($request->input('attendees'), true);
 

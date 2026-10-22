@@ -358,6 +358,15 @@
                                 class="absolute top-4 left-4 z-20 px-3 py-1 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full text-xs font-bold uppercase tracking-widest text-white shadow-lg">
                                 {{ $event->city ?? 'Event' }}
                             </div>
+
+                            @if($event->status === 'finished')
+                                <div class="absolute inset-0 bg-black/60 backdrop-blur-[2px] z-20 flex items-center justify-center pointer-events-none">
+                                    <span class="px-3.5 py-1.5 bg-rose-600/90 text-white rounded-full text-xs font-black uppercase tracking-wider shadow-lg border border-white/20 flex items-center gap-1.5">
+                                        <span>🏁</span>
+                                        <span>Finished</span>
+                                    </span>
+                                </div>
+                            @endif
                         </div>
                         <div class="p-8 flex flex-col flex-1 justify-between">
                             <div>
@@ -379,14 +388,18 @@
                             </div>
                             <div class="flex items-center justify-between pt-6 border-t border-white/5 mt-auto">
                                 <span class="text-xl font-bold text-orange-400">
-                                    @if($event->ticketCategories->count() > 0)
+                                    @if($event->status === 'finished')
+                                        <span class="text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                                            Finished
+                                        </span>
+                                    @elseif($event->ticketCategories->count() > 0)
                                         Mulai Rp. {{ number_format($event->ticketCategories->min('price'), 0, ',', '.') }}
                                     @else
                                         Coming Soon
                                     @endif
                                 </span>
                                 <a href="{{ route('events.show', $event->slug) }}"
-                                    class="px-6 py-2 rounded-xl bg-white/5 hover:bg-orange-500 hover:text-white text-stone-300 transition-all text-sm font-bold">Details</a>
+                                    class="px-6 py-2 rounded-xl {{ $event->status === 'finished' ? 'bg-white/10 hover:bg-white/20 text-stone-200' : 'bg-white/5 hover:bg-orange-500 hover:text-white text-stone-300' }} transition-all text-sm font-bold">Details</a>
                             </div>
                         </div>
                     </div>
