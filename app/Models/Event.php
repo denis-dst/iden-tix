@@ -19,6 +19,7 @@ class Event extends Model
         'season_name', 'home_team_name', 'away_team_name', 'home_team_logo', 'away_team_logo',
         'home_score', 'away_score', 'allow_season_pass', 'season_pass_claim_days_before',
         'is_member_priority_sale', 'member_priority_start_at', 'general_sale_start_at',
+        'views_count',
     ];
 
     protected $casts = [
@@ -37,7 +38,13 @@ class Event extends Model
         'umroh_question_enabled' => 'boolean',
         'thermal_paper_width_mm' => 'integer',
         'thermal_paper_height_mm' => 'integer',
+        'views_count' => 'integer',
     ];
+
+    public function getHitCountAttribute(): int
+    {
+        return (int) ($this->views_count ?? 0);
+    }
 
     public function tenant()
     {

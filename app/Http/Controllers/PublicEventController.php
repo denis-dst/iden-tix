@@ -449,6 +449,14 @@ class PublicEventController extends Controller
             }, 'tenant'])
             ->firstOrFail();
 
+        $sessionKey = 'viewed_event_' . $event->id;
+        $lastViewed = session($sessionKey);
+        if (!$lastViewed || (now()->timestamp - $lastViewed > 900)) {
+            Event::where('id', $event->id)->increment('views_count');
+            session([$sessionKey => now()->timestamp]);
+            $event->views_count = ($event->views_count ?? 0) + 1;
+        }
+
         $globalEmailEnabled = \Illuminate\Support\Facades\Cache::remember('setting.global_email_notifications_enabled', 3600, function() {
             $val = \App\Models\Setting::where('key', 'global_email_notifications_enabled')->value('value');
             return $val === null || ($val !== '0' && $val !== false);

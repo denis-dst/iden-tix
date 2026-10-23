@@ -142,6 +142,8 @@ class DashboardController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        $totalViews = (int) $events->sum('views_count');
+
         return view('organizer.dashboard', compact(
             'events',
             'eventOptions',
@@ -151,6 +153,7 @@ class DashboardController extends Controller
             'totalScans',
             'totalCheckIn',
             'totalCheckOut',
+            'totalViews',
             'earliestScan',
             'selectedEventId',
             'selectedGate',
