@@ -1524,6 +1524,11 @@
         currentScreen: 1,
         selectedCategory: null,
         quantity: 1,
+        totalPhotos: 1,
+        currentPhotoIndex: 1,
+        currentPhotoFanName: '',
+        capturedPhotos: [],
+        tickets: [],
         customer: {
             name: '',
             email: '',
@@ -1568,11 +1573,13 @@
             calculateTotal();
         } else if (screenNumber === 7) {
             startCamera();
+            updateScreen07UI();
         } else if (screenNumber !== 7) {
             stopCamera();
         }
 
         if (screenNumber === 9) {
+            renderScreen09Summary();
             startAutoResetTimer();
         }
     }
@@ -1591,11 +1598,12 @@
         calculateTotal();
     }
 
-    // Quantity Stepper
+    // Quantity Stepper (1 to 10)
     function updateQty(delta) {
         let newQty = kioskState.quantity + delta;
         if (newQty >= 1 && newQty <= 10) {
             kioskState.quantity = newQty;
+            kioskState.totalPhotos = newQty;
             document.getElementById('qtyDisplay').innerText = newQty;
             calculateTotal();
         }
@@ -1680,7 +1688,7 @@
                 const data = await res.json();
                 if (data.paid) {
                     clearInterval(kioskState.pollInterval);
-                    onPaymentSuccess();
+                    onPaymentSuccess(data);
                 }
             } catch (e) {
                 console.warn('Status poll warning:', e);
@@ -1704,19 +1712,108 @@
             });
             const data = await res.json();
             if (data.success) {
-                onPaymentSuccess();
+                onPaymentSuccess(data);
             }
         } catch (e) {
             console.error('Simulate payment error:', e);
         }
     }
 
-    // Payment Success Transition
-    function onPaymentSuccess() {
+    // Payment Success Transition: generates exact number of E-Voucher QR codes and photo chances
+    function onPaymentSuccess(data) {
         document.getElementById('waitingStatusText').innerText = 'PEMBAYARAN BERHASIL!';
+
+        if (data && data.tickets && data.tickets.length > 0) {
+            kioskState.tickets = data.tickets;
+        } else {
+            // Fallback: create simulated tickets matching quantity
+            kioskState.tickets = [];
+            const ref = (kioskState.transaction && kioskState.transaction.reference_no) ? kioskState.transaction.reference_no : ('KIOSK-' + Date.now());
+            for (let i = 1; i <= kioskState.quantity; i++) {
+                const code = ref + '-' + String(i).padStart(2, '0');
+                kioskState.tickets.push({
+                    ticket_number: i,
+                    total_tickets: kioskState.quantity,
+                    ticket_code: code,
+                    category_name: kioskState.selectedCategory ? kioskState.selectedCategory.name : 'VIP BARAT',
+                    visitor_name: kioskState.customer.name || 'SUPORTER',
+                    qr_svg: generateSimulatedQrSvg(code)
+                });
+            }
+        }
+
+        // Set photobooth chances strictly according to quantity purchased
+        kioskState.totalPhotos = kioskState.quantity;
+        kioskState.currentPhotoIndex = 1;
+        kioskState.capturedPhotos = [];
+
+        renderScreen06EVouchers();
+
         setTimeout(() => {
             goToScreen(6);
         }, 1200);
+    }
+
+    // Vector QR SVG generator fallback
+    function generateSimulatedQrSvg(text) {
+        return `<svg viewBox="0 0 100 100" fill="black"><rect width="100" height="100" fill="white"/><rect x="8" y="8" width="28" height="28" fill="black"/><rect x="12" y="12" width="20" height="20" fill="white"/><rect x="16" y="16" width="12" height="12" fill="black"/><rect x="64" y="8" width="28" height="28" fill="black"/><rect x="68" y="12" width="20" height="20" fill="white"/><rect x="72" y="16" width="12" height="12" fill="black"/><rect x="8" y="64" width="28" height="28" fill="black"/><rect x="12" y="68" width="20" height="20" fill="white"/><rect x="16" y="72" width="12" height="12" fill="black"/><rect x="44" y="12" width="8" height="8" fill="black"/><rect x="44" y="28" width="8" height="8" fill="black"/><rect x="44" y="44" width="8" height="8" fill="black"/><rect x="44" y="60" width="8" height="8" fill="black"/><rect x="44" y="76" width="8" height="8" fill="black"/><rect x="60" y="44" width="12" height="12" fill="black"/><rect x="76" y="60" width="16" height="16" fill="black"/><rect x="60" y="76" width="12" height="12" fill="black"/></svg>`;
+    }
+
+    // Render E-Voucher tickets dynamically on Screen 06
+    function renderScreen06EVouchers() {
+        const wrap = document.getElementById('screen06EvouchersWrap');
+        if (!wrap) return;
+
+        const emailNote = document.getElementById('screen06EmailNote');
+        if (emailNote) {
+            emailNote.innerText = `E-ticket telah dikirim ke email: ${kioskState.customer.email || 'email Anda'}`;
+        }
+
+        const header = document.getElementById('screen06EvoucherHeader');
+        if (header) {
+            if (kioskState.tickets.length === 1) {
+                header.innerText = 'E-VOUCHER TIKET ANDA (1 TIKET):';
+            } else {
+                header.innerText = `E-VOUCHER TIKET ANDA (${kioskState.tickets.length} TIKET):`;
+            }
+        }
+
+        let html = '';
+        kioskState.tickets.forEach((t, idx) => {
+            const badgeLabel = (kioskState.tickets.length === 1) ? 'E-VOUCHER TIKET RESMI' : `TIKET ${idx + 1} DARI ${kioskState.tickets.length}`;
+            html += `
+                <div class="kiosk-ticket-card">
+                    <div class="ticket-card-badge">${badgeLabel}</div>
+                    <div class="ticket-qr-wrap">${t.qr_svg}</div>
+                    <div class="ticket-code-text">${t.ticket_code}</div>
+                    <div class="ticket-category-pill">${t.category_name}</div>
+                    <div style="font-size: 11px; color: #cbd5e1; margin-top: 2px;">${t.visitor_name}</div>
+                </div>
+            `;
+        });
+        wrap.innerHTML = html;
+
+        // Configure Photo Experience banner
+        const titleEl = document.getElementById('screen06PhotoBannerTitle');
+        const descEl = document.getElementById('screen06PhotoBannerDesc');
+        const btnStart = document.getElementById('btnStartPhotoSession');
+
+        if (kioskState.totalPhotos > 1) {
+            if (titleEl) titleEl.innerText = `Nikmati FREE PHOTO EXPERIENCE! (${kioskState.totalPhotos}x Sesi Foto Suporter)`;
+            if (descEl) descEl.innerText = `Anda membeli ${kioskState.quantity} tiket dan berhak atas ${kioskState.totalPhotos}x foto Matchday Collectible resmi!`;
+            if (btnStart) btnStart.innerText = `YA, AMBIL FOTO (FOTO 1 DARI ${kioskState.totalPhotos})`;
+        } else {
+            if (titleEl) titleEl.innerText = 'Nikmati FREE PHOTO EXPERIENCE! (1x Sesi Foto)';
+            if (descEl) descEl.innerText = 'Abadikan momen spesial Anda dan dapatkan Matchday Collectible Card resmi.';
+            if (btnStart) btnStart.innerText = 'YA, AMBIL FOTO';
+        }
+    }
+
+    // Start Photo Session from Screen 06
+    function startPhotoSession() {
+        kioskState.currentPhotoIndex = 1;
+        updateScreen07UI();
+        goToScreen(7);
     }
 
     // QRIS 5-minute Countdown Timer
@@ -1736,7 +1833,7 @@
     }
 
     // ============================================================
-    // CAMERA & PHOTOBOOTH ENGINE
+    // CAMERA & PHOTOBOOTH ENGINE (PORTRAIT OUTPUT & PORTRAIT VIEWFINDER)
     // ============================================================
 
     async function startCamera() {
@@ -1759,6 +1856,62 @@
         if (kioskState.cameraStream) {
             kioskState.cameraStream.getTracks().forEach(track => track.stop());
             kioskState.cameraStream = null;
+        }
+    }
+
+    // Update Screen 07 UI for Current Photo Opportunity
+    function updateScreen07UI() {
+        const pill = document.getElementById('screen07PhotoPill');
+        if (pill) {
+            pill.innerText = `FOTO ${kioskState.currentPhotoIndex} DARI ${kioskState.totalPhotos}`;
+        }
+
+        const subtitle = document.getElementById('screen07Subtitle');
+        if (subtitle) {
+            subtitle.innerText = (kioskState.totalPhotos > 1) 
+                ? `Sesi foto suporter ke-${kioskState.currentPhotoIndex} dari total ${kioskState.totalPhotos}x foto.`
+                : 'Berdiri di depan kamera dan posisikan diri Anda di dalam bingkai portrait.';
+        }
+
+        const notice = document.getElementById('screen07ChanceNotice');
+        if (notice) {
+            if (kioskState.totalPhotos === 1) {
+                notice.innerText = 'Anda memiliki 1x kesempatan untuk mengambil gambar.';
+            } else {
+                const sisa = kioskState.totalPhotos - kioskState.currentPhotoIndex;
+                notice.innerText = `Kesempatan foto ke-${kioskState.currentPhotoIndex} dari ${kioskState.totalPhotos} (Sisa ${sisa}x lagi).`;
+            }
+        }
+
+        // Set default name for current photo
+        let defaultName = kioskState.customer.name || 'SUPORTER';
+        if (kioskState.totalPhotos > 1 && kioskState.currentPhotoIndex > 1) {
+            defaultName = kioskState.customer.name ? `${kioskState.customer.name} #${kioskState.currentPhotoIndex}` : `SUPORTER ${kioskState.currentPhotoIndex}`;
+        }
+        kioskState.currentPhotoFanName = defaultName;
+
+        const nameInput = document.getElementById('screen07FanNameInput');
+        if (nameInput) {
+            nameInput.value = defaultName;
+        }
+
+        const liveName = document.getElementById('cameraLiveFanName');
+        if (liveName) {
+            liveName.innerText = defaultName.toUpperCase();
+        }
+
+        const btn = document.getElementById('btnCapturePhoto');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = `AMBIL FOTO (${kioskState.currentPhotoIndex}/${kioskState.totalPhotos})`;
+        }
+    }
+
+    function onFanNameInputChange(val) {
+        kioskState.currentPhotoFanName = val.trim() || 'SUPORTER';
+        const liveName = document.getElementById('cameraLiveFanName');
+        if (liveName) {
+            liveName.innerText = kioskState.currentPhotoFanName.toUpperCase();
         }
     }
 
@@ -1789,7 +1942,7 @@
         }, 1000);
     }
 
-    // Capture & Composite Card Image
+    // Capture & Composite PORTRAIT Matchday Collectible Card
     function capturePhotoNow() {
         // 1. Flash effect
         const flash = document.getElementById('flashOverlay');
@@ -1800,6 +1953,7 @@
         const canvas = document.getElementById('cardCanvas');
         const ctx = canvas.getContext('2d');
 
+        // STRICTLY PORTRAIT CARD (1024 x 1536 px - 2:3 aspect ratio)
         const cardW = 1024;
         const cardH = 1536;
         canvas.width = cardW;
@@ -1817,10 +1971,10 @@
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, cardW, cardH);
 
-        // Draw Fan Captured Photo in upper/center area
+        // Portrait photo box on card
         const photoY = 160;
-        const photoW = cardW - 120; // 904
-        const photoH = 920;
+        const photoW = cardW - 120; // 904 px
+        const photoH = 920;         // 920 px (portrait proportion)
         const photoX = 60;
 
         ctx.save();
@@ -1829,10 +1983,29 @@
         ctx.clip();
 
         if (video.videoWidth > 0) {
+            // CENTER-CROP landscape webcam feed into portrait photo box
+            const vW = video.videoWidth;
+            const vH = video.videoHeight;
+            const targetRatio = photoW / photoH;
+            let srcW = vW;
+            let srcH = vH;
+            let srcX = 0;
+            let srcY = 0;
+
+            if (vW / vH > targetRatio) {
+                // Video is wider than portrait box: center-crop horizontally
+                srcW = vH * targetRatio;
+                srcX = (vW - srcW) / 2;
+            } else {
+                // Video is taller than portrait box: center-crop vertically
+                srcH = vW / targetRatio;
+                srcY = (vH - srcH) / 2;
+            }
+
             // Mirror image draw
             ctx.translate(photoX + photoW, photoY);
             ctx.scale(-1, 1);
-            ctx.drawImage(video, 0, 0, photoW, photoH);
+            ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
         } else {
             // Fallback draw sample fan photo
             ctx.fillStyle = '#1e1b4b';
@@ -1840,11 +2013,11 @@
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 36px Outfit';
             ctx.textAlign = 'center';
-            ctx.fillText('MATCHDAY FAN PHOTO', photoX + (photoW / 2), photoY + (photoH / 2));
+            ctx.fillText('MATCHDAY FAN PHOTO #' + kioskState.currentPhotoIndex, photoX + (photoW / 2), photoY + (photoH / 2));
         }
         ctx.restore();
 
-        // Card Outer Border
+        // Card Outer Border (Portrait)
         ctx.strokeStyle = accentColor;
         ctx.lineWidth = 14;
         roundedRect(ctx, 20, 20, cardW - 40, cardH - 40, 36);
@@ -1901,10 +2074,11 @@
         ctx.lineWidth = 3;
         ctx.stroke();
 
+        const activeName = (kioskState.currentPhotoFanName || kioskState.customer.name || 'BRIAN ARIBOWO').toUpperCase();
         if (KIOSK_CONFIG.showFanName) {
             ctx.fillStyle = '#ffffff';
             ctx.font = '900 28px Outfit';
-            ctx.fillText((kioskState.customer.name || 'BRIAN ARIBOWO').toUpperCase(), cardW / 2, badgeY + 45);
+            ctx.fillText(activeName, cardW / 2, badgeY + 45);
         }
 
         // Dynamic Category / Collectible Sub-badge
@@ -1940,15 +2114,127 @@
             ctx.fillText('SCAN TO DOWNLOAD', cardW - 100, footerY + 325);
         }
 
-        // Export generated card
+        // Export generated portrait card
         kioskState.generatedCardData = canvas.toDataURL('image/jpeg', 0.92);
-        document.getElementById('finalCardPreview').src = kioskState.generatedCardData;
+
+        // Save in capturedPhotos history
+        kioskState.capturedPhotos.push({
+            index: kioskState.currentPhotoIndex,
+            fanName: activeName,
+            dataUrl: kioskState.generatedCardData
+        });
 
         // Save card to backend & dispatch email
-        savePhotoToBackend(kioskState.generatedCardData);
+        savePhotoToBackend(kioskState.generatedCardData, activeName);
 
-        // Advance to Screen 08
+        // Update Screen 08 UI and advance
+        updateScreen08UI();
         goToScreen(8);
+    }
+
+    // Update Screen 08 for Multi-Photo Stepping
+    function updateScreen08UI() {
+        const previewImg = document.getElementById('finalCardPreview');
+        if (previewImg && kioskState.generatedCardData) {
+            previewImg.src = kioskState.generatedCardData;
+        }
+
+        const titleEl = document.getElementById('screen08StatusTitle');
+        const descEl = document.getElementById('screen08StatusDesc');
+        if (titleEl) {
+            titleEl.innerText = `Foto ${kioskState.currentPhotoIndex} dari ${kioskState.totalPhotos} Siap!`;
+        }
+        if (descEl) {
+            descEl.innerText = `Foto suporter ke-${kioskState.currentPhotoIndex} berhasil diproses dan dikirim ke email.`;
+        }
+
+        // Render photo session pills
+        const pillsWrap = document.getElementById('screen08PhotoPills');
+        if (pillsWrap) {
+            let pillsHtml = '';
+            for (let i = 1; i <= kioskState.totalPhotos; i++) {
+                const isDone = i <= kioskState.currentPhotoIndex;
+                const bg = isDone ? 'background: #22c55e; color: #ffffff;' : 'background: #334155; color: #94a3b8;';
+                pillsHtml += `<span style="padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; ${bg}">Foto #${i} ${isDone ? '✔' : ''}</span>`;
+            }
+            pillsWrap.innerHTML = pillsHtml;
+        }
+
+        // Action buttons
+        const actionsWrap = document.getElementById('screen08Actions');
+        if (actionsWrap) {
+            if (kioskState.currentPhotoIndex < kioskState.totalPhotos) {
+                const nextIndex = kioskState.currentPhotoIndex + 1;
+                actionsWrap.innerHTML = `
+                    <button type="button" class="btn-kiosk-primary" onclick="prepareNextPhoto()" style="background: var(--primary-orange); min-height: 52px;">
+                        LANJUT AMBIL FOTO KE-${nextIndex} DARI ${kioskState.totalPhotos}
+                    </button>
+                    <button type="button" class="btn-kiosk-secondary" onclick="goToScreen(9)" style="min-height: 48px;">
+                        SELESAI (LEWATI SISA FOTO)
+                    </button>
+                `;
+            } else {
+                actionsWrap.innerHTML = `
+                    <button type="button" class="btn-kiosk-primary" onclick="goToScreen(9)" style="background: var(--primary-orange); min-height: 52px;">
+                        SELESAI (LIHAT SEMUA TIKET & FOTO)
+                    </button>
+                `;
+            }
+        }
+    }
+
+    // Step to Next Photo
+    function prepareNextPhoto() {
+        kioskState.currentPhotoIndex++;
+        updateScreen07UI();
+        goToScreen(7);
+    }
+
+    // Render Screen 09 Finish Summary (All E-Vouchers and All Photos)
+    function renderScreen09Summary() {
+        const summaryText = document.getElementById('screen09SummaryText');
+        if (summaryText) {
+            summaryText.innerHTML = `Semua E-ticket (${kioskState.tickets.length} tiket) dan ${kioskState.capturedPhotos.length} foto Matchday Collectible telah dikirim ke email <strong>${kioskState.customer.email || 'Anda'}</strong>.<br>Selamat menikmati pertandingan!`;
+        }
+
+        // Render all ticket QR cards in Screen 09
+        const grid = document.getElementById('screen09EvouchersGrid');
+        if (grid) {
+            let html = '';
+            kioskState.tickets.forEach((t, idx) => {
+                const badgeLabel = (kioskState.tickets.length === 1) ? 'E-VOUCHER TIKET RESMI' : `TIKET ${idx + 1} DARI ${kioskState.tickets.length}`;
+                html += `
+                    <div class="kiosk-ticket-card" style="min-width: 170px;">
+                        <div class="ticket-card-badge">${badgeLabel}</div>
+                        <div class="ticket-qr-wrap" style="padding: 6px;">${t.qr_svg}</div>
+                        <div class="ticket-code-text" style="font-size: 12px;">${t.ticket_code}</div>
+                        <div class="ticket-category-pill">${t.category_name}</div>
+                        <div style="font-size: 10px; color: #cbd5e1; margin-top: 2px;">${t.visitor_name}</div>
+                    </div>
+                `;
+            });
+            grid.innerHTML = html;
+        }
+
+        // Render all captured collectible cards in Screen 09
+        const photosSec = document.getElementById('screen09PhotosSection');
+        const photosGrid = document.getElementById('screen09PhotosGrid');
+        if (photosSec && photosGrid) {
+            if (kioskState.capturedPhotos.length > 0) {
+                photosSec.style.display = 'block';
+                let pHtml = '';
+                kioskState.capturedPhotos.forEach(p => {
+                    pHtml += `
+                        <div style="width: 110px; aspect-ratio: 2/3; border-radius: 10px; overflow: hidden; border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+                            <img src="${p.dataUrl}" alt="Photo ${p.index}" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                    `;
+                });
+                photosGrid.innerHTML = pHtml;
+            } else {
+                photosSec.style.display = 'none';
+            }
+        }
     }
 
     // Rounded rectangle helper for Canvas
@@ -1967,7 +2253,7 @@
     }
 
     // Save photo to server
-    async function savePhotoToBackend(cardBase64) {
+    async function savePhotoToBackend(cardBase64, customFanName) {
         try {
             const res = await fetch(KIOSK_CONFIG.routes.savePhoto, {
                 method: 'POST',
@@ -1979,7 +2265,7 @@
                 body: JSON.stringify({
                     event_id: KIOSK_CONFIG.eventId,
                     transaction_id: kioskState.transaction ? kioskState.transaction.transaction_id : null,
-                    customer_name: kioskState.customer.name,
+                    customer_name: customFanName || kioskState.customer.name,
                     customer_email: kioskState.customer.email,
                     customer_phone: kioskState.customer.phone,
                     category_name: kioskState.selectedCategory ? kioskState.selectedCategory.name : null,
@@ -1993,16 +2279,16 @@
         }
     }
 
-    // Auto Reset Timer on Screen 09 (5 Seconds)
+    // Auto Reset Timer on Screen 09 (15 Seconds)
     function startAutoResetTimer() {
-        let sec = 5;
+        let sec = 15;
         const display = document.getElementById('autoResetTimer');
-        display.innerText = sec;
+        if (display) display.innerText = sec;
 
         clearInterval(kioskState.autoResetInterval);
         kioskState.autoResetInterval = setInterval(() => {
             sec--;
-            display.innerText = sec;
+            if (display) display.innerText = sec;
             if (sec <= 0) {
                 clearInterval(kioskState.autoResetInterval);
                 resetToWelcome();
@@ -2015,6 +2301,11 @@
         clearInterval(kioskState.autoResetInterval);
         stopCamera();
         kioskState.quantity = 1;
+        kioskState.totalPhotos = 1;
+        kioskState.currentPhotoIndex = 1;
+        kioskState.currentPhotoFanName = '';
+        kioskState.capturedPhotos = [];
+        kioskState.tickets = [];
         document.getElementById('qtyDisplay').innerText = '1';
         kioskState.transaction = null;
         kioskState.customer = { name: '', email: '', phone: '', nik: '', gender: '', birthdate: '' };
