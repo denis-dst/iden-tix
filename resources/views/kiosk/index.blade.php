@@ -1047,35 +1047,36 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label class="form-label">Nama Lengkap</label>
-                        <input type="text" id="custName" class="form-input" placeholder="Masukkan nama sesuai identitas" required value="BRIAN ARIBOWO">
+                        <input type="text" id="custName" class="form-input" placeholder="Masukkan nama sesuai identitas" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Email</label>
-                        <input type="email" id="custEmail" class="form-input" placeholder="nama@email.com" required value="brian.aribowo@gmail.com">
+                        <input type="email" id="custEmail" class="form-input" placeholder="nama@email.com" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Nomor Telepon / WhatsApp</label>
-                        <input type="tel" id="custPhone" class="form-input" placeholder="08xxxxxxxxxx" required value="081234567890">
+                        <input type="tel" id="custPhone" class="form-input" placeholder="08xxxxxxxxxx" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">NIK (Opsional)</label>
-                        <input type="text" id="custNik" class="form-input" placeholder="16 digit NIK" maxlength="16" value="3171012345670001">
+                        <input type="text" id="custNik" class="form-input" placeholder="16 digit NIK" maxlength="16">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Gender</label>
-                        <select id="custGender" class="form-input form-select">
+                        <select id="custGender" class="form-input form-select" required>
+                            <option value="" disabled selected>Pilih: Pria / Wanita</option>
                             <option value="Pria">Pria</option>
                             <option value="Wanita">Wanita</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Tanggal Lahir</label>
-                        <input type="text" id="custBirthdate" class="form-input" placeholder="DD / MM / YYYY" value="15 / 08 / 1998">
+                        <input type="text" id="custBirthdate" class="form-input" placeholder="DD / MM / YYYY">
                     </div>
                 </div>
 
                 <label class="terms-checkbox-wrap">
-                    <input type="checkbox" id="termsCheck" checked required>
+                    <input type="checkbox" id="termsCheck" required>
                     <span>Saya menyetujui Syarat & Ketentuan dan Kebijakan Privasi.</span>
                 </label>
 
@@ -1326,7 +1327,11 @@
         headerTitle: @json($photoboothTemplate->header_title ?? 'I LEAGUE 2026/2027'),
         headerSubtitle: @json($photoboothTemplate->header_subtitle ?? 'FOOTBALL UNITES US'),
         badgeText: @json($photoboothTemplate->badge_text ?? 'MATCHDAY COLLECTIBLE'),
+        categoryLabelFormat: @json($photoboothTemplate->category_label_format ?? '{category} • MATCHDAY COLLECTIBLE'),
         footerText: @json($photoboothTemplate->footer_text ?? 'SATU LIGA, SATU SEMANGAT'),
+        showCategory: {{ ($photoboothTemplate->show_category ?? true) ? 'true' : 'false' }},
+        showFanName: {{ ($photoboothTemplate->show_fan_name ?? true) ? 'true' : 'false' }},
+        showQr: {{ ($photoboothTemplate->show_qr ?? true) ? 'true' : 'false' }},
         sampleCardUrl: '{{ asset('images/kiosk/matchday_card_sample.jpg') }}',
         routes: {
             checkout: '{{ route('kiosk.checkout', $tenant->slug) }}',
@@ -1342,12 +1347,12 @@
         selectedCategory: null,
         quantity: 1,
         customer: {
-            name: 'BRIAN ARIBOWO',
-            email: 'brian.aribowo@gmail.com',
-            phone: '081234567890',
-            nik: '3171012345670001',
-            gender: 'Pria',
-            birthdate: '15 / 08 / 1998'
+            name: '',
+            email: '',
+            phone: '',
+            nik: '',
+            gender: '',
+            birthdate: ''
         },
         transaction: null,
         capturedRawPhoto: null,
@@ -1697,25 +1702,65 @@
         ctx.font = '600 20px Outfit';
         ctx.fillText(`${KIOSK_CONFIG.matchDate}  |  ${KIOSK_CONFIG.venue}`, cardW / 2, footerY + 100);
 
-        // Fan Name Badge Banner
-        const badgeY = footerY + 130;
+        // Fan Name Badge Banner (Chevron / Ribbon Style)
+        const badgeY = footerY + 125;
+        const bannerW = cardW - 200;
+        const bannerH = 72;
+        const bannerX = 100;
+
+        // Draw Chevron Ribbon
+        ctx.beginPath();
+        ctx.moveTo(bannerX, badgeY + bannerH / 2);
+        ctx.lineTo(bannerX + 30, badgeY);
+        ctx.lineTo(bannerX + bannerW - 30, badgeY);
+        ctx.lineTo(bannerX + bannerW, badgeY + bannerH / 2);
+        ctx.lineTo(bannerX + bannerW - 30, badgeY + bannerH);
+        ctx.lineTo(bannerX + 30, badgeY + bannerH);
+        ctx.closePath();
         ctx.fillStyle = primaryColor;
-        roundedRect(ctx, 120, badgeY, cardW - 240, 64, 12);
         ctx.fill();
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 3;
+        ctx.stroke();
 
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '800 28px Outfit';
-        ctx.fillText(kioskState.customer.name.toUpperCase(), cardW / 2, badgeY + 42);
+        if (KIOSK_CONFIG.showFanName) {
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 28px Outfit';
+            ctx.fillText((kioskState.customer.name || 'BRIAN ARIBOWO').toUpperCase(), cardW / 2, badgeY + 45);
+        }
 
-        // Collectible sub-badge
+        // Dynamic Category / Collectible Sub-badge
+        let catText = KIOSK_CONFIG.badgeText || 'MATCHDAY COLLECTIBLE';
+        if (KIOSK_CONFIG.showCategory) {
+            const catName = (kioskState.selectedCategory && kioskState.selectedCategory.name) ? kioskState.selectedCategory.name.toUpperCase() : 'VIP BARAT';
+            const fmt = KIOSK_CONFIG.categoryLabelFormat || '{category} • MATCHDAY COLLECTIBLE';
+            catText = fmt.replace('{category}', catName);
+        }
+
         ctx.fillStyle = accentColor;
         ctx.font = '800 18px Outfit';
-        ctx.fillText(KIOSK_CONFIG.badgeText || 'MATCHDAY COLLECTIBLE', cardW / 2, badgeY + 95);
+        ctx.letterSpacing = '2px';
+        ctx.fillText(catText, cardW / 2, badgeY + 105);
 
         // Bottom Slogan
-        ctx.fillStyle = '#94a3b8';
+        ctx.fillStyle = '#cbd5e1';
         ctx.font = '700 16px Outfit';
-        ctx.fillText(KIOSK_CONFIG.footerText || 'SATU LIGA, SATU SEMANGAT', cardW / 2, footerY + 315);
+        ctx.textAlign = 'left';
+        ctx.fillText(KIOSK_CONFIG.footerText || 'SATU LIGA, SATU SEMANGAT', 60, footerY + 315);
+
+        // QR Code area text
+        if (KIOSK_CONFIG.showQr) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(cardW - 140, footerY + 230, 80, 80);
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 10px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('QR CODE', cardW - 100, footerY + 275);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '800 10px Outfit';
+            ctx.fillText('SCAN TO DOWNLOAD', cardW - 100, footerY + 325);
+        }
 
         // Export generated card
         kioskState.generatedCardData = canvas.toDataURL('image/jpeg', 0.92);
@@ -1759,6 +1804,7 @@
                     customer_name: kioskState.customer.name,
                     customer_email: kioskState.customer.email,
                     customer_phone: kioskState.customer.phone,
+                    category_name: kioskState.selectedCategory ? kioskState.selectedCategory.name : null,
                     card_data: cardBase64
                 })
             });
@@ -1793,6 +1839,9 @@
         kioskState.quantity = 1;
         document.getElementById('qtyDisplay').innerText = '1';
         kioskState.transaction = null;
+        kioskState.customer = { name: '', email: '', phone: '', nik: '', gender: '', birthdate: '' };
+        const form = document.getElementById('userDataForm');
+        if (form) form.reset();
         goToScreen(1);
     }
 

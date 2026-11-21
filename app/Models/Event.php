@@ -261,14 +261,38 @@ class Event extends Model
         return $this->hasMany(KioskPhoto::class);
     }
 
-    public function getEffectivePhotoboothTemplate(): ?PhotoboothTemplate
+    public function getEffectivePhotoboothTemplate(): PhotoboothTemplate
     {
         if ($this->relationLoaded('photoboothTemplate') && $this->photoboothTemplate) {
             return $this->photoboothTemplate;
         }
 
-        return $this->photoboothTemplate()->first()
-            ?: PhotoboothTemplate::where('tenant_id', $this->tenant_id)->whereNull('event_id')->first();
+        $eventTemplate = $this->photoboothTemplate()->first();
+        if ($eventTemplate) {
+            return $eventTemplate;
+        }
+
+        // Fallback to Tenant Master Template
+        $tenant = $this->relationLoaded('tenant') ? $this->tenant : $this->tenant()->first();
+        if ($tenant) {
+            return $tenant->getEffectivePhotoboothTemplate();
+        }
+
+        return new PhotoboothTemplate([
+            'name' => 'Default Master Template',
+            'primary_color' => '#5A2D82',
+            'secondary_color' => '#F95700',
+            'header_title' => $this->season_name ?: 'I LEAGUE 2026/2027',
+            'header_subtitle' => 'FOOTBALL UNITES US',
+            'badge_text' => 'MATCHDAY COLLECTIBLE',
+            'category_label_format' => '{category} • MATCHDAY COLLECTIBLE',
+            'footer_text' => 'SATU LIGA, SATU SEMANGAT',
+            'show_qr' => true,
+            'show_fan_name' => true,
+            'show_category' => true,
+            'show_match_info' => true,
+            'show_team_logos' => true,
+        ]);
     }
 }
 

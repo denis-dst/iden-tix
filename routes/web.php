@@ -321,6 +321,8 @@ Route::middleware(['auth', 'role:Superadmin|Penyedia Event|Petugas Loket|Petugas
     // Photobooth Template per Pertandingan & Kiosk Launcher
     Route::get('events/{event}/photobooth', [App\Http\Controllers\Organizer\PhotoboothController::class, 'edit'])->name('photobooth.edit');
     Route::post('events/{event}/photobooth', [App\Http\Controllers\Organizer\PhotoboothController::class, 'update'])->name('photobooth.update');
+    Route::get('settings/photobooth-master', [App\Http\Controllers\Organizer\PhotoboothController::class, 'editMaster'])->name('photobooth.master');
+    Route::post('settings/photobooth-master', [App\Http\Controllers\Organizer\PhotoboothController::class, 'updateMaster'])->name('photobooth.master.update');
     Route::get('kiosk-launcher', [App\Http\Controllers\Organizer\PhotoboothController::class, 'kioskLauncher'])->name('kiosk.launcher');
 });
 

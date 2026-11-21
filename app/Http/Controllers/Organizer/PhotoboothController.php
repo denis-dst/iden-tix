@@ -54,12 +54,14 @@ class PhotoboothController extends Controller
             'secondary_color' => ['required', 'regex:/^#([a-f0-9]{6}|[a-f0-9]{3})$/i'],
             'header_title'    => 'nullable|string|max:100',
             'header_subtitle' => 'nullable|string|max:100',
-            'badge_text'      => 'nullable|string|max:100',
-            'footer_text'     => 'nullable|string|max:150',
-            'show_qr'         => 'nullable|boolean',
-            'show_fan_name'   => 'nullable|boolean',
-            'show_match_info' => 'nullable|boolean',
-            'show_team_logos' => 'nullable|boolean',
+            'badge_text'            => 'nullable|string|max:100',
+            'category_label_format' => 'nullable|string|max:100',
+            'footer_text'           => 'nullable|string|max:150',
+            'show_qr'               => 'nullable|boolean',
+            'show_fan_name'         => 'nullable|boolean',
+            'show_category'         => 'nullable|boolean',
+            'show_match_info'       => 'nullable|boolean',
+            'show_team_logos'       => 'nullable|boolean',
             'frame_overlay'   => 'nullable|image|mimes:png|max:4096',
             'background_image'=> 'nullable|image|mimes:jpeg,jpg,png,webp|max:4096',
         ]);
@@ -73,9 +75,11 @@ class PhotoboothController extends Controller
         $template->header_title = $validated['header_title'] ?? 'I LEAGUE 2026/2027';
         $template->header_subtitle = $validated['header_subtitle'] ?? 'FOOTBALL UNITES US';
         $template->badge_text = $validated['badge_text'] ?? 'MATCHDAY COLLECTIBLE';
+        $template->category_label_format = $validated['category_label_format'] ?? '{category} • MATCHDAY COLLECTIBLE';
         $template->footer_text = $validated['footer_text'] ?? 'SATU LIGA, SATU SEMANGAT';
         $template->show_qr = $request->has('show_qr');
         $template->show_fan_name = $request->has('show_fan_name');
+        $template->show_category = $request->has('show_category');
         $template->show_match_info = $request->has('show_match_info');
         $template->show_team_logos = $request->has('show_team_logos');
 
@@ -105,6 +109,112 @@ class PhotoboothController extends Controller
         return redirect()
             ->route('organizer.photobooth.edit', $event)
             ->with('success', 'Template Photobooth pertandingan berhasil diperbarui!');
+    }
+
+    /**
+     * Show Tenant-level Master Photobooth Template settings.
+     */
+    public function editMaster(Request $request)
+    {
+        $tenant = auth()->user()->tenant;
+        if (!$tenant && auth()->user()->tenant_id) {
+            $tenant = \App\Models\Tenant::find(auth()->user()->tenant_id);
+        }
+        if (!$tenant && auth()->user()->hasRole('Superadmin')) {
+            $tenant = \App\Models\Tenant::first();
+        }
+        if (!$tenant) {
+            abort(403, 'Tenant tidak ditemukan.');
+        }
+
+        $template = $tenant->getEffectivePhotoboothTemplate();
+
+        // Sample match for live preview
+        $sampleEvent = Event::where('tenant_id', $tenant->id)->with('ticketCategories')->latest()->first()
+            ?: Event::with('ticketCategories')->first();
+
+        return view('organizer.photobooth.master', compact('tenant', 'template', 'sampleEvent'));
+    }
+
+    /**
+     * Update Tenant-level Master Photobooth Template settings.
+     */
+    public function updateMaster(Request $request)
+    {
+        $tenant = auth()->user()->tenant;
+        if (!$tenant && auth()->user()->tenant_id) {
+            $tenant = \App\Models\Tenant::find(auth()->user()->tenant_id);
+        }
+        if (!$tenant && auth()->user()->hasRole('Superadmin')) {
+            $tenant = \App\Models\Tenant::first();
+        }
+        if (!$tenant) {
+            abort(403, 'Tenant tidak ditemukan.');
+        }
+
+        $validated = $request->validate([
+            'name'                  => 'required|string|max:255',
+            'is_active'             => 'nullable|boolean',
+            'primary_color'         => ['required', 'regex:/^#([a-f0-9]{6}|[a-f0-9]{3})$/i'],
+            'secondary_color'       => ['required', 'regex:/^#([a-f0-9]{6}|[a-f0-9]{3})$/i'],
+            'header_title'          => 'nullable|string|max:100',
+            'header_subtitle'       => 'nullable|string|max:100',
+            'badge_text'            => 'nullable|string|max:100',
+            'category_label_format' => 'nullable|string|max:100',
+            'footer_text'           => 'nullable|string|max:150',
+            'show_qr'               => 'nullable|boolean',
+            'show_fan_name'         => 'nullable|boolean',
+            'show_category'         => 'nullable|boolean',
+            'show_match_info'       => 'nullable|boolean',
+            'show_team_logos'       => 'nullable|boolean',
+            'frame_overlay'         => 'nullable|image|mimes:png|max:4096',
+            'background_image'      => 'nullable|image|mimes:jpeg,jpg,png,webp|max:4096',
+        ]);
+
+        $template = PhotoboothTemplate::firstOrNew([
+            'tenant_id' => $tenant->id,
+            'event_id'  => null,
+        ]);
+
+        $template->name = $validated['name'];
+        $template->is_active = $request->has('is_active');
+        $template->primary_color = $validated['primary_color'];
+        $template->secondary_color = $validated['secondary_color'];
+        $template->header_title = $validated['header_title'] ?? 'I LEAGUE 2026/2027';
+        $template->header_subtitle = $validated['header_subtitle'] ?? 'FOOTBALL UNITES US';
+        $template->badge_text = $validated['badge_text'] ?? 'MATCHDAY COLLECTIBLE';
+        $template->category_label_format = $validated['category_label_format'] ?? '{category} • MATCHDAY COLLECTIBLE';
+        $template->footer_text = $validated['footer_text'] ?? 'SATU LIGA, SATU SEMANGAT';
+        $template->show_qr = $request->has('show_qr');
+        $template->show_fan_name = $request->has('show_fan_name');
+        $template->show_category = $request->has('show_category');
+        $template->show_match_info = $request->has('show_match_info');
+        $template->show_team_logos = $request->has('show_team_logos');
+
+        if ($request->hasFile('frame_overlay')) {
+            if ($template->frame_overlay && Storage::disk('public')->exists($template->frame_overlay)) {
+                Storage::disk('public')->delete($template->frame_overlay);
+            }
+            $template->frame_overlay = $request->file('frame_overlay')->store('photobooth/frames', 'public');
+        }
+
+        if ($request->hasFile('background_image')) {
+            if ($template->background_image && Storage::disk('public')->exists($template->background_image)) {
+                Storage::disk('public')->delete($template->background_image);
+            }
+            $template->background_image = ImageOptimizerService::uploadAndOptimize(
+                $request->file('background_image'),
+                'photobooth/backgrounds',
+                1200,
+                85
+            );
+        }
+
+        $template->save();
+
+        return redirect()
+            ->route('organizer.photobooth.master')
+            ->with('success', 'Master Template Photobooth Klub berhasil diperbarui dan diterapkan ke seluruh pertandingan!');
     }
 
     /**

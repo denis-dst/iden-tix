@@ -251,6 +251,7 @@ class KioskController extends Controller
             'customer_name'   => 'required|string|max:255',
             'customer_email'  => 'required|email|max:255',
             'customer_phone'  => 'nullable|string|max:30',
+            'category_name'   => 'nullable|string|max:100',
             'card_data'       => 'required|string', // base64 composite card
             'raw_photo_data'  => 'nullable|string', // base64 camera capture
         ]);
@@ -263,6 +264,7 @@ class KioskController extends Controller
             'customer_name'  => $validated['customer_name'],
             'customer_email' => $validated['customer_email'],
             'customer_phone' => $validated['customer_phone'] ?? null,
+            'category_name'  => $validated['category_name'] ?? null,
             'card_data'      => $validated['card_data'],
             'raw_photo_data' => $validated['raw_photo_data'] ?? null,
         ]);

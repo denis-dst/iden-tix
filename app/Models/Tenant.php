@@ -81,6 +81,33 @@ class Tenant extends Model
         return $this->hasMany(PhotoboothTemplate::class);
     }
 
+    public function masterPhotoboothTemplate()
+    {
+        return $this->hasOne(PhotoboothTemplate::class)->whereNull('event_id');
+    }
+
+    public function getEffectivePhotoboothTemplate(): PhotoboothTemplate
+    {
+        return $this->masterPhotoboothTemplate()->first() ?: PhotoboothTemplate::create([
+            'tenant_id' => $this->id,
+            'event_id' => null,
+            'name' => 'Master Template ' . $this->name,
+            'is_active' => true,
+            'primary_color' => '#5A2D82',
+            'secondary_color' => '#F95700',
+            'header_title' => 'I LEAGUE 2026/2027',
+            'header_subtitle' => 'FOOTBALL UNITES US',
+            'badge_text' => 'MATCHDAY COLLECTIBLE',
+            'category_label_format' => '{category} • MATCHDAY COLLECTIBLE',
+            'footer_text' => 'SATU LIGA, SATU SEMANGAT',
+            'show_qr' => true,
+            'show_fan_name' => true,
+            'show_category' => true,
+            'show_match_info' => true,
+            'show_team_logos' => true,
+        ]);
+    }
+
     public function kioskPhotos()
     {
         return $this->hasMany(KioskPhoto::class);

@@ -64,6 +64,7 @@ class PhotoboothService
             'customer_name'  => $data['customer_name'],
             'customer_email' => $data['customer_email'],
             'customer_phone' => $data['customer_phone'] ?? null,
+            'category_name'  => $data['category_name'] ?? null,
             'original_photo' => $rawPath,
             'card_photo'     => $cardPath ?? 'images/kiosk/matchday_card_sample.jpg',
             'token'          => $token,

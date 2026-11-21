@@ -14,6 +14,7 @@ class KioskPhoto extends Model
         'tenant_id',
         'event_id',
         'transaction_id',
+        'category_name',
         'customer_name',
         'customer_email',
         'customer_phone',
