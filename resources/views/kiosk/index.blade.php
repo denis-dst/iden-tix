@@ -687,21 +687,102 @@
             color: #475569;
         }
 
-        /* Camera Screen (Screen 07) */
-        .camera-container {
+        /* E-Voucher Ticket Cards (Screen 06 & Screen 09) */
+        .evouchers-wrapper {
             width: 100%;
-            max-width: 460px;
-            height: 340px;
+            max-width: 820px;
+            margin: 0 auto 20px;
+        }
+
+        .evouchers-grid {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: stretch;
+            justify-content: center;
+            gap: 16px;
+            max-height: 310px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+
+        .kiosk-ticket-card {
+            flex: 1 1 200px;
+            max-width: 250px;
+            min-width: 190px;
+            background: #0f172a;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 18px;
+            padding: 14px;
+            text-align: center;
+            color: #ffffff;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .ticket-card-badge {
+            background: rgba(249, 87, 0, 0.2);
+            color: #ff8533;
+            border: 1px solid rgba(249, 87, 0, 0.4);
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+        }
+
+        .ticket-qr-wrap {
+            background: #ffffff;
+            padding: 8px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            margin: 6px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ticket-qr-wrap svg {
+            width: 130px;
+            height: 130px;
+            display: block;
+        }
+
+        .ticket-code-text {
+            font-family: monospace;
+            font-size: 13px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        .ticket-category-pill {
+            font-size: 11px;
+            font-weight: 800;
+            color: #38bdf8;
+            margin-top: 2px;
+        }
+
+        /* Camera Screen (Screen 07) - STRICTLY PORTRAIT ON LANDSCAPE KIOSK */
+        .camera-container {
+            width: 310px;
+            height: 450px;
+            max-height: 52vh;
+            aspect-ratio: 2/3;
             background: #090d16;
-            border-radius: 20px;
+            border-radius: 24px;
             position: relative;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            margin: 0 auto 14px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), 0 0 0 2px rgba(255, 255, 255, 0.15);
         }
 
         .camera-video {
@@ -709,6 +790,48 @@
             height: 100%;
             object-fit: cover;
             transform: scaleX(-1); /* Mirror camera */
+        }
+
+        /* Portrait Live Camera Overlay */
+        .camera-portrait-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-radius: 24px;
+        }
+
+        .camera-portrait-header {
+            padding: 12px 14px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #ffffff;
+        }
+
+        .camera-portrait-footer {
+            padding: 12px 14px;
+            background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+            text-align: center;
+        }
+
+        .photo-session-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            background: var(--primary-orange);
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 10px rgba(249, 87, 0, 0.4);
         }
 
         /* Viewfinder Corners */
@@ -759,22 +882,24 @@
             100% { transform: scale(0.8); }
         }
 
-        /* Photo Preview (Screen 08) */
+        /* Photo Preview (Screen 08) - PORTRAIT MATCHDAY CARD PREVIEW */
         .photo-preview-grid {
             width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 32px;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         .collectible-card-container {
-            width: 260px;
-            border-radius: 18px;
+            width: 270px;
+            max-height: 48vh;
+            aspect-ratio: 2/3;
+            border-radius: 20px;
             overflow: hidden;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
-            border: 2px solid rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.2);
             background: #111827;
             position: relative;
         }
@@ -782,7 +907,8 @@
         .collectible-card-container img, .collectible-card-container canvas {
             display: block;
             width: 100%;
-            height: auto;
+            height: 100%;
+            object-fit: contain;
         }
 
         .photo-status-sidebar {
@@ -790,18 +916,18 @@
             flex-direction: column;
             align-items: center;
             text-align: center;
-            max-width: 220px;
+            max-width: 280px;
         }
 
         .photo-status-sidebar svg {
-            width: 56px;
-            height: 56px;
+            width: 48px;
+            height: 48px;
             fill: var(--success-green);
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
         .photo-status-sidebar h5 {
-            font-size: 16px;
+            font-size: 17px;
             font-weight: 800;
             color: #ffffff;
             margin-bottom: 4px;
@@ -817,22 +943,24 @@
         .finish-card {
             background: #000000;
             border-radius: 24px;
-            padding: 36px 32px;
+            padding: 32px 28px;
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
             width: 100%;
-            max-width: 460px;
+            max-width: 780px;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            max-height: 82vh;
+            overflow-y: auto;
         }
 
         .finish-title {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 900;
             letter-spacing: 1.5px;
             color: #ffffff;
-            margin: 16px 0 8px 0;
+            margin: 12px 0 6px 0;
             text-transform: uppercase;
         }
 
@@ -1138,40 +1266,69 @@
         </div>
 
         <!-- ==========================================
-             SCREEN 06: KONFIRMASI PHOTO EXPERIENCE
+             SCREEN 06: E-VOUCHER & KONFIRMASI PHOTO EXPERIENCE
              ========================================== -->
         <div class="kiosk-screen" id="screen06">
-            <svg class="check-icon-large" viewBox="0 0 24 24" fill="#22c55e">
+            <svg class="check-icon-large" viewBox="0 0 24 24" fill="#22c55e" style="margin-bottom: 6px;">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
             </svg>
-            <p class="email-sent-note">E-ticket telah dikirim ke email Anda.</p>
+            <h2 class="welcome-title" style="font-size: 22px; margin-bottom: 4px;">PEMBAYARAN BERHASIL!</h2>
+            <p class="email-sent-note" id="screen06EmailNote" style="margin-bottom: 16px;">E-ticket telah dikirim ke email Anda.</p>
 
-            <div class="free-experience-banner">
-                <h4>Nikmati FREE PHOTO EXPERIENCE!</h4>
-                <p>Abadikan momen spesial Anda dan dapatkan Matchday Collectible Card resmi.</p>
+            <!-- Dynamic E-Vouchers Grid (1 tiket = 1 QR, >1 tiket = multiple QR) -->
+            <div class="evouchers-wrapper">
+                <div style="font-size: 11px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;" id="screen06EvoucherHeader">
+                    E-VOUCHER TIKET ANDA:
+                </div>
+                <div class="evouchers-grid" id="screen06EvouchersWrap">
+                    <!-- Populated dynamically by renderScreen06EVouchers() -->
+                </div>
+            </div>
+
+            <!-- Free Photo Experience Offer (Adjusts chances to quantity) -->
+            <div class="free-experience-banner" id="screen06PhotoBanner">
+                <h4 id="screen06PhotoBannerTitle">Nikmati FREE PHOTO EXPERIENCE!</h4>
+                <p id="screen06PhotoBannerDesc">Abadikan momen spesial Anda dan dapatkan Matchday Collectible Card resmi.</p>
             </div>
 
             <div class="action-buttons-wrap">
-                <button type="button" class="btn-kiosk-primary" onclick="goToScreen(7)" style="background: var(--primary-orange);">
+                <button type="button" class="btn-kiosk-primary" id="btnStartPhotoSession" onclick="startPhotoSession()" style="background: var(--primary-orange); min-height: 52px;">
                     YA, AMBIL FOTO
                 </button>
-                <button type="button" class="btn-kiosk-secondary" onclick="goToScreen(9)">
-                    TIDAK, LEWATI
+                <button type="button" class="btn-kiosk-secondary" onclick="goToScreen(9)" style="min-height: 52px;">
+                    TIDAK, SELESAI
                 </button>
             </div>
         </div>
 
         <!-- ==========================================
-             SCREEN 07: TAKE PHOTO – CAMERA & COUNTDOWN
+             SCREEN 07: TAKE PHOTO – CAMERA & COUNTDOWN (PORTRAIT VIEWFINDER)
              ========================================== -->
         <div class="kiosk-screen" id="screen07">
-            <h2 class="welcome-title" style="font-size: 24px; margin-bottom: 6px;">SIAP UNTUK FOTO?</h2>
-            <p style="font-size: 14px; font-weight: 600; color: #94a3b8; margin-bottom: 16px;">Berdiri di depan kamera dan lihat ke layar.</p>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 6px;">
+                <h2 class="welcome-title" style="font-size: 22px; margin-bottom: 0;">SIAP UNTUK FOTO?</h2>
+                <div class="photo-session-pill" id="screen07PhotoPill">FOTO 1 DARI 1</div>
+            </div>
+            <p style="font-size: 13px; font-weight: 600; color: #94a3b8; margin-bottom: 10px;" id="screen07Subtitle">
+                Berdiri di depan kamera dan posisikan diri Anda di dalam bingkai portrait.
+            </p>
 
+            <!-- Strictly Portrait Viewfinder on Landscape Kiosk Screen -->
             <div class="camera-container">
                 <video id="cameraVideo" class="camera-video" autoplay playsinline muted></video>
 
-                <!-- Viewfinder Guides -->
+                <!-- Portrait Live Overlays -->
+                <div class="camera-portrait-overlay">
+                    <div class="camera-portrait-header">
+                        <span style="font-size: 10px; font-weight: 900; letter-spacing: 1px; color: #f95700;" id="cameraLeagueTag">I LEAGUE 2026/2027</span>
+                        <span style="font-size: 9px; font-weight: 800; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px;">PORTRAIT</span>
+                    </div>
+                    <div class="camera-portrait-footer">
+                        <span style="font-size: 9px; font-weight: 800; color: rgba(255,255,255,0.9); text-transform: uppercase;" id="cameraLiveFanName">BRIAN ARIBOWO</span>
+                    </div>
+                </div>
+
+                <!-- Viewfinder Corners -->
                 <div class="viewfinder-corner vf-top-left"></div>
                 <div class="viewfinder-corner vf-top-right"></div>
                 <div class="viewfinder-corner vf-bottom-left"></div>
@@ -1183,69 +1340,90 @@
                 </div>
             </div>
 
-            <div style="font-size: 14px; font-weight: 800; letter-spacing: 2px; color: #cbd5e1; margin-bottom: 6px;">
-                3 &bull; 2 &bull; 1 &bull; SMILE!
+            <!-- Name personalization for current photo session -->
+            <div style="margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <label style="font-size: 12px; font-weight: 700; color: #cbd5e1;">Nama Suporter di Kartu:</label>
+                <input type="text" id="screen07FanNameInput" 
+                       style="background: #1e293b; border: 1px solid #475569; border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 800; color: #ffffff; text-transform: uppercase; width: 220px;"
+                       oninput="onFanNameInputChange(this.value)">
             </div>
-            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 20px;">
+
+            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;" id="screen07ChanceNotice">
                 Anda memiliki 1x kesempatan untuk mengambil gambar
             </div>
 
             <div class="action-buttons-wrap">
-                <button type="button" class="btn-kiosk-primary" id="btnCapturePhoto" onclick="startPhotoCountdown()" style="max-width: 280px;">
-                    AMBIL PHOTO
+                <button type="button" class="btn-kiosk-primary" id="btnCapturePhoto" onclick="startPhotoCountdown()" style="max-width: 320px; min-height: 52px;">
+                    AMBIL FOTO (1/1)
                 </button>
             </div>
         </div>
 
         <!-- ==========================================
-             SCREEN 08: PHOTO PREVIEW & EMAIL NOTIFICATION
+             SCREEN 08: PHOTO PREVIEW & MULTI-PHOTO STEPPER
              ========================================== -->
         <div class="kiosk-screen" id="screen08">
-            <h2 class="welcome-title" style="font-size: 24px; margin-bottom: 20px;">FOTO KAMU SUDAH SIAP!</h2>
+            <h2 class="welcome-title" style="font-size: 22px; margin-bottom: 16px;">FOTO KAMU SUDAH SIAP!</h2>
 
             <div class="photo-preview-grid">
-                <!-- Matchday Collectible Card Preview -->
+                <!-- Portrait Matchday Collectible Card Preview -->
                 <div class="collectible-card-container">
                     <img id="finalCardPreview" src="{{ asset('images/kiosk/matchday_card_sample.jpg') }}" alt="Matchday Collectible Preview">
                 </div>
 
-                <!-- Status Sidebar -->
-                <div class="photo-status-sidebar">
+                <!-- Multi-photo Status & Navigation Sidebar -->
+                <div class="photo-status-sidebar" style="max-width: 300px;">
                     <svg viewBox="0 0 24 24">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                     </svg>
-                    <h5>Foto berhasil dikirim ke email Anda.</h5>
-                    <p>Silakan periksa inbox email Anda untuk mengunduh kartu ini.</p>
+                    <h5 id="screen08StatusTitle">Foto berhasil disimpan!</h5>
+                    <p id="screen08StatusDesc">Foto telah dikirim ke email Anda.</p>
+
+                    <!-- Status Pills for multiple photos -->
+                    <div id="screen08PhotoPills" style="display: flex; gap: 6px; margin: 12px 0; justify-content: center; flex-wrap: wrap;"></div>
+
+                    <!-- Dynamic Action Buttons -->
+                    <div id="screen08Actions" style="width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 6px;"></div>
                 </div>
             </div>
 
-            <div style="font-size: 13px; font-weight: 800; letter-spacing: 1px; color: #94a3b8; margin-bottom: 20px;">
-                PHOTO PREVIEW
-            </div>
-
-            <div class="action-buttons-wrap">
-                <button type="button" class="btn-kiosk-primary" onclick="goToScreen(9)" style="max-width: 280px;">
-                    SELESAI
-                </button>
+            <div style="font-size: 12px; font-weight: 800; letter-spacing: 1px; color: #64748b; margin-top: 4px;">
+                MATCHDAY COLLECTIBLE CARD &bull; PORTRAIT EDITION
             </div>
         </div>
 
         <!-- ==========================================
-             SCREEN 09: SELESAI – AUTO RESET MENU AWAL
+             SCREEN 09: SELESAI – SEMUA TIKET & FOTO
              ========================================== -->
         <div class="kiosk-screen" id="screen09">
             <div class="finish-card">
-                <svg width="72" height="72" viewBox="0 0 24 24" fill="#22c55e">
+                <svg width="56" height="56" viewBox="0 0 24 24" fill="#22c55e" style="margin-bottom: 4px;">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                 </svg>
                 <h2 class="finish-title">TERIMA KASIH!</h2>
-                <p class="finish-desc">
-                    E-ticket dan foto telah dikirim ke email Anda.<br>
-                    Selamat menikmati event!
+                <p class="finish-desc" id="screen09SummaryText" style="margin-bottom: 16px;">
+                    Semua E-ticket dan foto Matchday Collectible telah dikirim ke email Anda.<br>
+                    Selamat menikmati pertandingan!
                 </p>
 
-                <button type="button" class="btn-kiosk-primary" onclick="resetToWelcome()" style="width: 100%; max-width: 320px;">
-                    KEMBALI KE MENU AWAL... (<span id="autoResetTimer">5</span>s)
+                <!-- Grid of E-Vouchers on Screen 09 -->
+                <div style="width: 100%; margin-bottom: 16px;">
+                    <div style="font-size: 11px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+                        E-VOUCHER TIKET ANDA:
+                    </div>
+                    <div class="evouchers-grid" id="screen09EvouchersGrid"></div>
+                </div>
+
+                <!-- Gallery of Captured Photos on Screen 09 -->
+                <div id="screen09PhotosSection" style="width: 100%; margin-bottom: 20px; display: none;">
+                    <div style="font-size: 11px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+                        KARTU MATCHDAY COLLECTIBLE ANDA:
+                    </div>
+                    <div id="screen09PhotosGrid" style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;"></div>
+                </div>
+
+                <button type="button" class="btn-kiosk-primary" onclick="resetToWelcome()" style="width: 100%; max-width: 340px; min-height: 52px;">
+                    KEMBALI KE MENU AWAL... (<span id="autoResetTimer">15</span>s)
                 </button>
             </div>
         </div>

@@ -204,6 +204,8 @@ class KioskController extends Controller
             $this->issueTicketsForTransaction($transaction);
         }
 
+        $tickets = ($transaction->payment_status === 'paid') ? $this->formatTicketsForKiosk($transaction) : [];
+
         return response()->json([
             'status'         => $transaction->payment_status,
             'paid'           => $transaction->payment_status === 'paid',
@@ -211,6 +213,8 @@ class KioskController extends Controller
             'transaction_id' => $transaction->id,
             'customer_name'  => $transaction->customer_name,
             'customer_email' => $transaction->customer_email,
+            'quantity'       => $transaction->quantity,
+            'tickets'        => $tickets,
         ]);
     }
 
@@ -231,11 +235,44 @@ class KioskController extends Controller
             $this->issueTicketsForTransaction($transaction);
         }
 
+        $tickets = $this->formatTicketsForKiosk($transaction);
+
         return response()->json([
-            'success' => true,
-            'status'  => 'paid',
-            'message' => 'Pembayaran simulasi berhasil diverifikasi.',
+            'success'        => true,
+            'status'         => 'paid',
+            'paid'           => true,
+            'reference_no'   => $transaction->reference_no,
+            'transaction_id' => $transaction->id,
+            'customer_name'  => $transaction->customer_name,
+            'customer_email' => $transaction->customer_email,
+            'quantity'       => $transaction->quantity,
+            'tickets'        => $tickets,
+            'message'        => 'Pembayaran simulasi berhasil diverifikasi.',
         ]);
+    }
+
+    /**
+     * Helper to format tickets for Kiosk display (including individual QR codes).
+     */
+    protected function formatTicketsForKiosk(Transaction $transaction)
+    {
+        return $transaction->tickets()->with('category')->get()->map(function ($ticket, $idx) use ($transaction) {
+            $qrSvg = (string) QrCode::format('svg')
+                ->size(150)
+                ->errorCorrection('H')
+                ->generate($ticket->ticket_code);
+
+            return [
+                'id'            => $ticket->id,
+                'ticket_number' => $idx + 1,
+                'total_tickets' => $transaction->quantity,
+                'ticket_code'   => $ticket->ticket_code,
+                'category_name' => $ticket->category->name ?? 'Regular',
+                'visitor_name'  => $ticket->visitor_data['name'] ?? $transaction->customer_name ?? 'Pengunjung',
+                'qr_svg'        => $qrSvg,
+                'status'        => $ticket->status,
+            ];
+        });
     }
 
     /**
