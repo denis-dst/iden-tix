@@ -64,6 +64,8 @@ class PhotoboothController extends Controller
             'show_team_logos'       => 'nullable|boolean',
             'frame_overlay'   => 'nullable|image|mimes:png|max:4096',
             'background_image'=> 'nullable|image|mimes:jpeg,jpg,png,webp|max:4096',
+            'remove_frame_overlay'    => 'nullable|boolean',
+            'remove_background_image' => 'nullable|boolean',
         ]);
 
         $template = PhotoboothTemplate::firstOrNew(['event_id' => $event->id]);
@@ -83,15 +85,20 @@ class PhotoboothController extends Controller
         $template->show_match_info = $request->has('show_match_info');
         $template->show_team_logos = $request->has('show_team_logos');
 
-        // Handle Custom Frame Overlay Upload (PNG with cutout)
+        // Handle Custom Frame Overlay Upload or Removal
         if ($request->hasFile('frame_overlay')) {
             if ($template->frame_overlay && Storage::disk('public')->exists($template->frame_overlay)) {
                 Storage::disk('public')->delete($template->frame_overlay);
             }
             $template->frame_overlay = $request->file('frame_overlay')->store('photobooth/frames', 'public');
+        } elseif ($request->boolean('remove_frame_overlay')) {
+            if ($template->frame_overlay && Storage::disk('public')->exists($template->frame_overlay)) {
+                Storage::disk('public')->delete($template->frame_overlay);
+            }
+            $template->frame_overlay = null;
         }
 
-        // Handle Custom Background Backdrop
+        // Handle Custom Background Backdrop Upload or Removal
         if ($request->hasFile('background_image')) {
             if ($template->background_image && Storage::disk('public')->exists($template->background_image)) {
                 Storage::disk('public')->delete($template->background_image);
@@ -102,6 +109,11 @@ class PhotoboothController extends Controller
                 1200,
                 85
             );
+        } elseif ($request->boolean('remove_background_image')) {
+            if ($template->background_image && Storage::disk('public')->exists($template->background_image)) {
+                Storage::disk('public')->delete($template->background_image);
+            }
+            $template->background_image = null;
         }
 
         $template->save();
@@ -169,6 +181,8 @@ class PhotoboothController extends Controller
             'show_team_logos'       => 'nullable|boolean',
             'frame_overlay'         => 'nullable|image|mimes:png|max:4096',
             'background_image'      => 'nullable|image|mimes:jpeg,jpg,png,webp|max:4096',
+            'remove_frame_overlay'    => 'nullable|boolean',
+            'remove_background_image' => 'nullable|boolean',
         ]);
 
         $template = PhotoboothTemplate::firstOrNew([
@@ -196,6 +210,11 @@ class PhotoboothController extends Controller
                 Storage::disk('public')->delete($template->frame_overlay);
             }
             $template->frame_overlay = $request->file('frame_overlay')->store('photobooth/frames', 'public');
+        } elseif ($request->boolean('remove_frame_overlay')) {
+            if ($template->frame_overlay && Storage::disk('public')->exists($template->frame_overlay)) {
+                Storage::disk('public')->delete($template->frame_overlay);
+            }
+            $template->frame_overlay = null;
         }
 
         if ($request->hasFile('background_image')) {
@@ -208,6 +227,11 @@ class PhotoboothController extends Controller
                 1200,
                 85
             );
+        } elseif ($request->boolean('remove_background_image')) {
+            if ($template->background_image && Storage::disk('public')->exists($template->background_image)) {
+                Storage::disk('public')->delete($template->background_image);
+            }
+            $template->background_image = null;
         }
 
         $template->save();

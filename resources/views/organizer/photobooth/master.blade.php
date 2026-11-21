@@ -146,32 +146,54 @@
 
                     <!-- Custom Graphic Assets Upload -->
                     <div class="border-t border-slate-100 pt-6 space-y-4">
-                        <h4 class="text-sm font-black text-slate-800 uppercase tracking-wider">Aset Grafis Custom Master Template (Opsional)</h4>
+                        <input type="hidden" name="remove_frame_overlay" id="master_remove_frame_input" value="0">
+                        <input type="hidden" name="remove_background_image" id="master_remove_bg_input" value="0">
+
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-sm font-black text-slate-800 uppercase tracking-wider">Aset Grafis Custom Master Template (Opsional)</h4>
+                            <button type="button" onclick="resetMasterAllImages()" 
+                                    class="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl border border-red-200 transition flex items-center gap-1.5 shadow-xs">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                <span>Reset Semua Gambar</span>
+                            </button>
+                        </div>
                         
-                        <div>
-                            <label class="block text-xs font-black uppercase tracking-wider text-slate-600 mb-2">Custom Frame Overlay (PNG Transparan)</label>
-                            <input type="file" name="frame_overlay" accept="image/png"
-                                   class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100 cursor-pointer">
-                            <span class="text-[11px] text-slate-500 font-medium mt-1 block">Format PNG rasio 2:3 (disarankan 1024 x 1536 px dengan cutout transparan di tengah).</span>
-                            @if(!empty($template->frame_overlay))
-                                <div class="mt-2 text-xs font-bold text-emerald-600 flex items-center gap-1">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    Frame overlay kustom sudah terpasang.
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-xs font-black uppercase tracking-wider text-slate-700">Custom Frame Overlay (PNG Transparan)</label>
+                                <div class="flex items-center gap-2">
+                                    <span id="masterFrameBadge" class="text-[10px] font-bold {{ !empty($template->frame_overlay) ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600' }} px-2 py-0.5 rounded-full">
+                                        {{ !empty($template->frame_overlay) ? 'Frame Terpasang' : 'Belum Diupload' }}
+                                    </span>
+                                    <button type="button" id="btnMasterResetFrame" onclick="resetMasterFrame()" 
+                                            class="text-[11px] font-bold text-red-600 hover:text-red-700 bg-white hover:bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 transition flex items-center gap-1 shadow-xs {{ empty($template->frame_overlay) ? 'hidden' : '' }}">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                        <span>Reset Frame</span>
+                                    </button>
                                 </div>
-                            @endif
+                            </div>
+                            <input type="file" name="frame_overlay" id="masterFrameInput" accept="image/png"
+                                   class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100 cursor-pointer">
+                            <span class="text-[11px] text-slate-500 font-medium block">Format PNG rasio 2:3 (disarankan 1024 x 1536 px dengan cutout transparan di tengah).</span>
                         </div>
 
-                        <div>
-                            <label class="block text-xs font-black uppercase tracking-wider text-slate-600 mb-2">Background Stadion / Lapangan</label>
-                            <input type="file" name="background_image" accept="image/jpeg,image/png,image/webp"
-                                   class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer">
-                            <span class="text-[11px] text-slate-500 font-medium mt-1 block">Latar belakang atmosfer stadion / tribun supporter untuk kartu foto.</span>
-                            @if(!empty($template->background_image))
-                                <div class="mt-2 text-xs font-bold text-emerald-600 flex items-center gap-1">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    Background kustom sudah terpasang.
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-xs font-black uppercase tracking-wider text-slate-700">Background Stadion / Lapangan</label>
+                                <div class="flex items-center gap-2">
+                                    <span id="masterBgBadge" class="text-[10px] font-bold {{ !empty($template->background_image) ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600' }} px-2 py-0.5 rounded-full">
+                                        {{ !empty($template->background_image) ? 'Background Terpasang' : 'Belum Diupload' }}
+                                    </span>
+                                    <button type="button" id="btnMasterResetBg" onclick="resetMasterBg()" 
+                                            class="text-[11px] font-bold text-red-600 hover:text-red-700 bg-white hover:bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 transition flex items-center gap-1 shadow-xs {{ empty($template->background_image) ? 'hidden' : '' }}">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                        <span>Reset Background</span>
+                                    </button>
                                 </div>
-                            @endif
+                            </div>
+                            <input type="file" name="background_image" id="masterBgInput" accept="image/jpeg,image/png,image/webp"
+                                   class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer">
+                            <span class="text-[11px] text-slate-500 font-medium block">Latar belakang atmosfer stadion / tribun supporter untuk kartu foto.</span>
                         </div>
                     </div>
 
@@ -423,6 +445,37 @@
             const input = document.getElementById('categoryFormatInput');
             input.value += ' ' + tag;
             updateLivePreview();
+        }
+
+        function resetMasterFrame() {
+            document.getElementById('master_remove_frame_input').value = '1';
+            const input = document.getElementById('masterFrameInput');
+            if (input) input.value = '';
+            const badge = document.getElementById('masterFrameBadge');
+            if (badge) {
+                badge.innerText = 'Dihapus (Polos)';
+                badge.className = 'text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full';
+            }
+            const btn = document.getElementById('btnMasterResetFrame');
+            if (btn) btn.style.display = 'none';
+        }
+
+        function resetMasterBg() {
+            document.getElementById('master_remove_bg_input').value = '1';
+            const input = document.getElementById('masterBgInput');
+            if (input) input.value = '';
+            const badge = document.getElementById('masterBgBadge');
+            if (badge) {
+                badge.innerText = 'Dihapus (Polos)';
+                badge.className = 'text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full';
+            }
+            const btn = document.getElementById('btnMasterResetBg');
+            if (btn) btn.style.display = 'none';
+        }
+
+        function resetMasterAllImages() {
+            resetMasterFrame();
+            resetMasterBg();
         }
 
         // Initialize on load

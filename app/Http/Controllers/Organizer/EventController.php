@@ -229,6 +229,7 @@ class EventController extends Controller
             'registration_proofs_json' => 'nullable|string',
             'evoucher_page_mode' => 'nullable|in:1_page,multi_page',
             'photobooth_frame_overlay' => 'nullable|image|mimes:png|max:5120',
+            'remove_photobooth_frame' => 'nullable|boolean',
         ]);
 
         $validated['type'] = $request->input('type', $event->type ?? 'concert');
@@ -295,6 +296,15 @@ class EventController extends Controller
             $pbTemplate->frame_overlay = $request->file('photobooth_frame_overlay')->store('photobooth/frames', 'public');
             $pbTemplate->is_active = true;
             $pbTemplate->save();
+        } elseif ($request->boolean('remove_photobooth_frame')) {
+            $pbTemplate = \App\Models\PhotoboothTemplate::where('event_id', $event->id)->first();
+            if ($pbTemplate) {
+                if ($pbTemplate->frame_overlay && Storage::disk('public')->exists($pbTemplate->frame_overlay)) {
+                    Storage::disk('public')->delete($pbTemplate->frame_overlay);
+                }
+                $pbTemplate->frame_overlay = null;
+                $pbTemplate->save();
+            }
         }
 
         return redirect()->route('organizer.events.edit', $event)->with('success', 'Event updated successfully.');

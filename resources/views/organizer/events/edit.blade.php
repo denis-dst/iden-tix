@@ -308,17 +308,25 @@
                             </div>
 
                             <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+                                <input type="hidden" name="remove_photobooth_frame" id="remove_photobooth_frame_input" value="0">
                                 <div class="flex items-center justify-between">
                                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Custom Frame Overlay (PNG Transparan)</label>
-                                    @if($currentFrameUrl)
-                                        <span class="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">Frame Terpasang</span>
-                                    @else
-                                        <span class="text-[10px] font-bold bg-slate-200 text-slate-600 px-2.5 py-0.5 rounded-full">Belum Diupload</span>
-                                    @endif
+                                    <div class="flex items-center gap-2">
+                                        <span id="eventFrameStatusBadge" class="text-[10px] font-bold {{ $currentFrameUrl ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600' }} px-2.5 py-0.5 rounded-full">
+                                            {{ $currentFrameUrl ? 'Frame Terpasang' : 'Belum Diupload' }}
+                                        </span>
+                                        @if($currentFrameUrl)
+                                            <button type="button" id="btnEventResetFrame" onclick="resetEventPhotoboothFrame()" 
+                                                    class="text-[11px] font-bold text-red-600 hover:text-red-700 bg-white hover:bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 transition flex items-center gap-1 shadow-xs">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                <span>Reset Frame</span>
+                                            </button>
+                                        @endif
+                                    </div>
                                 </div>
 
                                 @if($currentFrameUrl)
-                                    <div class="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200">
+                                    <div id="eventActiveFrameBox" class="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200">
                                         <img src="{{ $currentFrameUrl }}" class="h-16 w-12 object-contain bg-slate-900 rounded border border-slate-300 shadow-xs" alt="Bingkai Frame">
                                         <div class="text-xs">
                                             <div class="font-bold text-slate-800">Bingkai Matchday Aktif</div>
@@ -327,11 +335,28 @@
                                     </div>
                                 @endif
 
-                                <input type="file" name="photobooth_frame_overlay" accept="image/png"
+                                <input type="file" name="photobooth_frame_overlay" id="event_photobooth_frame_input" accept="image/png"
                                     class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 transition cursor-pointer">
                                 <p class="text-[11px] text-slate-500">Unggah file bingkai baru untuk menggantikan frame yang sedang aktif di kiosk.</p>
                             </div>
                         </div>
+
+                        <script>
+                            function resetEventPhotoboothFrame() {
+                                document.getElementById('remove_photobooth_frame_input').value = '1';
+                                const fileInput = document.getElementById('event_photobooth_frame_input');
+                                if (fileInput) fileInput.value = '';
+                                const frameBox = document.getElementById('eventActiveFrameBox');
+                                if (frameBox) frameBox.style.display = 'none';
+                                const badge = document.getElementById('eventFrameStatusBadge');
+                                if (badge) {
+                                    badge.innerText = 'Dihapus (Polos)';
+                                    badge.className = 'text-[10px] font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full';
+                                }
+                                const btn = document.getElementById('btnEventResetFrame');
+                                if (btn) btn.style.display = 'none';
+                            }
+                        </script>
 
                         <div class="mb-4">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Informasi

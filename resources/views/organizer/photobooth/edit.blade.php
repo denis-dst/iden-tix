@@ -163,16 +163,35 @@
 
                     <!-- Custom Graphic Assets Upload -->
                     <div class="border-t border-slate-100 pt-6 space-y-4">
-                        <h4 class="text-sm font-black text-slate-800 uppercase tracking-wider">Aset Grafis Custom Pertandingan</h4>
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-sm font-black text-slate-800 uppercase tracking-wider">Aset Grafis Custom Pertandingan</h4>
+                            <button type="button" onclick="resetAllImagesToPlain()" 
+                                    class="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl border border-red-200 transition flex items-center gap-1.5 shadow-xs"
+                                    title="Hilangkan semua frame dan gambar agar preview kartu bersih polos">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                <span>Reset Semua Gambar (Polos)</span>
+                            </button>
+                        </div>
                         
+                        <!-- Hidden flags for permanent deletion on save -->
+                        <input type="hidden" name="remove_frame_overlay" id="removeFrameOverlayInput" value="0">
+                        <input type="hidden" name="remove_background_image" id="removeBackgroundImageInput" value="0">
+
+                        <!-- Custom Frame Overlay -->
                         <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
                             <div class="flex items-center justify-between">
                                 <label class="block text-xs font-black uppercase tracking-wider text-slate-700">Custom Frame Overlay (PNG Transparan)</label>
-                                @if(!empty($template->frame_overlay))
-                                    <span class="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">Frame Terpasang</span>
-                                @else
-                                    <span class="text-[10px] font-bold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">Belum Diupload</span>
-                                @endif
+                                <div class="flex items-center gap-2">
+                                    <span id="badgeFrameStatus" class="text-[10px] font-bold {{ !empty($template->frame_overlay) ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600' }} px-2.5 py-0.5 rounded-full">
+                                        {{ !empty($template->frame_overlay) ? 'Frame Terpasang' : 'Belum Diupload' }}
+                                    </span>
+                                    <button type="button" id="btnResetFrame" onclick="resetFrameOverlay()" 
+                                            class="text-[11px] font-bold text-red-600 hover:text-red-700 bg-white hover:bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 transition flex items-center gap-1 shadow-xs {{ empty($template->frame_overlay) ? 'hidden' : '' }}"
+                                            title="Hilangkan frame overlay">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                        <span>Reset Frame</span>
+                                    </button>
+                                </div>
                             </div>
                             
                             <input type="file" name="frame_overlay" id="frameOverlayInput" accept="image/png"
@@ -183,12 +202,21 @@
                             </div>
                         </div>
 
+                        <!-- Background Stadion -->
                         <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
                             <div class="flex items-center justify-between">
                                 <label class="block text-xs font-black uppercase tracking-wider text-slate-700">Background Stadion / Lapangan</label>
-                                @if(!empty($template->background_image))
-                                    <span class="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">Background Terpasang</span>
-                                @endif
+                                <div class="flex items-center gap-2">
+                                    <span id="badgeBgStatus" class="text-[10px] font-bold {{ !empty($template->background_image) ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600' }} px-2.5 py-0.5 rounded-full">
+                                        {{ !empty($template->background_image) ? 'Background Terpasang' : 'Belum Diupload' }}
+                                    </span>
+                                    <button type="button" id="btnResetBg" onclick="resetBackgroundImage()" 
+                                            class="text-[11px] font-bold text-red-600 hover:text-red-700 bg-white hover:bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 transition flex items-center gap-1 shadow-xs {{ empty($template->background_image) ? 'hidden' : '' }}"
+                                            title="Hilangkan background stadion">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                        <span>Reset Background</span>
+                                    </button>
+                                </div>
                             </div>
                             <input type="file" name="background_image" id="backgroundImageInput" accept="image/jpeg,image/png,image/webp"
                                    onchange="handleBackgroundImageChange(this)"
@@ -244,26 +272,44 @@
                             <span class="text-xs font-black uppercase tracking-wider text-slate-700">Live Card Preview</span>
                             <div class="text-[11px] text-slate-500">Hasil real Matchday Collectible Card</div>
                         </div>
-                        <span class="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full border border-emerald-200">
-                            REALTIME
-                        </span>
+                        <div class="flex items-center gap-2">
+                            <button type="button" id="btnToggleCleanCard" onclick="toggleCleanPreview()" 
+                                    class="text-[11px] font-bold px-2.5 py-1 rounded-full border transition flex items-center gap-1 bg-white hover:bg-slate-100 text-slate-700 border-slate-300 shadow-xs"
+                                    title="Tampilkan kartu polos tanpa foto contoh">
+                                <svg class="w-3.5 h-3.5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                <span id="lblCleanPreview">Mode Polos</span>
+                            </button>
+                            <span class="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full border border-emerald-200">
+                                REALTIME
+                            </span>
+                        </div>
                     </div>
 
                     <!-- Visual Portrait Matchday Card Preview (Strictly 2:3 Aspect Ratio) -->
                     <div id="previewCard" 
                          class="w-full rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 border-4"
-                         style="aspect-ratio: 2/3; position: relative; background: #000000; border-color: {{ $template->secondary_color ?? '#F95700' }};">
+                         style="aspect-ratio: 2/3; position: relative; background: radial-gradient(circle at 50% 30%, #1e1338 0%, #0d0818 60%, #000000 100%); border-color: {{ $template->secondary_color ?? '#F95700' }};">
                         
                         <!-- Layer 1: Background Stadion / Gradient -->
                         <img id="previewBgImage" 
-                             src="{{ !empty($template->background_image) ? asset('storage/' . $template->background_image) : asset('images/kiosk/stadium_bg.jpg') }}" 
+                             src="{{ !empty($template->background_image) ? asset('storage/' . $template->background_image) : '' }}" 
                              alt="Background" 
-                             class="absolute inset-0 w-full h-full object-cover">
+                             class="absolute inset-0 w-full h-full object-cover"
+                             style="{{ empty($template->background_image) ? 'display: none;' : '' }}">
                         <div id="previewBgGradient" class="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/95"></div>
 
                         <!-- Layer 2: Fan Photo (Sample Supporter) -->
                         <div id="previewFanPhotoWrap" class="absolute inset-0 flex items-center justify-center p-6 z-0">
                             <img id="previewFanPhoto" src="{{ asset('images/kiosk/matchday_card_sample.jpg') }}" alt="Fan Photo" class="w-full h-full object-cover rounded-2xl shadow-inner">
+                        </div>
+
+                        <!-- Layer 2B: Clean Empty Wireframe Placeholder (When in clean mode) -->
+                        <div id="previewCleanPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-8 z-0 text-center pointer-events-none" style="display: none;">
+                            <div class="w-16 h-16 rounded-2xl border-2 border-dashed border-white/20 flex items-center justify-center mb-2 bg-white/5">
+                                <svg class="w-8 h-8 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            </div>
+                            <div class="text-[11px] font-bold text-white/50 uppercase tracking-widest">AREA FOTO SUPORTER POLOS</div>
+                            <div class="text-[9px] text-white/30 mt-1">Live feed kamera suporter otomatis mengisi jendela ini</div>
                         </div>
 
                         <!-- Layer 3: Custom Frame Overlay (Rendered directly on top of photo) -->
@@ -410,9 +456,102 @@
             }
         }
 
+        let isCleanMode = false;
+
+        function resetFrameOverlay() {
+            document.getElementById('removeFrameOverlayInput').value = '1';
+            const input = document.getElementById('frameOverlayInput');
+            if (input) input.value = '';
+
+            const frameImg = document.getElementById('previewFrameOverlay');
+            if (frameImg) {
+                frameImg.src = '';
+                frameImg.style.display = 'none';
+            }
+
+            const badge = document.getElementById('badgeFrameStatus');
+            if (badge) {
+                badge.innerText = 'Dihapus (Polos)';
+                badge.className = 'text-[10px] font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full';
+            }
+
+            const btn = document.getElementById('btnResetFrame');
+            if (btn) btn.style.display = 'none';
+        }
+
+        function resetBackgroundImage() {
+            document.getElementById('removeBackgroundImageInput').value = '1';
+            const input = document.getElementById('backgroundImageInput');
+            if (input) input.value = '';
+
+            const bgImg = document.getElementById('previewBgImage');
+            if (bgImg) {
+                bgImg.src = '';
+                bgImg.style.display = 'none';
+            }
+
+            const badge = document.getElementById('badgeBgStatus');
+            if (badge) {
+                badge.innerText = 'Dihapus (Polos)';
+                badge.className = 'text-[10px] font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full';
+            }
+
+            const btn = document.getElementById('btnResetBg');
+            if (btn) btn.style.display = 'none';
+        }
+
+        function resetAllImagesToPlain() {
+            resetFrameOverlay();
+            resetBackgroundImage();
+
+            // Set clean mode true so sample supporter photo also disappears
+            isCleanMode = true;
+            applyCleanModeState();
+        }
+
+        function toggleCleanPreview() {
+            isCleanMode = !isCleanMode;
+            applyCleanModeState();
+        }
+
+        function applyCleanModeState() {
+            const fanPhotoWrap = document.getElementById('previewFanPhotoWrap');
+            const cleanPlaceholder = document.getElementById('previewCleanPlaceholder');
+            const bgGradient = document.getElementById('previewBgGradient');
+            const lbl = document.getElementById('lblCleanPreview');
+            const btn = document.getElementById('btnToggleCleanCard');
+
+            if (isCleanMode) {
+                if (fanPhotoWrap) fanPhotoWrap.style.display = 'none';
+                if (cleanPlaceholder) cleanPlaceholder.style.display = 'flex';
+                if (bgGradient) bgGradient.style.display = 'none';
+                if (lbl) lbl.innerText = 'Tampilkan Foto';
+                if (btn) {
+                    btn.className = 'text-[11px] font-bold px-2.5 py-1 rounded-full border transition flex items-center gap-1 bg-orange-50 text-orange-700 border-orange-300 shadow-xs';
+                }
+            } else {
+                if (fanPhotoWrap) fanPhotoWrap.style.display = 'flex';
+                if (cleanPlaceholder) cleanPlaceholder.style.display = 'none';
+                if (bgGradient) bgGradient.style.display = 'block';
+                if (lbl) lbl.innerText = 'Mode Polos';
+                if (btn) {
+                    btn.className = 'text-[11px] font-bold px-2.5 py-1 rounded-full border transition flex items-center gap-1 bg-white hover:bg-slate-100 text-slate-700 border-slate-300 shadow-xs';
+                }
+            }
+        }
+
         // Live preview for uploaded custom PNG Frame Overlay
         function handleFrameOverlayChange(input) {
             if (input.files && input.files[0]) {
+                document.getElementById('removeFrameOverlayInput').value = '0';
+                const badge = document.getElementById('badgeFrameStatus');
+                if (badge) {
+                    badge.innerText = 'Frame Baru Dipilih';
+                    badge.className = 'text-[10px] font-bold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full';
+                }
+                const btn = document.getElementById('btnResetFrame');
+                if (btn) btn.style.display = 'inline-flex';
+
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const frameImg = document.getElementById('previewFrameOverlay');
@@ -426,10 +565,20 @@
         // Live preview for uploaded background image
         function handleBackgroundImageChange(input) {
             if (input.files && input.files[0]) {
+                document.getElementById('removeBackgroundImageInput').value = '0';
+                const badge = document.getElementById('badgeBgStatus');
+                if (badge) {
+                    badge.innerText = 'Background Baru Dipilih';
+                    badge.className = 'text-[10px] font-bold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full';
+                }
+                const btn = document.getElementById('btnResetBg');
+                if (btn) btn.style.display = 'inline-flex';
+
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const bgImg = document.getElementById('previewBgImage');
                     bgImg.src = e.target.result;
+                    bgImg.style.display = 'block';
                 };
                 reader.readAsDataURL(input.files[0]);
             }
