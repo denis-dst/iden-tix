@@ -88,6 +88,22 @@ Route::post('/ranger-bhayangkara', [App\Http\Controllers\RangerRegistrationContr
 Route::get('/join/{slug}', [App\Http\Controllers\Fan\FanRegistrationController::class, 'show'])->name('fan.register.show');
 Route::post('/join/{slug}', [App\Http\Controllers\Fan\FanRegistrationController::class, 'store'])->name('fan.register.store');
 
+// Club Kiosk & Photobooth Experience
+Route::prefix('kiosk')->name('kiosk.')->group(function () {
+    Route::get('/photo/{token}', [App\Http\Controllers\Kiosk\KioskController::class, 'viewPhoto'])->name('photo.view');
+    Route::get('/photo/{token}/download', [App\Http\Controllers\Kiosk\KioskController::class, 'downloadPhoto'])->name('photo.download');
+    Route::get('/', function () {
+        return redirect()->route('kiosk.index', 'persita');
+    });
+    Route::get('/{tenant_slug}', [App\Http\Controllers\Kiosk\KioskController::class, 'index'])->name('index');
+    Route::get('/{tenant_slug}/match/{event_slug}', [App\Http\Controllers\Kiosk\KioskController::class, 'index'])->name('match');
+    Route::post('/{tenant_slug}/checkout', [App\Http\Controllers\Kiosk\KioskController::class, 'checkout'])->name('checkout');
+    Route::get('/{tenant_slug}/status/{reference}', [App\Http\Controllers\Kiosk\KioskController::class, 'checkStatus'])->name('status');
+    Route::post('/{tenant_slug}/simulate-pay/{reference}', [App\Http\Controllers\Kiosk\KioskController::class, 'simulatePayment'])->name('simulate-pay');
+    Route::post('/{tenant_slug}/photo/save', [App\Http\Controllers\Kiosk\KioskController::class, 'savePhoto'])->name('photo.save');
+    Route::post('/{tenant_slug}/redeem/lookup', [App\Http\Controllers\Kiosk\KioskController::class, 'redeemLookup'])->name('redeem.lookup');
+});
+
 // Tenant Specific Public Event Listing (e.g. /lampung-youth/list-event/)
 Route::get('/{slug}/list-event', [App\Http\Controllers\TenantPublicController::class, 'listEvents'])
     ->where('slug', '^(?!organizer|superadmin|fan|api|dashboard|profile|login|register).*$')
@@ -301,6 +317,11 @@ Route::middleware(['auth', 'role:Superadmin|Penyedia Event|Petugas Loket|Petugas
         Route::post('/store-korwil', [App\Http\Controllers\Organizer\KorwilManagementController::class, 'storeKorwil'])->name('store-korwil');
         Route::post('/store-allocation', [App\Http\Controllers\Organizer\KorwilManagementController::class, 'storeAllocation'])->name('store-allocation');
     });
+
+    // Photobooth Template per Pertandingan & Kiosk Launcher
+    Route::get('events/{event}/photobooth', [App\Http\Controllers\Organizer\PhotoboothController::class, 'edit'])->name('photobooth.edit');
+    Route::post('events/{event}/photobooth', [App\Http\Controllers\Organizer\PhotoboothController::class, 'update'])->name('photobooth.update');
+    Route::get('kiosk-launcher', [App\Http\Controllers\Organizer\PhotoboothController::class, 'kioskLauncher'])->name('kiosk.launcher');
 });
 
 // Fan Portal (Suporter Club Zone & KYC)

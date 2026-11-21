@@ -250,5 +250,25 @@ class Event extends Model
 
         return [];
     }
+
+    public function photoboothTemplate()
+    {
+        return $this->hasOne(PhotoboothTemplate::class);
+    }
+
+    public function kioskPhotos()
+    {
+        return $this->hasMany(KioskPhoto::class);
+    }
+
+    public function getEffectivePhotoboothTemplate(): ?PhotoboothTemplate
+    {
+        if ($this->relationLoaded('photoboothTemplate') && $this->photoboothTemplate) {
+            return $this->photoboothTemplate;
+        }
+
+        return $this->photoboothTemplate()->first()
+            ?: PhotoboothTemplate::where('tenant_id', $this->tenant_id)->whereNull('event_id')->first();
+    }
 }
 

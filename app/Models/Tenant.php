@@ -75,4 +75,14 @@ class Tenant extends Model
     {
         return $this->hasMany(WristbandTemplate::class);
     }
+
+    public function photoboothTemplates()
+    {
+        return $this->hasMany(PhotoboothTemplate::class);
+    }
+
+    public function kioskPhotos()
+    {
+        return $this->hasMany(KioskPhoto::class);
+    }
 }

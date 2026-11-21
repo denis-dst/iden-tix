@@ -8,9 +8,15 @@
                 <h2 class="text-3xl font-black text-slate-800 font-outfit">Penjualan Langsung</h2>
                 <p class="text-sm text-slate-500 font-medium mt-1">Pilih event untuk membuat transaksi yang ditangani petugas tenant.</p>
             </div>
-            <a href="{{ route('organizer.transactions.index') }}" class="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition shadow-sm text-center">
-                Lihat Laporan
-            </a>
+            <div class="flex items-center gap-3">
+                <a href="{{ route('organizer.kiosk.launcher') }}" class="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold shadow-sm transition text-center flex items-center gap-2 text-sm">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                    Mode KIOSK Mandiri
+                </a>
+                <a href="{{ route('organizer.transactions.index') }}" class="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition shadow-sm text-center text-sm">
+                    Lihat Laporan
+                </a>
+            </div>
         </div>
 
         @if(session('success'))

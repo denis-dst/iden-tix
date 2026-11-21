@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'checkout/success*',
             'ipaymu/notification',
             'impersonate/leave',
+            'kiosk/*',
         ]);
         
         $middleware->web(append: [
