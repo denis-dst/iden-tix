@@ -289,7 +289,7 @@
                         <!-- Template Photobooth & Bingkai Matchday Kiosk -->
                         @php
                             $pbTemplate = $event->photoboothTemplate;
-                            $currentFrameUrl = !empty($pbTemplate?->frame_overlay) ? asset('storage/' . $pbTemplate->frame_overlay) : null;
+                            $currentFrameUrl = (!empty($pbTemplate?->frame_overlay) && file_exists(public_path('storage/' . $pbTemplate->frame_overlay))) ? asset('storage/' . $pbTemplate->frame_overlay) : null;
                         @endphp
                         <div class="pt-6 border-t border-slate-100 space-y-4">
                             <div class="flex items-center justify-between">

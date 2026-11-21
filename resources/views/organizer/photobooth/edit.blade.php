@@ -31,7 +31,7 @@
             </div>
         @endif
 
-        @if($errors->any())
+        @if(isset($errors) && $errors->any())
             <div class="bg-rose-50 border border-rose-200 text-rose-800 px-4 py-3 rounded-2xl text-sm font-bold">
                 <ul class="list-disc list-inside">
                     @foreach($errors->all() as $err)
@@ -173,6 +173,11 @@
                             </button>
                         </div>
                         
+                        @php
+                            $hasFrame = !empty($template->frame_overlay) && file_exists(public_path('storage/' . $template->frame_overlay));
+                            $hasBg = !empty($template->background_image) && file_exists(public_path('storage/' . $template->background_image));
+                        @endphp
+
                         <!-- Hidden flags for permanent deletion on save -->
                         <input type="hidden" name="remove_frame_overlay" id="removeFrameOverlayInput" value="0">
                         <input type="hidden" name="remove_background_image" id="removeBackgroundImageInput" value="0">
@@ -182,11 +187,11 @@
                             <div class="flex items-center justify-between">
                                 <label class="block text-xs font-black uppercase tracking-wider text-slate-700">Custom Frame Overlay (PNG Transparan)</label>
                                 <div class="flex items-center gap-2">
-                                    <span id="badgeFrameStatus" class="text-[10px] font-bold {{ !empty($template->frame_overlay) ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600' }} px-2.5 py-0.5 rounded-full">
-                                        {{ !empty($template->frame_overlay) ? 'Frame Terpasang' : 'Belum Diupload' }}
+                                    <span id="badgeFrameStatus" class="text-[10px] font-bold {{ $hasFrame ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600' }} px-2.5 py-0.5 rounded-full">
+                                        {{ $hasFrame ? 'Frame Terpasang' : 'Belum Diupload' }}
                                     </span>
-                                    <button type="button" id="btnResetFrame" onclick="resetFrameOverlay()" 
-                                            class="text-[11px] font-bold text-red-600 hover:text-red-700 bg-white hover:bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 transition flex items-center gap-1 shadow-xs {{ empty($template->frame_overlay) ? 'hidden' : '' }}"
+                                    <button type="button" id="btnResetFrame" onclick="resetFrameOverlay(true)" 
+                                            class="text-[11px] font-bold text-red-600 hover:text-red-700 bg-white hover:bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 transition flex items-center gap-1 shadow-xs {{ $hasFrame ? '' : 'hidden' }}"
                                             title="Hilangkan frame overlay">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                                         <span>Reset Frame</span>
@@ -207,11 +212,11 @@
                             <div class="flex items-center justify-between">
                                 <label class="block text-xs font-black uppercase tracking-wider text-slate-700">Background Stadion / Lapangan</label>
                                 <div class="flex items-center gap-2">
-                                    <span id="badgeBgStatus" class="text-[10px] font-bold {{ !empty($template->background_image) ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600' }} px-2.5 py-0.5 rounded-full">
-                                        {{ !empty($template->background_image) ? 'Background Terpasang' : 'Belum Diupload' }}
+                                    <span id="badgeBgStatus" class="text-[10px] font-bold {{ $hasBg ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600' }} px-2.5 py-0.5 rounded-full">
+                                        {{ $hasBg ? 'Background Terpasang' : 'Belum Diupload' }}
                                     </span>
-                                    <button type="button" id="btnResetBg" onclick="resetBackgroundImage()" 
-                                            class="text-[11px] font-bold text-red-600 hover:text-red-700 bg-white hover:bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 transition flex items-center gap-1 shadow-xs {{ empty($template->background_image) ? 'hidden' : '' }}"
+                                    <button type="button" id="btnResetBg" onclick="resetBackgroundImage(true)" 
+                                            class="text-[11px] font-bold text-red-600 hover:text-red-700 bg-white hover:bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 transition flex items-center gap-1 shadow-xs {{ $hasBg ? '' : 'hidden' }}"
                                             title="Hilangkan background stadion">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                                         <span>Reset Background</span>
@@ -275,14 +280,19 @@
                         <div class="flex items-center gap-2">
                             <button type="button" id="btnToggleCleanCard" onclick="toggleCleanPreview()" 
                                     class="text-[11px] font-bold px-2.5 py-1 rounded-full border transition flex items-center gap-1 bg-white hover:bg-slate-100 text-slate-700 border-slate-300 shadow-xs"
-                                    title="Tampilkan kartu polos tanpa foto contoh">
+                                    title="Tampilkan contoh foto suporter atau biarkan bersih polos">
                                 <svg class="w-3.5 h-3.5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                <span id="lblCleanPreview">Mode Polos</span>
+                                <span id="lblCleanPreview">Contoh Foto</span>
                             </button>
                             <span class="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full border border-emerald-200">
                                 REALTIME
                             </span>
                         </div>
+                    </div>
+
+                    <!-- Reset Toast Notification -->
+                    <div id="resetToastNotice" class="hidden w-full p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold text-center animate-in fade-in transition">
+                        Semua gambar telah direset. Live Card Preview sekarang bersih polos.
                     </div>
 
                     <!-- Visual Portrait Matchday Card Preview (Strictly 2:3 Aspect Ratio) -->
@@ -292,35 +302,32 @@
                         
                         <!-- Layer 1: Background Stadion / Gradient -->
                         <img id="previewBgImage" 
-                             src="{{ !empty($template->background_image) ? asset('storage/' . $template->background_image) : '' }}" 
+                             src="{{ $hasBg ? asset('storage/' . $template->background_image) : '' }}" 
                              alt="Background" 
                              class="absolute inset-0 w-full h-full object-cover"
-                             style="{{ empty($template->background_image) ? 'display: none;' : '' }}">
-                        <div id="previewBgGradient" class="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/95"></div>
+                             style="{{ $hasBg ? '' : 'display: none;' }}">
+                        <div id="previewBgGradient" class="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/95" style="{{ $hasBg ? '' : 'display: none;' }}"></div>
 
-                        <!-- Layer 2: Fan Photo (Sample Supporter) -->
-                        <div id="previewFanPhotoWrap" class="absolute inset-0 flex items-center justify-center p-6 z-0">
-                            <img id="previewFanPhoto" src="{{ asset('images/kiosk/matchday_card_sample.jpg') }}" alt="Fan Photo" class="w-full h-full object-cover rounded-2xl shadow-inner">
+                        <!-- Layer 2: Clean Fan Face Photo (Sample Supporter - ONLY shown when toggled on) -->
+                        <div id="previewFanPhotoWrap" class="absolute inset-0 flex items-center justify-center p-6 z-0" style="display: none;">
+                            <img id="previewFanPhoto" src="{{ asset('images/kiosk/clean_fan_photo.jpg') }}" alt="Fan Photo" class="w-full h-full object-cover rounded-2xl shadow-inner">
                         </div>
 
-                        <!-- Layer 2B: Clean Empty Wireframe Placeholder (When in clean mode) -->
-                        <div id="previewCleanPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-8 z-0 text-center pointer-events-none" style="display: none;">
-                            <div class="w-16 h-16 rounded-2xl border-2 border-dashed border-white/20 flex items-center justify-center mb-2 bg-white/5">
-                                <svg class="w-8 h-8 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <!-- Layer 2B: Clean Empty Wireframe Placeholder (Default Clean / Polos) -->
+                        <div id="previewCleanPlaceholder" class="absolute inset-x-4 top-20 bottom-36 rounded-2xl border-2 border-dashed border-white/20 bg-white/5 flex flex-col items-center justify-center p-6 text-center pointer-events-none z-0">
+                            <div class="w-12 h-12 rounded-xl border border-white/20 bg-white/10 flex items-center justify-center mb-2 shadow-inner">
+                                <svg class="w-6 h-6 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             </div>
-                            <div class="text-[11px] font-bold text-white/50 uppercase tracking-widest">AREA FOTO SUPORTER POLOS</div>
-                            <div class="text-[9px] text-white/30 mt-1">Live feed kamera suporter otomatis mengisi jendela ini</div>
+                            <div class="text-[11px] font-black text-white/70 uppercase tracking-widest">AREA LIVE FEED KAMERA KIOSK</div>
+                            <div class="text-[9px] text-white/40 mt-1">Kartu bersih polos &bull; Foto suporter & bingkai custom akan ditampilkan di sini</div>
                         </div>
 
                         <!-- Layer 3: Custom Frame Overlay (Rendered directly on top of photo) -->
-                        @php
-                            $frameUrl = !empty($template->frame_overlay) ? asset('storage/' . $template->frame_overlay) : '';
-                        @endphp
                         <img id="previewFrameOverlay" 
-                             src="{{ $frameUrl }}" 
+                             src="{{ $hasFrame ? asset('storage/' . $template->frame_overlay) : '' }}" 
                              alt="Custom Frame Overlay" 
                              class="absolute inset-0 w-full h-full object-fill pointer-events-none z-10"
-                             style="{{ empty($frameUrl) ? 'display: none;' : '' }}">
+                             style="{{ $hasFrame ? '' : 'display: none;' }}">
 
                         <!-- Layer 4A: Top Header (Standard or when no custom frame) -->
                         <div id="previewTopHeader" class="absolute top-0 inset-x-0 pt-4 pb-2 text-center z-20 pointer-events-none" style="text-shadow: 0 2px 8px rgba(0,0,0,0.9);">
@@ -330,7 +337,7 @@
 
                         <!-- Layer 4B: Bottom Card Details (Logos, Matchday Info, Fan Name, Badge, QR) -->
                         <div id="previewBottomDetails" class="absolute bottom-0 inset-x-0 p-3.5 z-20 pointer-events-none">
-                            <div class="rounded-2xl p-3 text-center backdrop-blur-md border border-white/10" style="background: rgba(10, 8, 20, 0.88); box-shadow: 0 8px 30px rgba(0,0,0,0.8);">
+                            <div class="rounded-2xl p-3 text-center backdrop-blur-md border border-white/10" style="background: rgba(10, 8, 20, 0.90); box-shadow: 0 8px 30px rgba(0,0,0,0.8);">
                                 
                                 <!-- Team Logos Row -->
                                 <div id="previewLogosRow" class="flex items-center justify-center gap-3 mb-1.5" style="{{ $template->show_team_logos ? '' : 'display: none;' }}">
@@ -392,7 +399,7 @@
                             <span>Informasi Realtime Preview</span>
                         </div>
                         <p class="text-slate-600 leading-relaxed">
-                            Preview di atas mencerminkan kartu yang akan ditampilkan di KIOSK dan dikirim ke suporter. Jika frame overlay diunggah, bingkai PNG tersebut akan menutupi live feed kamera dan kartu foto secara pas.
+                            Preview di atas mencerminkan kartu yang akan ditampilkan di KIOSK dan dikirim ke suporter. Tombol <strong>Reset Semua Gambar (Polos)</strong> akan mengosongkan gambar dan frame agar kartu kembali ke template dasar klub.
                         </p>
                     </div>
 
@@ -456,9 +463,48 @@
             }
         }
 
-        let isCleanMode = false;
+        let isCleanMode = true; // Default clean plain mode
 
-        function resetFrameOverlay() {
+        function toggleCleanPreview() {
+            isCleanMode = !isCleanMode;
+            applyCleanModeState();
+        }
+
+        function applyCleanModeState() {
+            const fanPhotoWrap = document.getElementById('previewFanPhotoWrap');
+            const cleanPlaceholder = document.getElementById('previewCleanPlaceholder');
+            const lbl = document.getElementById('lblCleanPreview');
+            const btn = document.getElementById('btnToggleCleanCard');
+
+            if (isCleanMode) {
+                if (fanPhotoWrap) fanPhotoWrap.style.display = 'none';
+                if (cleanPlaceholder) cleanPlaceholder.style.display = 'flex';
+                if (lbl) lbl.innerText = 'Contoh Foto';
+                if (btn) {
+                    btn.className = 'text-[11px] font-bold px-2.5 py-1 rounded-full border transition flex items-center gap-1 bg-white hover:bg-slate-100 text-slate-700 border-slate-300 shadow-xs';
+                }
+            } else {
+                if (fanPhotoWrap) fanPhotoWrap.style.display = 'flex';
+                if (cleanPlaceholder) cleanPlaceholder.style.display = 'none';
+                if (lbl) lbl.innerText = 'Mode Polos';
+                if (btn) {
+                    btn.className = 'text-[11px] font-bold px-2.5 py-1 rounded-full border transition flex items-center gap-1 bg-orange-50 text-orange-700 border-orange-300 shadow-xs';
+                }
+            }
+        }
+
+        function showResetToast(msg) {
+            const toast = document.getElementById('resetToastNotice');
+            if (toast) {
+                toast.innerText = msg;
+                toast.classList.remove('hidden');
+                setTimeout(() => {
+                    toast.classList.add('hidden');
+                }, 4000);
+            }
+        }
+
+        async function resetFrameOverlay(persist = true) {
             document.getElementById('removeFrameOverlayInput').value = '1';
             const input = document.getElementById('frameOverlayInput');
             if (input) input.value = '';
@@ -471,15 +517,32 @@
 
             const badge = document.getElementById('badgeFrameStatus');
             if (badge) {
-                badge.innerText = 'Dihapus (Polos)';
-                badge.className = 'text-[10px] font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full';
+                badge.innerText = 'Belum Diupload';
+                badge.className = 'text-[10px] font-bold bg-slate-200 text-slate-600 px-2.5 py-0.5 rounded-full';
             }
 
             const btn = document.getElementById('btnResetFrame');
             if (btn) btn.style.display = 'none';
+
+            if (persist) {
+                try {
+                    await fetch("{{ route('organizer.photobooth.reset-images', $event) }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ target: 'frame' })
+                    });
+                    showResetToast('Frame overlay berhasil direset (polos).');
+                } catch (e) {
+                    console.warn(e);
+                }
+            }
         }
 
-        function resetBackgroundImage() {
+        async function resetBackgroundImage(persist = true) {
             document.getElementById('removeBackgroundImageInput').value = '1';
             const input = document.getElementById('backgroundImageInput');
             if (input) input.value = '';
@@ -490,53 +553,62 @@
                 bgImg.style.display = 'none';
             }
 
+            const bgGrad = document.getElementById('previewBgGradient');
+            if (bgGrad) bgGrad.style.display = 'none';
+
             const badge = document.getElementById('badgeBgStatus');
             if (badge) {
-                badge.innerText = 'Dihapus (Polos)';
-                badge.className = 'text-[10px] font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full';
+                badge.innerText = 'Belum Diupload';
+                badge.className = 'text-[10px] font-bold bg-slate-200 text-slate-600 px-2.5 py-0.5 rounded-full';
             }
 
             const btn = document.getElementById('btnResetBg');
             if (btn) btn.style.display = 'none';
+
+            if (persist) {
+                try {
+                    await fetch("{{ route('organizer.photobooth.reset-images', $event) }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ target: 'background' })
+                    });
+                    showResetToast('Background stadion berhasil direset (polos).');
+                } catch (e) {
+                    console.warn(e);
+                }
+            }
         }
 
-        function resetAllImagesToPlain() {
-            resetFrameOverlay();
-            resetBackgroundImage();
+        async function resetAllImagesToPlain() {
+            await resetFrameOverlay(false);
+            await resetBackgroundImage(false);
 
-            // Set clean mode true so sample supporter photo also disappears
+            // Hide fan photo and switch to clean wireframe placeholder
             isCleanMode = true;
             applyCleanModeState();
-        }
 
-        function toggleCleanPreview() {
-            isCleanMode = !isCleanMode;
-            applyCleanModeState();
-        }
-
-        function applyCleanModeState() {
-            const fanPhotoWrap = document.getElementById('previewFanPhotoWrap');
-            const cleanPlaceholder = document.getElementById('previewCleanPlaceholder');
-            const bgGradient = document.getElementById('previewBgGradient');
-            const lbl = document.getElementById('lblCleanPreview');
-            const btn = document.getElementById('btnToggleCleanCard');
-
-            if (isCleanMode) {
-                if (fanPhotoWrap) fanPhotoWrap.style.display = 'none';
-                if (cleanPlaceholder) cleanPlaceholder.style.display = 'flex';
-                if (bgGradient) bgGradient.style.display = 'none';
-                if (lbl) lbl.innerText = 'Tampilkan Foto';
-                if (btn) {
-                    btn.className = 'text-[11px] font-bold px-2.5 py-1 rounded-full border transition flex items-center gap-1 bg-orange-50 text-orange-700 border-orange-300 shadow-xs';
+            // Persist reset in DB
+            try {
+                const response = await fetch("{{ route('organizer.photobooth.reset-images', $event) }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ target: 'all' })
+                });
+                const res = await response.json();
+                if (res.success) {
+                    showResetToast('Semua gambar berhasil direset! Live Card Preview sekarang bersih polos.');
                 }
-            } else {
-                if (fanPhotoWrap) fanPhotoWrap.style.display = 'flex';
-                if (cleanPlaceholder) cleanPlaceholder.style.display = 'none';
-                if (bgGradient) bgGradient.style.display = 'block';
-                if (lbl) lbl.innerText = 'Mode Polos';
-                if (btn) {
-                    btn.className = 'text-[11px] font-bold px-2.5 py-1 rounded-full border transition flex items-center gap-1 bg-white hover:bg-slate-100 text-slate-700 border-slate-300 shadow-xs';
-                }
+            } catch (err) {
+                console.warn('Persist reset error:', err);
+                showResetToast('Semua gambar dihilangkan. Live Card Preview sekarang bersih polos.');
             }
         }
 
@@ -579,6 +651,8 @@
                     const bgImg = document.getElementById('previewBgImage');
                     bgImg.src = e.target.result;
                     bgImg.style.display = 'block';
+                    const bgGrad = document.getElementById('previewBgGradient');
+                    if (bgGrad) bgGrad.style.display = 'block';
                 };
                 reader.readAsDataURL(input.files[0]);
             }

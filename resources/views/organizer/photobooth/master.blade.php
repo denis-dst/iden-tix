@@ -447,35 +447,63 @@
             updateLivePreview();
         }
 
-        function resetMasterFrame() {
+        async function resetMasterFrame() {
             document.getElementById('master_remove_frame_input').value = '1';
             const input = document.getElementById('masterFrameInput');
             if (input) input.value = '';
             const badge = document.getElementById('masterFrameBadge');
             if (badge) {
-                badge.innerText = 'Dihapus (Polos)';
-                badge.className = 'text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full';
+                badge.innerText = 'Belum Diupload';
+                badge.className = 'text-[10px] font-bold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full';
             }
             const btn = document.getElementById('btnMasterResetFrame');
             if (btn) btn.style.display = 'none';
+
+            try {
+                await fetch("{{ route('organizer.photobooth.master.reset-images') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ target: 'frame' })
+                });
+            } catch (e) {
+                console.warn(e);
+            }
         }
 
-        function resetMasterBg() {
+        async function resetMasterBg() {
             document.getElementById('master_remove_bg_input').value = '1';
             const input = document.getElementById('masterBgInput');
             if (input) input.value = '';
             const badge = document.getElementById('masterBgBadge');
             if (badge) {
-                badge.innerText = 'Dihapus (Polos)';
-                badge.className = 'text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full';
+                badge.innerText = 'Belum Diupload';
+                badge.className = 'text-[10px] font-bold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full';
             }
             const btn = document.getElementById('btnMasterResetBg');
             if (btn) btn.style.display = 'none';
+
+            try {
+                await fetch("{{ route('organizer.photobooth.master.reset-images') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ target: 'background' })
+                });
+            } catch (e) {
+                console.warn(e);
+            }
         }
 
-        function resetMasterAllImages() {
-            resetMasterFrame();
-            resetMasterBg();
+        async function resetMasterAllImages() {
+            await resetMasterFrame();
+            await resetMasterBg();
         }
 
         // Initialize on load
