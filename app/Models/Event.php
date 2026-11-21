@@ -294,5 +294,58 @@ class Event extends Model
             'show_team_logos' => true,
         ]);
     }
+
+    public function getEffectiveHomeTeamNameAttribute(): string
+    {
+        if (!empty($this->home_team_name)) {
+            return $this->home_team_name;
+        }
+
+        if (!empty($this->name)) {
+            $parts = preg_split('/\s+(?:vs|\-|VS|v|V)\s+/i', $this->name);
+            if (!empty($parts[0])) {
+                return trim($parts[0]);
+            }
+        }
+
+        return 'PERSITA';
+    }
+
+    public function getEffectiveAwayTeamNameAttribute(): string
+    {
+        if (!empty($this->away_team_name)) {
+            return $this->away_team_name;
+        }
+
+        if (!empty($this->name)) {
+            $parts = preg_split('/\s+(?:vs|\-|VS|v|V)\s+/i', $this->name);
+            if (!empty($parts[1])) {
+                return trim($parts[1]);
+            }
+        }
+
+        return 'PERSIB';
+    }
+
+    public function getEffectiveHomeTeamLogoUrlAttribute(): ?string
+    {
+        $path = $this->home_team_logo ?: ($this->meta['wristband_home_club_logo'] ?? $this->tenant?->logo);
+        if (!$path) return null;
+        return str_starts_with($path, 'http') ? $path : asset('storage/' . $path);
+    }
+
+    public function getEffectiveAwayTeamLogoUrlAttribute(): ?string
+    {
+        $path = $this->away_team_logo ?: ($this->meta['wristband_away_club_logo'] ?? null);
+        if (!$path) return null;
+        return str_starts_with($path, 'http') ? $path : asset('storage/' . $path);
+    }
+
+    public function getEffectiveLeagueLogoUrlAttribute(): ?string
+    {
+        $path = $this->meta['wristband_league_logo'] ?? null;
+        if (!$path) return null;
+        return str_starts_with($path, 'http') ? $path : asset('storage/' . $path);
+    }
 }
 

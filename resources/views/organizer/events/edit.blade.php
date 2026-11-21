@@ -286,6 +286,53 @@
 
                         @include('organizer.events._wristband_designer', ['event' => $event])
 
+                        <!-- Template Photobooth & Bingkai Matchday Kiosk -->
+                        @php
+                            $pbTemplate = $event->photoboothTemplate;
+                            $currentFrameUrl = !empty($pbTemplate?->frame_overlay) ? asset('storage/' . $pbTemplate->frame_overlay) : null;
+                        @endphp
+                        <div class="pt-6 border-t border-slate-100 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="p-2 rounded-xl bg-purple-100 text-purple-700">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    </span>
+                                    <div>
+                                        <h3 class="text-lg font-black text-slate-800">Bingkai Photobooth Matchday (Kiosk)</h3>
+                                        <p class="text-xs text-slate-500">Unggah bingkai frame custom (PNG transparan) untuk sesi foto suporter di terminal KIOSK.</p>
+                                    </div>
+                                </div>
+                                <a href="{{ route('organizer.photobooth.edit', $event) }}" class="text-xs font-black text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-xl border border-purple-200 transition">
+                                    Editor & Live Preview Lengkap &rarr;
+                                </a>
+                            </div>
+
+                            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Custom Frame Overlay (PNG Transparan)</label>
+                                    @if($currentFrameUrl)
+                                        <span class="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">Frame Terpasang</span>
+                                    @else
+                                        <span class="text-[10px] font-bold bg-slate-200 text-slate-600 px-2.5 py-0.5 rounded-full">Belum Diupload</span>
+                                    @endif
+                                </div>
+
+                                @if($currentFrameUrl)
+                                    <div class="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200">
+                                        <img src="{{ $currentFrameUrl }}" class="h-16 w-12 object-contain bg-slate-900 rounded border border-slate-300 shadow-xs" alt="Bingkai Frame">
+                                        <div class="text-xs">
+                                            <div class="font-bold text-slate-800">Bingkai Matchday Aktif</div>
+                                            <div class="text-slate-500 text-[11px] truncate max-w-xs">{{ basename($pbTemplate->frame_overlay) }}</div>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <input type="file" name="photobooth_frame_overlay" accept="image/png"
+                                    class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 transition cursor-pointer">
+                                <p class="text-[11px] text-slate-500">Unggah file bingkai baru untuk menggantikan frame yang sedang aktif di kiosk.</p>
+                            </div>
+                        </div>
+
                         <div class="mb-4">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Informasi
                                 E-Voucher Tambahan (Dinamis)</label>

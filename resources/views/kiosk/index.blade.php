@@ -793,6 +793,37 @@
         }
 
         /* Portrait Live Camera Overlay */
+        .camera-frame-overlay-img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+            pointer-events: none;
+            z-index: 4;
+        }
+
+        .camera-live-logos {
+            position: absolute;
+            top: 76%;
+            left: 0;
+            right: 0;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 0 45px;
+            pointer-events: none;
+            z-index: 6;
+        }
+
+        .camera-live-logos .live-team-logo {
+            width: 52px;
+            height: 52px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.85));
+        }
+
         .camera-portrait-overlay {
             position: absolute;
             inset: 0;
@@ -1115,9 +1146,9 @@
              ========================================== -->
         <div class="kiosk-screen" id="screen02">
             <div class="match-card-header">
-                <h2 class="match-title">{{ $event->name ?? 'PERSITA VS PERSIJA' }}</h2>
+                <h2 class="match-title">{{ $event->effective_home_team_name }} VS {{ $event->effective_away_team_name }}</h2>
                 <div class="match-info-meta">
-                    {{ $event->event_start_date ? $event->event_start_date->translatedFormat('d F Y | H:i') . ' WIB' : '20 OKTOBER 2026 | 15.30 WIB' }}
+                    {{ $event->event_start_date ? $event->event_start_date->translatedFormat('d F Y | H:i') . ' WIB' : '29 NOVEMBER 2026 | 19.00 WIB' }}
                     | {{ $event->venue ?? 'STADION INDOMILK ARENA' }}{{ $event->city ? ', ' . $event->city : '' }}
                 </div>
             </div>
@@ -1289,10 +1320,13 @@
             <div class="free-experience-banner" id="screen06PhotoBanner">
                 <h4 id="screen06PhotoBannerTitle">Nikmati FREE PHOTO EXPERIENCE!</h4>
                 <p id="screen06PhotoBannerDesc">Abadikan momen spesial Anda dan dapatkan Matchday Collectible Card resmi.</p>
+                <div id="photoAutoNotice" style="display: none; font-size: 12px; font-weight: 800; color: #ea580c; margin-top: 8px;">
+                    Standby kamera otomatis dalam <span id="photoAutoSec">3</span>s...
+                </div>
             </div>
 
             <div class="action-buttons-wrap">
-                <button type="button" class="btn-kiosk-primary" id="btnStartPhotoSession" onclick="startPhotoSession()" style="background: var(--primary-orange); min-height: 52px;">
+                <button type="button" class="btn-kiosk-primary" id="btnStartPhotoSession" onclick="startPhotoSession(event)" style="background: var(--primary-orange); min-height: 52px; cursor: pointer;">
                     YA, AMBIL FOTO
                 </button>
                 <button type="button" class="btn-kiosk-secondary" onclick="goToScreen(9)" style="min-height: 52px;">
@@ -1317,10 +1351,28 @@
             <div class="camera-container">
                 <video id="cameraVideo" class="camera-video" autoplay playsinline muted></video>
 
-                <!-- Portrait Live Overlays -->
-                <div class="camera-portrait-overlay">
+                <!-- Custom PNG Frame Overlay on live camera feed -->
+                @if(!empty($photoboothTemplate->frame_overlay))
+                    <img id="cameraFrameOverlay" 
+                         src="{{ asset('storage/' . $photoboothTemplate->frame_overlay) }}" 
+                         class="camera-frame-overlay-img" 
+                         alt="Matchday Frame">
+                @endif
+
+                <!-- Live Team Logos on Viewfinder (Aligned with Frame VS mark) -->
+                <div id="cameraLiveLogos" class="camera-live-logos" style="{{ empty($photoboothTemplate->frame_overlay) ? 'display: none;' : '' }}">
+                    @if($event->effective_home_team_logo_url)
+                        <img src="{{ $event->effective_home_team_logo_url }}" class="live-team-logo" alt="Home">
+                    @endif
+                    @if($event->effective_away_team_logo_url)
+                        <img src="{{ $event->effective_away_team_logo_url }}" class="live-team-logo" alt="Away">
+                    @endif
+                </div>
+
+                <!-- Fallback Portrait Live Overlays (if no custom frame uploaded) -->
+                <div id="cameraFrameFallback" class="camera-portrait-overlay" style="{{ !empty($photoboothTemplate->frame_overlay) ? 'display: none;' : '' }}">
                     <div class="camera-portrait-header">
-                        <span style="font-size: 10px; font-weight: 900; letter-spacing: 1px; color: #f95700;" id="cameraLeagueTag">I LEAGUE 2026/2027</span>
+                        <span style="font-size: 10px; font-weight: 900; letter-spacing: 1px; color: #f95700;" id="cameraLeagueTag">{{ $photoboothTemplate->header_title ?? ($event->season_name ?: 'I LEAGUE 2026/2027') }}</span>
                         <span style="font-size: 9px; font-weight: 800; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px;">PORTRAIT</span>
                     </div>
                     <div class="camera-portrait-footer">
@@ -1495,14 +1547,19 @@
     const KIOSK_CONFIG = {
         tenantSlug: '{{ $tenant->slug }}',
         eventId: {{ $event->id }},
-        eventName: @json($event->name ?? 'PERSITA VS PERSIJA'),
-        matchDate: @json($event->event_start_date ? $event->event_start_date->translatedFormat('d F Y | H:i') . ' WIB' : '20 OKTOBER 2026 | 15.30 WIB'),
+        eventName: @json($event->name),
+        matchDate: @json($event->event_start_date ? $event->event_start_date->translatedFormat('d F Y | H:i') . ' WIB' : '29 NOVEMBER 2026 | 19.00 WIB'),
         venue: @json($event->venue ?? 'STADION INDOMILK ARENA'),
-        homeTeam: @json($event->home_team_name ?? 'PERSITA'),
-        awayTeam: @json($event->away_team_name ?? 'PERSIJA'),
+        homeTeam: @json($event->effective_home_team_name),
+        awayTeam: @json($event->effective_away_team_name),
+        homeTeamLogo: @json($event->effective_home_team_logo_url),
+        awayTeamLogo: @json($event->effective_away_team_logo_url),
+        leagueLogo: @json($event->effective_league_logo_url),
+        frameOverlayUrl: @json(!empty($photoboothTemplate->frame_overlay) ? asset('storage/' . $photoboothTemplate->frame_overlay) : null),
+        backgroundUrl: @json(!empty($photoboothTemplate->background_image) ? asset('storage/' . $photoboothTemplate->background_image) : null),
         primaryColor: @json($photoboothTemplate->primary_color ?? '#5A2D82'),
         secondaryColor: @json($photoboothTemplate->secondary_color ?? '#F95700'),
-        headerTitle: @json($photoboothTemplate->header_title ?? 'I LEAGUE 2026/2027'),
+        headerTitle: @json($photoboothTemplate->header_title ?? ($event->season_name ?: 'I LEAGUE 2026/2027')),
         headerSubtitle: @json($photoboothTemplate->header_subtitle ?? 'FOOTBALL UNITES US'),
         badgeText: @json($photoboothTemplate->badge_text ?? 'MATCHDAY COLLECTIBLE'),
         categoryLabelFormat: @json($photoboothTemplate->category_label_format ?? '{category} • MATCHDAY COLLECTIBLE'),
@@ -1510,6 +1567,8 @@
         showCategory: {{ ($photoboothTemplate->show_category ?? true) ? 'true' : 'false' }},
         showFanName: {{ ($photoboothTemplate->show_fan_name ?? true) ? 'true' : 'false' }},
         showQr: {{ ($photoboothTemplate->show_qr ?? true) ? 'true' : 'false' }},
+        showMatchInfo: {{ ($photoboothTemplate->show_match_info ?? true) ? 'true' : 'false' }},
+        showTeamLogos: {{ ($photoboothTemplate->show_team_logos ?? true) ? 'true' : 'false' }},
         sampleCardUrl: '{{ asset('images/kiosk/matchday_card_sample.jpg') }}',
         routes: {
             checkout: '{{ route('kiosk.checkout', $tenant->slug) }}',
@@ -1519,6 +1578,36 @@
             redeemLookup: '{{ route('kiosk.redeem.lookup', $tenant->slug) }}'
         }
     };
+
+    // Preload image assets for instant canvas rendering
+    let preloadedFrameImg = null;
+    let preloadedHomeLogo = null;
+    let preloadedAwayLogo = null;
+    let preloadedBgImg = null;
+
+    function initPreloadAssets() {
+        if (KIOSK_CONFIG.frameOverlayUrl) {
+            preloadedFrameImg = new Image();
+            preloadedFrameImg.crossOrigin = 'anonymous';
+            preloadedFrameImg.src = KIOSK_CONFIG.frameOverlayUrl;
+        }
+        if (KIOSK_CONFIG.homeTeamLogo) {
+            preloadedHomeLogo = new Image();
+            preloadedHomeLogo.crossOrigin = 'anonymous';
+            preloadedHomeLogo.src = KIOSK_CONFIG.homeTeamLogo;
+        }
+        if (KIOSK_CONFIG.awayTeamLogo) {
+            preloadedAwayLogo = new Image();
+            preloadedAwayLogo.crossOrigin = 'anonymous';
+            preloadedAwayLogo.src = KIOSK_CONFIG.awayTeamLogo;
+        }
+        if (KIOSK_CONFIG.backgroundUrl) {
+            preloadedBgImg = new Image();
+            preloadedBgImg.crossOrigin = 'anonymous';
+            preloadedBgImg.src = KIOSK_CONFIG.backgroundUrl;
+        }
+    }
+    initPreloadAssets();
 
     let kioskState = {
         currentScreen: 1,
@@ -1542,7 +1631,8 @@
         generatedCardData: null,
         cameraStream: null,
         pollInterval: null,
-        autoResetInterval: null
+        autoResetInterval: null,
+        autoPhotoTimer: null
     };
 
     // Initialize Default Category
@@ -1565,7 +1655,8 @@
         if (targetScreen) {
             targetScreen.classList.add('active');
             kioskState.currentScreen = screenNumber;
-            document.getElementById('stepIndicator').innerText = `SCREEN 0${screenNumber}/09`;
+            const stepInd = document.getElementById('stepIndicator');
+            if (stepInd) stepInd.innerText = `SCREEN 0${screenNumber}/09`;
         }
 
         // Screen specific hooks
@@ -1751,7 +1842,28 @@
 
         setTimeout(() => {
             goToScreen(6);
+            startAutoPhotoStandbyTimer();
         }, 1200);
+    }
+
+    // Auto-advance timer from screen 06 to screen 07 (standby camera)
+    function startAutoPhotoStandbyTimer() {
+        if (kioskState.autoPhotoTimer) clearInterval(kioskState.autoPhotoTimer);
+        let sec = 3;
+        const secDisplay = document.getElementById('photoAutoSec');
+        if (secDisplay) secDisplay.innerText = sec;
+        const noticeEl = document.getElementById('photoAutoNotice');
+        if (noticeEl) noticeEl.style.display = 'block';
+
+        kioskState.autoPhotoTimer = setInterval(() => {
+            sec--;
+            if (secDisplay) secDisplay.innerText = sec;
+            if (sec <= 0) {
+                clearInterval(kioskState.autoPhotoTimer);
+                kioskState.autoPhotoTimer = null;
+                startPhotoSession();
+            }
+        }, 1000);
     }
 
     // Vector QR SVG generator fallback
@@ -1810,10 +1922,24 @@
     }
 
     // Start Photo Session from Screen 06
-    function startPhotoSession() {
+    function startPhotoSession(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        if (kioskState.autoPhotoTimer) {
+            clearInterval(kioskState.autoPhotoTimer);
+            kioskState.autoPhotoTimer = null;
+        }
         kioskState.currentPhotoIndex = 1;
-        updateScreen07UI();
-        goToScreen(7);
+        try {
+            goToScreen(7);
+        } catch (err) {
+            console.error('goToScreen(7) error:', err);
+            document.querySelectorAll('.kiosk-screen').forEach(s => s.classList.remove('active'));
+            const s7 = document.getElementById('screen07');
+            if (s7) s7.classList.add('active');
+            kioskState.currentScreen = 7;
+            startCamera();
+            updateScreen07UI();
+        }
     }
 
     // QRIS 5-minute Countdown Timer
@@ -1838,17 +1964,20 @@
 
     async function startCamera() {
         const video = document.getElementById('cameraVideo');
+        if (!video) return;
         try {
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                kioskState.cameraStream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
-                    audio: false
-                });
+                if (!kioskState.cameraStream) {
+                    kioskState.cameraStream = await navigator.mediaDevices.getUserMedia({
+                        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+                        audio: false
+                    });
+                }
                 video.srcObject = kioskState.cameraStream;
-                video.play();
+                video.play().catch(e => console.warn('Video play interrupted:', e));
             }
         } catch (err) {
-            console.warn('Webcam not accessible, using placeholder frame:', err);
+            console.warn('Webcam not accessible:', err);
         }
     }
 
@@ -1942,12 +2071,27 @@
         }, 1000);
     }
 
+    // Helper to draw centered and scaled logo on canvas
+    function drawCenteredLogo(ctx, img, cx, cy, maxDiameter) {
+        if (!img || !img.complete || img.naturalWidth === 0) return;
+        const aspect = img.naturalWidth / img.naturalHeight;
+        let w = maxDiameter;
+        let h = maxDiameter;
+        if (aspect > 1) {
+            h = maxDiameter / aspect;
+        } else {
+            w = maxDiameter * aspect;
+        }
+        ctx.drawImage(img, cx - (w / 2), cy - (h / 2), w, h);
+    }
+
     // Capture & Composite PORTRAIT Matchday Collectible Card
     function capturePhotoNow() {
-        // 1. Flash effect
         const flash = document.getElementById('flashOverlay');
-        flash.classList.add('flash');
-        setTimeout(() => flash.classList.remove('flash'), 200);
+        if (flash) {
+            flash.classList.add('flash');
+            setTimeout(() => flash.classList.remove('flash'), 200);
+        }
 
         const video = document.getElementById('cameraVideo');
         const canvas = document.getElementById('cardCanvas');
@@ -1959,163 +2103,244 @@
         canvas.width = cardW;
         canvas.height = cardH;
 
-        // Draw Club Theme Background Gradient
         const primaryColor = KIOSK_CONFIG.primaryColor || '#5A2D82';
         const accentColor = KIOSK_CONFIG.secondaryColor || '#F95700';
 
-        const grad = ctx.createLinearGradient(0, 0, 0, cardH);
-        grad.addColorStop(0, '#110b1a');
-        grad.addColorStop(0.35, primaryColor);
-        grad.addColorStop(0.7, '#0f0817');
-        grad.addColorStop(1, '#000000');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, cardW, cardH);
-
-        // Portrait photo box on card
-        const photoY = 160;
-        const photoW = cardW - 120; // 904 px
-        const photoH = 920;         // 920 px (portrait proportion)
-        const photoX = 60;
-
-        ctx.save();
-        // Clip rounded rectangle for fan photo
-        roundedRect(ctx, photoX, photoY, photoW, photoH, 24);
-        ctx.clip();
-
-        if (video.videoWidth > 0) {
-            // CENTER-CROP landscape webcam feed into portrait photo box
-            const vW = video.videoWidth;
-            const vH = video.videoHeight;
-            const targetRatio = photoW / photoH;
-            let srcW = vW;
-            let srcH = vH;
-            let srcX = 0;
-            let srcY = 0;
-
-            if (vW / vH > targetRatio) {
-                // Video is wider than portrait box: center-crop horizontally
-                srcW = vH * targetRatio;
-                srcX = (vW - srcW) / 2;
-            } else {
-                // Video is taller than portrait box: center-crop vertically
-                srcH = vW / targetRatio;
-                srcY = (vH - srcH) / 2;
-            }
-
-            // Mirror image draw
-            ctx.translate(photoX + photoW, photoY);
-            ctx.scale(-1, 1);
-            ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
+        // 1. Draw Background
+        if (preloadedBgImg && preloadedBgImg.complete && preloadedBgImg.naturalWidth > 0) {
+            ctx.drawImage(preloadedBgImg, 0, 0, cardW, cardH);
         } else {
-            // Fallback draw sample fan photo
-            ctx.fillStyle = '#1e1b4b';
-            ctx.fillRect(0, 0, photoW, photoH);
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 36px Outfit';
-            ctx.textAlign = 'center';
-            ctx.fillText('MATCHDAY FAN PHOTO #' + kioskState.currentPhotoIndex, photoX + (photoW / 2), photoY + (photoH / 2));
+            const grad = ctx.createLinearGradient(0, 0, 0, cardH);
+            grad.addColorStop(0, '#0c0714');
+            grad.addColorStop(0.35, primaryColor);
+            grad.addColorStop(0.7, '#0f0817');
+            grad.addColorStop(1, '#000000');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, cardW, cardH);
+        }
+
+        const hasFrame = preloadedFrameImg && preloadedFrameImg.complete && preloadedFrameImg.naturalWidth > 0;
+
+        // 2. Draw Fan Photo from Webcam Feed
+        ctx.save();
+        if (hasFrame) {
+            // Cutout area behind PNG frame
+            const photoX = 35;
+            const photoY = 45;
+            const photoW = cardW - 70; // 954 px
+            const photoH = 1180;
+            roundedRect(ctx, photoX, photoY, photoW, photoH, 20);
+            ctx.clip();
+
+            if (video && video.videoWidth > 0) {
+                const vW = video.videoWidth;
+                const vH = video.videoHeight;
+                const targetRatio = photoW / photoH;
+                let srcW = vW, srcH = vH, srcX = 0, srcY = 0;
+                if (vW / vH > targetRatio) {
+                    srcW = vH * targetRatio;
+                    srcX = (vW - srcW) / 2;
+                } else {
+                    srcH = vW / targetRatio;
+                    srcY = (vH - srcH) / 2;
+                }
+                // Mirrored draw
+                ctx.translate(photoX + photoW, photoY);
+                ctx.scale(-1, 1);
+                ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
+            } else {
+                ctx.fillStyle = '#1e1b4b';
+                ctx.fillRect(photoX, photoY, photoW, photoH);
+            }
+        } else {
+            // Fallback photo box
+            const photoY = 160;
+            const photoW = cardW - 120;
+            const photoH = 920;
+            const photoX = 60;
+            roundedRect(ctx, photoX, photoY, photoW, photoH, 24);
+            ctx.clip();
+
+            if (video && video.videoWidth > 0) {
+                const vW = video.videoWidth;
+                const vH = video.videoHeight;
+                const targetRatio = photoW / photoH;
+                let srcW = vW, srcH = vH, srcX = 0, srcY = 0;
+                if (vW / vH > targetRatio) {
+                    srcW = vH * targetRatio;
+                    srcX = (vW - srcW) / 2;
+                } else {
+                    srcH = vW / targetRatio;
+                    srcY = (vH - srcH) / 2;
+                }
+                ctx.translate(photoX + photoW, photoY);
+                ctx.scale(-1, 1);
+                ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
+            } else {
+                ctx.fillStyle = '#1e1b4b';
+                ctx.fillRect(photoX, photoY, photoW, photoH);
+            }
         }
         ctx.restore();
 
-        // Card Outer Border (Portrait)
-        ctx.strokeStyle = accentColor;
-        ctx.lineWidth = 14;
-        roundedRect(ctx, 20, 20, cardW - 40, cardH - 40, 36);
-        ctx.stroke();
+        // 3. Draw Frame Overlay or Fallback Borders
+        if (hasFrame) {
+            ctx.drawImage(preloadedFrameImg, 0, 0, cardW, cardH);
+        } else {
+            ctx.strokeStyle = accentColor;
+            ctx.lineWidth = 14;
+            roundedRect(ctx, 20, 20, cardW - 40, cardH - 40, 36);
+            ctx.stroke();
 
-        // Header Branding
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '900 34px Outfit';
-        ctx.textAlign = 'center';
-        ctx.fillText(KIOSK_CONFIG.headerTitle || 'I LEAGUE 2026/2027', cardW / 2, 80);
+            // Header text
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 34px Outfit';
+            ctx.textAlign = 'center';
+            ctx.fillText(KIOSK_CONFIG.headerTitle || 'I LEAGUE 2026/2027', cardW / 2, 80);
 
-        ctx.fillStyle = accentColor;
-        ctx.font = '700 22px Outfit';
-        ctx.fillText(KIOSK_CONFIG.headerSubtitle || 'FOOTBALL UNITES US', cardW / 2, 118);
-
-        // Bottom Info Banner / Matchday Card Footer
-        const footerY = 1120;
-        ctx.fillStyle = 'rgba(10, 6, 18, 0.94)';
-        roundedRect(ctx, 40, footerY, cardW - 80, 350, 20);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Match Title (Persita VS Persija)
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '900 42px Outfit';
-        ctx.textAlign = 'center';
-        ctx.fillText(`${KIOSK_CONFIG.homeTeam}  VS  ${KIOSK_CONFIG.awayTeam}`, cardW / 2, footerY + 60);
-
-        // Date & Venue
-        ctx.fillStyle = '#cbd5e1';
-        ctx.font = '600 20px Outfit';
-        ctx.fillText(`${KIOSK_CONFIG.matchDate}  |  ${KIOSK_CONFIG.venue}`, cardW / 2, footerY + 100);
-
-        // Fan Name Badge Banner (Chevron / Ribbon Style)
-        const badgeY = footerY + 125;
-        const bannerW = cardW - 200;
-        const bannerH = 72;
-        const bannerX = 100;
-
-        // Draw Chevron Ribbon
-        ctx.beginPath();
-        ctx.moveTo(bannerX, badgeY + bannerH / 2);
-        ctx.lineTo(bannerX + 30, badgeY);
-        ctx.lineTo(bannerX + bannerW - 30, badgeY);
-        ctx.lineTo(bannerX + bannerW, badgeY + bannerH / 2);
-        ctx.lineTo(bannerX + bannerW - 30, badgeY + bannerH);
-        ctx.lineTo(bannerX + 30, badgeY + bannerH);
-        ctx.closePath();
-        ctx.fillStyle = primaryColor;
-        ctx.fill();
-        ctx.strokeStyle = accentColor;
-        ctx.lineWidth = 3;
-        ctx.stroke();
+            ctx.fillStyle = accentColor;
+            ctx.font = '700 22px Outfit';
+            ctx.fillText(KIOSK_CONFIG.headerSubtitle || 'FOOTBALL UNITES US', cardW / 2, 118);
+        }
 
         const activeName = (kioskState.currentPhotoFanName || kioskState.customer.name || 'BRIAN ARIBOWO').toUpperCase();
-        if (KIOSK_CONFIG.showFanName) {
+
+        // 4. Draw Club Logos & Real Match Details
+        if (hasFrame) {
+            // Draw Club Logos in the frame's designated transparent slots
+            const homeLogoX = cardW * 0.264; // ~270 px
+            const awayLogoX = cardW * 0.736; // ~754 px
+            const logosCenterY = cardH * 0.761; // ~1168 px
+            const logoMaxDiam = 155;
+
+            if (preloadedHomeLogo && preloadedHomeLogo.complete && preloadedHomeLogo.naturalWidth > 0) {
+                drawCenteredLogo(ctx, preloadedHomeLogo, homeLogoX, logosCenterY, logoMaxDiam);
+            }
+            if (preloadedAwayLogo && preloadedAwayLogo.complete && preloadedAwayLogo.naturalWidth > 0) {
+                drawCenteredLogo(ctx, preloadedAwayLogo, awayLogoX, logosCenterY, logoMaxDiam);
+            }
+
+            // Team Names under logos
             ctx.fillStyle = '#ffffff';
-            ctx.font = '900 28px Outfit';
-            ctx.fillText(activeName, cardW / 2, badgeY + 45);
-        }
-
-        // Dynamic Category / Collectible Sub-badge
-        let catText = KIOSK_CONFIG.badgeText || 'MATCHDAY COLLECTIBLE';
-        if (KIOSK_CONFIG.showCategory) {
-            const catName = (kioskState.selectedCategory && kioskState.selectedCategory.name) ? kioskState.selectedCategory.name.toUpperCase() : 'VIP BARAT';
-            const fmt = KIOSK_CONFIG.categoryLabelFormat || '{category} • MATCHDAY COLLECTIBLE';
-            catText = fmt.replace('{category}', catName);
-        }
-
-        ctx.fillStyle = accentColor;
-        ctx.font = '800 18px Outfit';
-        ctx.letterSpacing = '2px';
-        ctx.fillText(catText, cardW / 2, badgeY + 105);
-
-        // Bottom Slogan
-        ctx.fillStyle = '#cbd5e1';
-        ctx.font = '700 16px Outfit';
-        ctx.textAlign = 'left';
-        ctx.fillText(KIOSK_CONFIG.footerText || 'SATU LIGA, SATU SEMANGAT', 60, footerY + 315);
-
-        // QR Code area text
-        if (KIOSK_CONFIG.showQr) {
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(cardW - 140, footerY + 230, 80, 80);
-            ctx.fillStyle = '#000000';
-            ctx.font = 'bold 10px monospace';
+            ctx.font = '900 26px Outfit';
             ctx.textAlign = 'center';
-            ctx.fillText('QR CODE', cardW - 100, footerY + 275);
+            ctx.shadowColor = 'rgba(0,0,0,0.85)';
+            ctx.shadowBlur = 8;
+            ctx.fillText(KIOSK_CONFIG.homeTeam, homeLogoX, cardH * 0.838);
+            ctx.fillText(KIOSK_CONFIG.awayTeam, awayLogoX, cardH * 0.838);
+            ctx.shadowBlur = 0;
 
+            // Real Match Details in White Bar (Date • Venue • League)
+            ctx.fillStyle = '#1e1b4b';
+            ctx.font = '800 17px Outfit';
+            ctx.textAlign = 'center';
+            const matchInfoText = `${KIOSK_CONFIG.matchDate}   |   ${KIOSK_CONFIG.venue}   |   ${KIOSK_CONFIG.headerTitle}`;
+            ctx.fillText(matchInfoText, cardW / 2, cardH * 0.940);
+
+            // Fan Name in Chevron Ribbon
+            if (KIOSK_CONFIG.showFanName) {
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '900 32px Outfit';
+                ctx.textAlign = 'center';
+                ctx.shadowColor = 'rgba(0,0,0,0.9)';
+                ctx.shadowBlur = 10;
+                ctx.fillText(activeName, cardW / 2, cardH * 0.975);
+                ctx.shadowBlur = 0;
+            }
+        } else {
+            // Fallback Matchday Card Footer (when no custom frame)
+            const footerY = 1120;
+            ctx.fillStyle = 'rgba(10, 6, 18, 0.94)';
+            roundedRect(ctx, 40, footerY, cardW - 80, 350, 20);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Draw Logos on fallback footer
+            const homeLogoX = (cardW / 2) - 140;
+            const awayLogoX = (cardW / 2) + 140;
+            const logosCenterY = footerY + 55;
+            if (preloadedHomeLogo && preloadedHomeLogo.complete) {
+                drawCenteredLogo(ctx, preloadedHomeLogo, homeLogoX, logosCenterY, 70);
+            }
+            if (preloadedAwayLogo && preloadedAwayLogo.complete) {
+                drawCenteredLogo(ctx, preloadedAwayLogo, awayLogoX, logosCenterY, 70);
+            }
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = '900 24px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('VS', cardW / 2, logosCenterY + 8);
+
+            // Match Title (Persita VS Persib)
             ctx.fillStyle = '#ffffff';
-            ctx.font = '800 10px Outfit';
-            ctx.fillText('SCAN TO DOWNLOAD', cardW - 100, footerY + 325);
+            ctx.font = '900 36px Outfit';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${KIOSK_CONFIG.homeTeam}  VS  ${KIOSK_CONFIG.awayTeam}`, cardW / 2, footerY + 115);
+
+            // Date & Venue
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = '600 20px Outfit';
+            ctx.fillText(`${KIOSK_CONFIG.matchDate}  |  ${KIOSK_CONFIG.venue}`, cardW / 2, footerY + 148);
+
+            // Fan Name Badge Banner
+            const badgeY = footerY + 170;
+            const bannerW = cardW - 200;
+            const bannerH = 72;
+            const bannerX = 100;
+            ctx.beginPath();
+            ctx.moveTo(bannerX, badgeY + bannerH / 2);
+            ctx.lineTo(bannerX + 30, badgeY);
+            ctx.lineTo(bannerX + bannerW - 30, badgeY);
+            ctx.lineTo(bannerX + bannerW, badgeY + bannerH / 2);
+            ctx.lineTo(bannerX + bannerW - 30, badgeY + bannerH);
+            ctx.lineTo(bannerX + 30, badgeY + bannerH);
+            ctx.closePath();
+            ctx.fillStyle = primaryColor;
+            ctx.fill();
+            ctx.strokeStyle = accentColor;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            if (KIOSK_CONFIG.showFanName) {
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '900 28px Outfit';
+                ctx.fillText(activeName, cardW / 2, badgeY + 45);
+            }
+
+            // Category Sub-badge
+            let catText = KIOSK_CONFIG.badgeText || 'MATCHDAY COLLECTIBLE';
+            if (KIOSK_CONFIG.showCategory) {
+                const catName = (kioskState.selectedCategory && kioskState.selectedCategory.name) ? kioskState.selectedCategory.name.toUpperCase() : 'VIP';
+                const fmt = KIOSK_CONFIG.categoryLabelFormat || '{category} • MATCHDAY COLLECTIBLE';
+                catText = fmt.replace('{category}', catName);
+            }
+            ctx.fillStyle = accentColor;
+            ctx.font = '800 18px Outfit';
+            ctx.fillText(catText, cardW / 2, badgeY + 105);
+
+            // Bottom Slogan
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = '700 16px Outfit';
+            ctx.textAlign = 'left';
+            ctx.fillText(KIOSK_CONFIG.footerText || 'SATU LIGA, SATU SEMANGAT', 60, footerY + 315);
+
+            // QR Code area
+            if (KIOSK_CONFIG.showQr) {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(cardW - 140, footerY + 230, 80, 80);
+                ctx.fillStyle = '#000000';
+                ctx.font = 'bold 10px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('QR CODE', cardW - 100, footerY + 275);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '800 10px Outfit';
+                ctx.fillText('SCAN TO DOWNLOAD', cardW - 100, footerY + 325);
+            }
         }
 
         // Export generated portrait card
-        kioskState.generatedCardData = canvas.toDataURL('image/jpeg', 0.92);
+        kioskState.generatedCardData = canvas.toDataURL('image/jpeg', 0.94);
 
         // Save in capturedPhotos history
         kioskState.capturedPhotos.push({

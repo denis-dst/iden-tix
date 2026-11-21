@@ -228,6 +228,7 @@ class EventController extends Controller
             'proof_review_required' => 'nullable|boolean',
             'registration_proofs_json' => 'nullable|string',
             'evoucher_page_mode' => 'nullable|in:1_page,multi_page',
+            'photobooth_frame_overlay' => 'nullable|image|mimes:png|max:5120',
         ]);
 
         $validated['type'] = $request->input('type', $event->type ?? 'concert');
@@ -284,6 +285,17 @@ class EventController extends Controller
 
         $event->update($validated);
         $this->syncWristbandTemplate($request, $event);
+
+        if ($request->hasFile('photobooth_frame_overlay')) {
+            $pbTemplate = \App\Models\PhotoboothTemplate::firstOrNew(['event_id' => $event->id]);
+            $pbTemplate->tenant_id = $event->tenant_id;
+            if ($pbTemplate->frame_overlay && Storage::disk('public')->exists($pbTemplate->frame_overlay)) {
+                Storage::disk('public')->delete($pbTemplate->frame_overlay);
+            }
+            $pbTemplate->frame_overlay = $request->file('photobooth_frame_overlay')->store('photobooth/frames', 'public');
+            $pbTemplate->is_active = true;
+            $pbTemplate->save();
+        }
 
         return redirect()->route('organizer.events.edit', $event)->with('success', 'Event updated successfully.');
     }
