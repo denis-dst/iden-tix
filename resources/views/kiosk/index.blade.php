@@ -2420,29 +2420,6 @@
             btn.innerText = 'BAYAR SEKARANG';
         }
     }
-                }
-                const waitEl = document.getElementById('waitingStatusText');
-                if (waitEl) waitEl.innerText = 'Menunggu konfirmasi pembayaran...';
-
-                // Render QR code SVG
-                document.getElementById('qrisContainer').innerHTML = data.qr_svg;
-                document.getElementById('qrisTotalAmount').innerText = data.formatted_total;
-                
-                // Go to screen 05
-                goToScreen(5);
-                startQrisTimer();
-                startPaymentPolling(data.reference_no);
-            } else {
-                alert(data.message || 'Gagal memproses pemesanan.');
-            }
-        } catch (err) {
-            console.error('Checkout error:', err);
-            alert('Terjadi kesalahan jaringan saat memproses pesanan.');
-        } finally {
-            btn.disabled = false;
-            btn.innerText = 'BAYAR SEKARANG';
-        }
-    }
 
     // Polling Payment Status
     function startPaymentPolling(referenceNo) {
