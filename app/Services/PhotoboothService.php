@@ -229,8 +229,8 @@ class PhotoboothService
                     imagettftext($canvas, $fontSizeAn, 0, round($anX - ($wA / 2)), $anY, $white, $fontFile, $event->effective_away_team_name);
                 }
 
-                // VS Badge (Respect show_team_logos)
-                if ($showTeamLogos && !empty($layout['vs_badge']['visible'] ?? true)) {
+                // VS Badge (Only draw if explicitly set to visible: true; defaults to false as requested: "di foto nya hilangkan karena saya akan tempel pada desain gambarnya")
+                if ($showTeamLogos && !empty($layout['vs_badge']['visible']) && $layout['vs_badge']['visible'] === true) {
                     $vsX = round($width * (($layout['vs_badge']['x'] ?? 50) / 100));
                     $vsY = round($height * (($layout['vs_badge']['y'] ?? 74) / 100));
                     $fontSizeVs = round((($layout['vs_badge']['font_size'] ?? 22) / 400) * $width);

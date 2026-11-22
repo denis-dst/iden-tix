@@ -339,6 +339,11 @@
                             </label>
 
                             <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 cursor-pointer hover:bg-slate-100 transition">
+                                <input type="checkbox" id="toggleVsBadge" value="1" class="w-4 h-4 text-orange-500 rounded border-slate-300" {{ (!empty($layoutConfig['vs_badge']['visible']) && $layoutConfig['vs_badge']['visible'] === true) ? 'checked' : '' }} onchange="handleVsBadgeToggle(this.checked)">
+                                <span class="text-xs font-bold text-slate-700">Tampilkan Teks / Badge "VS"</span>
+                            </label>
+
+                            <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 cursor-pointer hover:bg-slate-100 transition">
                                 <input type="checkbox" name="show_match_info" id="toggleMatchInfo" value="1" class="w-4 h-4 text-orange-500 rounded border-slate-300" {{ $template->show_match_info ? 'checked' : '' }} onchange="updateLivePreview()">
                                 <span class="text-xs font-bold text-slate-700">Tampilkan Nama Laga & Venue</span>
                             </label>
@@ -353,7 +358,7 @@
                                 <span class="text-xs font-bold text-slate-700">Tampilkan Kategori Tiket</span>
                             </label>
 
-                            <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 cursor-pointer hover:bg-slate-100 transition sm:col-span-2">
+                            <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 cursor-pointer hover:bg-slate-100 transition">
                                 <input type="checkbox" name="show_qr" id="toggleQr" value="1" class="w-4 h-4 text-orange-500 rounded border-slate-300" {{ $template->show_qr ? 'checked' : '' }} onchange="updateLivePreview()">
                                 <span class="text-xs font-bold text-slate-700">Tampilkan QR Code Download Digital</span>
                             </label>
@@ -503,13 +508,16 @@
                         </div>
 
                         <!-- 5. VS Badge -->
+                        @php
+                            $showVsBadge = $template->show_team_logos && (!empty($layoutConfig['vs_badge']['visible']) && $layoutConfig['vs_badge']['visible'] === true);
+                        @endphp
                         <div id="dragItem_vs_badge" 
                              class="drag-item text-center pointer-events-auto"
                              data-key="vs_badge"
                              data-title="Badge VS"
                              data-type="font_size"
                              title="Geser posisi Badge VS"
-                             style="left: {{ $layoutConfig['vs_badge']['x'] ?? 50 }}%; top: {{ $layoutConfig['vs_badge']['y'] ?? 74 }}%; font-size: calc(var(--card-w) * ({{ $layoutConfig['vs_badge']['font_size'] ?? 22 }} / 400)); display: {{ ($template->show_team_logos && ($layoutConfig['vs_badge']['visible'] ?? true)) ? 'block' : 'none' }};">
+                             style="left: {{ $layoutConfig['vs_badge']['x'] ?? 50 }}%; top: {{ $layoutConfig['vs_badge']['y'] ?? 74 }}%; font-size: calc(var(--card-w) * ({{ $layoutConfig['vs_badge']['font_size'] ?? 22 }} / 400)); display: {{ $showVsBadge ? 'block' : 'none' }};">
                             <div class="font-black font-mono text-amber-400 drop-shadow-lg tracking-wider leading-none">
                                 VS
                             </div>
@@ -1099,11 +1107,20 @@
             toggleElementVisibility('away_logo', showTeamLogos);
             toggleElementVisibility('home_name', showTeamLogos);
             toggleElementVisibility('away_name', showTeamLogos);
-            toggleElementVisibility('vs_badge', showTeamLogos);
+
+            const showVs = showTeamLogos && Boolean(currentLayout.vs_badge && currentLayout.vs_badge.visible === true);
+            toggleElementVisibility('vs_badge', showVs);
 
             toggleElementVisibility('match_info', document.getElementById('toggleMatchInfo').checked);
             toggleElementVisibility('fan_name', document.getElementById('toggleFanName').checked);
             toggleElementVisibility('qr_code', document.getElementById('toggleQr').checked);
+        }
+
+        function handleVsBadgeToggle(checked) {
+            if (!currentLayout.vs_badge) currentLayout.vs_badge = {};
+            currentLayout.vs_badge.visible = checked;
+            syncLayoutConfigInput();
+            updateLivePreview();
         }
 
         function toggleElementVisibility(key, isVisible) {

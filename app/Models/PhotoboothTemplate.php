@@ -62,7 +62,7 @@ class PhotoboothTemplate extends Model
             'header_slogan' => ['x' => 50, 'y' => 5, 'font_size' => 14, 'visible' => true],
             'home_logo' => ['x' => 24, 'y' => 69, 'size' => 85, 'visible' => true],
             'home_name' => ['x' => 24, 'y' => 77, 'font_size' => 14, 'visible' => true],
-            'vs_badge' => ['x' => 50, 'y' => 74, 'font_size' => 22, 'visible' => true],
+            'vs_badge' => ['x' => 50, 'y' => 74, 'font_size' => 22, 'visible' => false],
             'away_logo' => ['x' => 76, 'y' => 69, 'size' => 85, 'visible' => true],
             'away_name' => ['x' => 76, 'y' => 77, 'font_size' => 14, 'visible' => true],
             'fan_name' => ['x' => 50, 'y' => 86, 'font_size' => 18, 'visible' => true],

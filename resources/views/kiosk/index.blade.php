@@ -2420,7 +2420,7 @@
             header_slogan: { x: 50, y: 5, font_size: 14, visible: true },
             home_logo: { x: 24, y: 68, size: 85, visible: true },
             home_name: { x: 24, y: 76, font_size: 14, visible: true },
-            vs_badge: { x: 50, y: 74, font_size: 22, visible: true },
+            vs_badge: { x: 50, y: 74, font_size: 22, visible: false },
             away_logo: { x: 76, y: 68, size: 85, visible: true },
             away_name: { x: 76, y: 76, font_size: 14, visible: true },
             category_badge: { x: 50, y: 80, font_size: 16, visible: true },
@@ -2484,8 +2484,8 @@
                 ctx.shadowBlur = 0;
             }
 
-            // VS Badge (Respect showTeamLogos checkbox)
-            if (KIOSK_CONFIG.showTeamLogos && layout.vs_badge && layout.vs_badge.visible !== false) {
+            // VS Badge (Only draw if explicitly set to visible: true; defaults to false as requested: "di foto nya hilangkan karena saya akan tempel pada desain gambarnya")
+            if (KIOSK_CONFIG.showTeamLogos && layout.vs_badge && layout.vs_badge.visible === true) {
                 const vsX = (layout.vs_badge.x / 100) * cardW;
                 const vsY = (layout.vs_badge.y / 100) * cardH;
                 const fontVs = Math.round(((layout.vs_badge.font_size || 22) / 400) * cardW);
