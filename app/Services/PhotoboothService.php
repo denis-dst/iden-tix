@@ -106,7 +106,13 @@ class PhotoboothService
     {
         $rawFullPath = Storage::disk('public')->path($rawPath);
         if (!file_exists($rawFullPath)) {
-            return $rawPath;
+            if (file_exists(public_path($rawPath))) {
+                $rawFullPath = public_path($rawPath);
+            } elseif (file_exists($rawPath)) {
+                $rawFullPath = $rawPath;
+            } else {
+                return $rawPath;
+            }
         }
 
         $width = 1024;
@@ -149,16 +155,35 @@ class PhotoboothService
             }
         }
 
-        // 4. Draw Club Logos if event is present
+        // 4. Draw Club Logos & Graphics using Layout Configuration
+        $layout = $template ? $template->getEffectiveLayoutConfig() : (new PhotoboothTemplate())->getEffectiveLayoutConfig();
+
         if ($event) {
-            $homeLogoX = round($width * 0.264);
-            $awayLogoX = round($width * 0.736);
-            $logosY = round($height * 0.761);
+            // Draw League / Penyelenggara Logo
+            if (!empty($layout['league_logo']['visible'] ?? true)) {
+                $leagueLogoX = round($width * (($layout['league_logo']['x'] ?? 14) / 100));
+                $leagueLogoY = round($height * (($layout['league_logo']['y'] ?? 6) / 100));
+                $leagueLogoSize = round((($layout['league_logo']['size'] ?? 65) / 400) * $width);
+                $this->placeLogoOnCanvas($canvas, $event->effective_league_logo_url, $leagueLogoX, $leagueLogoY, $leagueLogoSize);
+            }
 
-            $this->placeLogoOnCanvas($canvas, $event->effective_home_team_logo_url, $homeLogoX, $logosY, 155);
-            $this->placeLogoOnCanvas($canvas, $event->effective_away_team_logo_url, $awayLogoX, $logosY, 155);
+            // Draw Home Club Logo
+            if (!empty($layout['home_logo']['visible'] ?? true)) {
+                $homeLogoX = round($width * (($layout['home_logo']['x'] ?? 24) / 100));
+                $homeLogoY = round($height * (($layout['home_logo']['y'] ?? 72) / 100));
+                $homeLogoSize = round((($layout['home_logo']['size'] ?? 80) / 400) * $width);
+                $this->placeLogoOnCanvas($canvas, $event->effective_home_team_logo_url, $homeLogoX, $homeLogoY, $homeLogoSize);
+            }
 
-            // 5. Draw Typography
+            // Draw Away Club Logo
+            if (!empty($layout['away_logo']['visible'] ?? true)) {
+                $awayLogoX = round($width * (($layout['away_logo']['x'] ?? 76) / 100));
+                $awayLogoY = round($height * (($layout['away_logo']['y'] ?? 72) / 100));
+                $awayLogoSize = round((($layout['away_logo']['size'] ?? 80) / 400) * $width);
+                $this->placeLogoOnCanvas($canvas, $event->effective_away_team_logo_url, $awayLogoX, $awayLogoY, $awayLogoSize);
+            }
+
+            // 5. Draw Typography using Layout Configuration
             $fontFile = null;
             $possibleFonts = [
                 public_path('fonts/Outfit-Bold.ttf'),
@@ -175,30 +200,61 @@ class PhotoboothService
             if ($fontFile) {
                 $white = imagecolorallocate($canvas, 255, 255, 255);
                 $navy = imagecolorallocate($canvas, 30, 27, 75);
+                $orange = imagecolorallocate($canvas, 249, 87, 0);
 
                 // Team Names
-                $boxHome = imagettfbbox(18, 0, $fontFile, $event->effective_home_team_name);
-                $wH = abs($boxHome[2] - $boxHome[0]);
-                imagettftext($canvas, 18, 0, round($homeLogoX - ($wH / 2)), round($height * 0.838), $white, $fontFile, $event->effective_home_team_name);
+                if (!empty($layout['home_name']['visible'] ?? true)) {
+                    $hnX = round($width * (($layout['home_name']['x'] ?? 24) / 100));
+                    $hnY = round($height * (($layout['home_name']['y'] ?? 81) / 100));
+                    $fontSizeHn = round((($layout['home_name']['font_size'] ?? 14) / 400) * $width * 0.75);
+                    $boxHome = imagettfbbox($fontSizeHn, 0, $fontFile, $event->effective_home_team_name);
+                    $wH = abs($boxHome[2] - $boxHome[0]);
+                    imagettftext($canvas, $fontSizeHn, 0, round($hnX - ($wH / 2)), $hnY, $white, $fontFile, $event->effective_home_team_name);
+                }
 
-                $boxAway = imagettfbbox(18, 0, $fontFile, $event->effective_away_team_name);
-                $wA = abs($boxAway[2] - $boxAway[0]);
-                imagettftext($canvas, 18, 0, round($awayLogoX - ($wA / 2)), round($height * 0.838), $white, $fontFile, $event->effective_away_team_name);
+                if (!empty($layout['away_name']['visible'] ?? true)) {
+                    $anX = round($width * (($layout['away_name']['x'] ?? 76) / 100));
+                    $anY = round($height * (($layout['away_name']['y'] ?? 81) / 100));
+                    $fontSizeAn = round((($layout['away_name']['font_size'] ?? 14) / 400) * $width * 0.75);
+                    $boxAway = imagettfbbox($fontSizeAn, 0, $fontFile, $event->effective_away_team_name);
+                    $wA = abs($boxAway[2] - $boxAway[0]);
+                    imagettftext($canvas, $fontSizeAn, 0, round($anX - ($wA / 2)), $anY, $white, $fontFile, $event->effective_away_team_name);
+                }
+
+                // VS Badge
+                if (!empty($layout['vs_badge']['visible'] ?? true)) {
+                    $vsX = round($width * (($layout['vs_badge']['x'] ?? 50) / 100));
+                    $vsY = round($height * (($layout['vs_badge']['y'] ?? 73) / 100));
+                    $fontSizeVs = round((($layout['vs_badge']['font_size'] ?? 22) / 400) * $width * 0.75);
+                    $boxVs = imagettfbbox($fontSizeVs, 0, $fontFile, 'VS');
+                    $wVs = abs($boxVs[2] - $boxVs[0]);
+                    imagettftext($canvas, $fontSizeVs, 0, round($vsX - ($wVs / 2)), $vsY, $orange, $fontFile, 'VS');
+                }
 
                 // Match Details in White Bar
-                $dateStr = $event->event_start_date ? $event->event_start_date->translatedFormat('d F Y') : 'MATCHDAY';
-                $venueStr = $event->venue ?: 'STADION';
-                $seasonStr = $template->header_title ?? ($event->season_name ?: 'I LEAGUE 2026/2027');
-                $matchInfo = strtoupper("{$dateStr}   |   {$venueStr}   |   {$seasonStr}");
-                $boxMatch = imagettfbbox(11, 0, $fontFile, $matchInfo);
-                $wM = abs($boxMatch[2] - $boxMatch[0]);
-                imagettftext($canvas, 11, 0, round(($width - $wM) / 2), round($height * 0.940), $navy, $fontFile, $matchInfo);
+                if (!empty($layout['match_info']['visible'] ?? true)) {
+                    $dateStr = $event->event_start_date ? $event->event_start_date->translatedFormat('d F Y') : 'MATCHDAY';
+                    $venueStr = $event->venue ?: 'STADION';
+                    $seasonStr = $template->header_title ?? ($event->season_name ?: 'I LEAGUE 2026/2027');
+                    $matchInfo = strtoupper("{$dateStr}   |   {$venueStr}   |   {$seasonStr}");
+                    $miX = round($width * (($layout['match_info']['x'] ?? 50) / 100));
+                    $miY = round($height * (($layout['match_info']['y'] ?? 86) / 100));
+                    $fontSizeMi = round((($layout['match_info']['font_size'] ?? 11) / 400) * $width * 0.75);
+                    $boxMatch = imagettfbbox($fontSizeMi, 0, $fontFile, $matchInfo);
+                    $wM = abs($boxMatch[2] - $boxMatch[0]);
+                    imagettftext($canvas, $fontSizeMi, 0, round($miX - ($wM / 2)), $miY, $white, $fontFile, $matchInfo);
+                }
 
                 // Fan Name
-                $fanStr = strtoupper($fanName);
-                $boxFan = imagettfbbox(20, 0, $fontFile, $fanStr);
-                $wF = abs($boxFan[2] - $boxFan[0]);
-                imagettftext($canvas, 20, 0, round(($width - $wF) / 2), round($height * 0.975), $white, $fontFile, $fanStr);
+                if (!empty($layout['fan_name']['visible'] ?? true)) {
+                    $fanStr = strtoupper($fanName);
+                    $fnX = round($width * (($layout['fan_name']['x'] ?? 50) / 100));
+                    $fnY = round($height * (($layout['fan_name']['y'] ?? 93) / 100));
+                    $fontSizeFn = round((($layout['fan_name']['font_size'] ?? 16) / 400) * $width * 0.75);
+                    $boxFan = imagettfbbox($fontSizeFn, 0, $fontFile, $fanStr);
+                    $wF = abs($boxFan[2] - $boxFan[0]);
+                    imagettftext($canvas, $fontSizeFn, 0, round($fnX - ($wF / 2)), $fnY, $white, $fontFile, $fanStr);
+                }
             }
         }
 
@@ -219,16 +275,22 @@ class PhotoboothService
         if (empty($logoUrlOrPath)) return;
 
         $content = null;
-        if (str_starts_with($logoUrlOrPath, 'http')) {
+        if (str_starts_with($logoUrlOrPath, 'data:')) {
+            $content = $this->decodeBase64($logoUrlOrPath);
+        } elseif (str_starts_with($logoUrlOrPath, 'http')) {
             $parsed = parse_url($logoUrlOrPath, PHP_URL_PATH);
             $localRel = ltrim(preg_replace('#^/storage/#', '', $parsed), '/');
             if (Storage::disk('public')->exists($localRel)) {
                 $content = Storage::disk('public')->get($localRel);
+            } elseif (file_exists(public_path('storage/' . $localRel))) {
+                $content = file_get_contents(public_path('storage/' . $localRel));
             } else {
                 $content = @file_get_contents($logoUrlOrPath);
             }
         } elseif (file_exists($logoUrlOrPath)) {
             $content = file_get_contents($logoUrlOrPath);
+        } elseif (file_exists(public_path('storage/' . $logoUrlOrPath))) {
+            $content = file_get_contents(public_path('storage/' . $logoUrlOrPath));
         } elseif (Storage::disk('public')->exists($logoUrlOrPath)) {
             $content = Storage::disk('public')->get($logoUrlOrPath);
         }
@@ -240,6 +302,8 @@ class PhotoboothService
 
         $lw = imagesx($logo);
         $lh = imagesy($logo);
+        if ($lw <= 0 || $lh <= 0) return;
+
         $aspect = $lw / $lh;
         $w = $maxDiameter;
         $h = $maxDiameter;

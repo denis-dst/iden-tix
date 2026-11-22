@@ -322,6 +322,8 @@ Route::middleware(['auth', 'role:Superadmin|Penyedia Event|Petugas Loket|Petugas
     Route::get('events/{event}/photobooth', [App\Http\Controllers\Organizer\PhotoboothController::class, 'edit'])->name('photobooth.edit');
     Route::post('events/{event}/photobooth', [App\Http\Controllers\Organizer\PhotoboothController::class, 'update'])->name('photobooth.update');
     Route::post('events/{event}/photobooth/reset-images', [App\Http\Controllers\Organizer\PhotoboothController::class, 'resetImages'])->name('photobooth.reset-images');
+    Route::post('events/{event}/photobooth/save-layout', [App\Http\Controllers\Organizer\PhotoboothController::class, 'saveLayout'])->name('photobooth.save-layout');
+    Route::post('events/{event}/photobooth/reset-layout', [App\Http\Controllers\Organizer\PhotoboothController::class, 'resetLayout'])->name('photobooth.reset-layout');
     Route::get('settings/photobooth-master', [App\Http\Controllers\Organizer\PhotoboothController::class, 'editMaster'])->name('photobooth.master');
     Route::post('settings/photobooth-master', [App\Http\Controllers\Organizer\PhotoboothController::class, 'updateMaster'])->name('photobooth.master.update');
     Route::post('settings/photobooth-master/reset-images', [App\Http\Controllers\Organizer\PhotoboothController::class, 'resetMasterImages'])->name('photobooth.master.reset-images');

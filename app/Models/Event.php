@@ -347,5 +347,43 @@ class Event extends Model
         if (!$path) return null;
         return str_starts_with($path, 'http') ? $path : asset('storage/' . $path);
     }
+
+    public function getEffectiveHomeTeamLogoDataUriAttribute(): ?string
+    {
+        return $this->resolveLogoDataUri($this->home_team_logo ?: ($this->meta['wristband_home_club_logo'] ?? $this->tenant?->logo));
+    }
+
+    public function getEffectiveAwayTeamLogoDataUriAttribute(): ?string
+    {
+        return $this->resolveLogoDataUri($this->away_team_logo ?: ($this->meta['wristband_away_club_logo'] ?? null));
+    }
+
+    public function getEffectiveLeagueLogoDataUriAttribute(): ?string
+    {
+        return $this->resolveLogoDataUri($this->meta['wristband_league_logo'] ?? null);
+    }
+
+    protected function resolveLogoDataUri(?string $path): ?string
+    {
+        if (!$path) return null;
+        if (str_starts_with($path, 'data:')) return $path;
+
+        $fullPath = null;
+        if (file_exists($path)) {
+            $fullPath = $path;
+        } elseif (file_exists(public_path('storage/' . $path))) {
+            $fullPath = public_path('storage/' . $path);
+        } elseif (file_exists(storage_path('app/public/' . $path))) {
+            $fullPath = storage_path('app/public/' . $path);
+        }
+
+        if ($fullPath && file_exists($fullPath)) {
+            $mime = mime_content_type($fullPath) ?: 'image/png';
+            $base64 = base64_encode(file_get_contents($fullPath));
+            return "data:{$mime};base64,{$base64}";
+        }
+
+        return null;
+    }
 }
 

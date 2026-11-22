@@ -30,7 +30,7 @@
             </div>
         @endif
 
-        @if($errors->any())
+        @if(isset($errors) && $errors->any())
             <div class="bg-rose-50 border border-rose-200 text-rose-800 px-4 py-3 rounded-2xl text-sm font-bold">
                 <ul class="list-disc list-inside">
                     @foreach($errors->all() as $err)

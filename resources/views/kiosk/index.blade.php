@@ -1555,6 +1555,10 @@
         homeTeamLogo: @json($event->effective_home_team_logo_url),
         awayTeamLogo: @json($event->effective_away_team_logo_url),
         leagueLogo: @json($event->effective_league_logo_url),
+        homeTeamLogoDataUri: @json($event->effective_home_team_logo_data_uri),
+        awayTeamLogoDataUri: @json($event->effective_away_team_logo_data_uri),
+        leagueLogoDataUri: @json($event->effective_league_logo_data_uri),
+        layoutConfig: @json($photoboothTemplate->getEffectiveLayoutConfig()),
         frameOverlayUrl: @json(!empty($photoboothTemplate->frame_overlay) ? asset('storage/' . $photoboothTemplate->frame_overlay) : null),
         backgroundUrl: @json(!empty($photoboothTemplate->background_image) ? asset('storage/' . $photoboothTemplate->background_image) : null),
         primaryColor: @json($photoboothTemplate->primary_color ?? '#5A2D82'),
@@ -1583,27 +1587,31 @@
     let preloadedFrameImg = null;
     let preloadedHomeLogo = null;
     let preloadedAwayLogo = null;
+    let preloadedLeagueLogo = null;
     let preloadedBgImg = null;
 
     function initPreloadAssets() {
         if (KIOSK_CONFIG.frameOverlayUrl) {
             preloadedFrameImg = new Image();
-            preloadedFrameImg.crossOrigin = 'anonymous';
             preloadedFrameImg.src = KIOSK_CONFIG.frameOverlayUrl;
         }
-        if (KIOSK_CONFIG.homeTeamLogo) {
+        const hSrc = KIOSK_CONFIG.homeTeamLogoDataUri || KIOSK_CONFIG.homeTeamLogo;
+        if (hSrc) {
             preloadedHomeLogo = new Image();
-            preloadedHomeLogo.crossOrigin = 'anonymous';
-            preloadedHomeLogo.src = KIOSK_CONFIG.homeTeamLogo;
+            preloadedHomeLogo.src = hSrc;
         }
-        if (KIOSK_CONFIG.awayTeamLogo) {
+        const aSrc = KIOSK_CONFIG.awayTeamLogoDataUri || KIOSK_CONFIG.awayTeamLogo;
+        if (aSrc) {
             preloadedAwayLogo = new Image();
-            preloadedAwayLogo.crossOrigin = 'anonymous';
-            preloadedAwayLogo.src = KIOSK_CONFIG.awayTeamLogo;
+            preloadedAwayLogo.src = aSrc;
+        }
+        const lSrc = KIOSK_CONFIG.leagueLogoDataUri || KIOSK_CONFIG.leagueLogo;
+        if (lSrc) {
+            preloadedLeagueLogo = new Image();
+            preloadedLeagueLogo.src = lSrc;
         }
         if (KIOSK_CONFIG.backgroundUrl) {
             preloadedBgImg = new Image();
-            preloadedBgImg.crossOrigin = 'anonymous';
             preloadedBgImg.src = KIOSK_CONFIG.backgroundUrl;
         }
     }
@@ -2206,45 +2214,166 @@
         const activeName = (kioskState.currentPhotoFanName || kioskState.customer.name || 'BRIAN ARIBOWO').toUpperCase();
 
         // 4. Draw Club Logos & Real Match Details
+        const layout = KIOSK_CONFIG.layoutConfig || {
+            league_logo: { x: 14, y: 6, size: 65, visible: true },
+            header_slogan: { x: 50, y: 5, font_size: 14, visible: true },
+            home_logo: { x: 24, y: 72, size: 80, visible: true },
+            home_name: { x: 24, y: 81, font_size: 14, visible: true },
+            vs_badge: { x: 50, y: 73, font_size: 22, visible: true },
+            away_logo: { x: 76, y: 72, size: 80, visible: true },
+            away_name: { x: 76, y: 81, font_size: 14, visible: true },
+            match_info: { x: 50, y: 86, font_size: 11, visible: true },
+            fan_name: { x: 50, y: 93, font_size: 16, visible: true },
+            category_badge: { x: 50, y: 89, font_size: 10, visible: true },
+            qr_code: { x: 88, y: 92, size: 48, visible: true },
+            footer_text: { x: 50, y: 97, font_size: 9, visible: true },
+        };
+
         if (hasFrame) {
-            // Draw Club Logos in the frame's designated transparent slots
-            const homeLogoX = cardW * 0.264; // ~270 px
-            const awayLogoX = cardW * 0.736; // ~754 px
-            const logosCenterY = cardH * 0.761; // ~1168 px
-            const logoMaxDiam = 155;
-
-            if (preloadedHomeLogo && preloadedHomeLogo.complete && preloadedHomeLogo.naturalWidth > 0) {
-                drawCenteredLogo(ctx, preloadedHomeLogo, homeLogoX, logosCenterY, logoMaxDiam);
-            }
-            if (preloadedAwayLogo && preloadedAwayLogo.complete && preloadedAwayLogo.naturalWidth > 0) {
-                drawCenteredLogo(ctx, preloadedAwayLogo, awayLogoX, logosCenterY, logoMaxDiam);
+            // Draw League / Penyelenggara Logo
+            if (layout.league_logo && layout.league_logo.visible !== false && preloadedLeagueLogo && (preloadedLeagueLogo.complete || preloadedLeagueLogo.naturalWidth > 0)) {
+                const lX = (layout.league_logo.x / 100) * cardW;
+                const lY = (layout.league_logo.y / 100) * cardH;
+                const lSize = ((layout.league_logo.size || 65) / 400) * cardW;
+                drawCenteredLogo(ctx, preloadedLeagueLogo, lX, lY, lSize);
             }
 
-            // Team Names under logos
+            // Draw Home Club Logo
+            if (layout.home_logo && layout.home_logo.visible !== false && preloadedHomeLogo && (preloadedHomeLogo.complete || preloadedHomeLogo.naturalWidth > 0)) {
+                const hX = (layout.home_logo.x / 100) * cardW;
+                const hY = (layout.home_logo.y / 100) * cardH;
+                const hSize = ((layout.home_logo.size || 80) / 400) * cardW;
+                drawCenteredLogo(ctx, preloadedHomeLogo, hX, hY, hSize);
+            }
+
+            // Draw Away Club Logo
+            if (layout.away_logo && layout.away_logo.visible !== false && preloadedAwayLogo && (preloadedAwayLogo.complete || preloadedAwayLogo.naturalWidth > 0)) {
+                const aX = (layout.away_logo.x / 100) * cardW;
+                const aY = (layout.away_logo.y / 100) * cardH;
+                const aSize = ((layout.away_logo.size || 80) / 400) * cardW;
+                drawCenteredLogo(ctx, preloadedAwayLogo, aX, aY, aSize);
+            }
+
+            // Team Names
             ctx.fillStyle = '#ffffff';
-            ctx.font = '900 26px Outfit';
-            ctx.textAlign = 'center';
             ctx.shadowColor = 'rgba(0,0,0,0.85)';
             ctx.shadowBlur = 8;
-            ctx.fillText(KIOSK_CONFIG.homeTeam, homeLogoX, cardH * 0.838);
-            ctx.fillText(KIOSK_CONFIG.awayTeam, awayLogoX, cardH * 0.838);
+            ctx.textAlign = 'center';
+
+            if (layout.home_name && layout.home_name.visible !== false) {
+                const hnX = (layout.home_name.x / 100) * cardW;
+                const hnY = (layout.home_name.y / 100) * cardH;
+                const fontHn = Math.round(((layout.home_name.font_size || 14) / 400) * cardW * 0.75);
+                ctx.font = `900 ${fontHn}px Outfit`;
+                ctx.fillText(KIOSK_CONFIG.homeTeam, hnX, hnY);
+            }
+
+            if (layout.away_name && layout.away_name.visible !== false) {
+                const anX = (layout.away_name.x / 100) * cardW;
+                const anY = (layout.away_name.y / 100) * cardH;
+                const fontAn = Math.round(((layout.away_name.font_size || 14) / 400) * cardW * 0.75);
+                ctx.font = `900 ${fontAn}px Outfit`;
+                ctx.fillText(KIOSK_CONFIG.awayTeam, anX, anY);
+            }
+
+            if (layout.vs_badge && layout.vs_badge.visible !== false) {
+                const vsX = (layout.vs_badge.x / 100) * cardW;
+                const vsY = (layout.vs_badge.y / 100) * cardH;
+                const fontVs = Math.round(((layout.vs_badge.font_size || 22) / 400) * cardW * 0.75);
+                ctx.fillStyle = accentColor;
+                ctx.font = `900 ${fontVs}px Outfit`;
+                ctx.fillText('VS', vsX, vsY);
+                ctx.fillStyle = '#ffffff';
+            }
             ctx.shadowBlur = 0;
 
-            // Real Match Details in White Bar (Date • Venue • League)
-            ctx.fillStyle = '#1e1b4b';
-            ctx.font = '800 17px Outfit';
-            ctx.textAlign = 'center';
-            const matchInfoText = `${KIOSK_CONFIG.matchDate}   |   ${KIOSK_CONFIG.venue}   |   ${KIOSK_CONFIG.headerTitle}`;
-            ctx.fillText(matchInfoText, cardW / 2, cardH * 0.940);
-
-            // Fan Name in Chevron Ribbon
-            if (KIOSK_CONFIG.showFanName) {
+            // Match Details (Date • Venue • League)
+            if (layout.match_info && layout.match_info.visible !== false && KIOSK_CONFIG.showMatchInfo) {
+                const miX = (layout.match_info.x / 100) * cardW;
+                const miY = (layout.match_info.y / 100) * cardH;
+                const fontMi = Math.round(((layout.match_info.font_size || 11) / 400) * cardW * 0.75);
                 ctx.fillStyle = '#ffffff';
-                ctx.font = '900 32px Outfit';
+                ctx.font = `800 ${fontMi}px Outfit`;
                 ctx.textAlign = 'center';
-                ctx.shadowColor = 'rgba(0,0,0,0.9)';
+                ctx.shadowColor = 'rgba(0,0,0,0.85)';
+                ctx.shadowBlur = 6;
+                const matchInfoText = `${KIOSK_CONFIG.matchDate}   |   ${KIOSK_CONFIG.venue}   |   ${KIOSK_CONFIG.headerTitle}`;
+                ctx.fillText(matchInfoText, miX, miY);
+                ctx.shadowBlur = 0;
+            }
+
+            // Fan Name
+            if (layout.fan_name && layout.fan_name.visible !== false && KIOSK_CONFIG.showFanName) {
+                const fnX = (layout.fan_name.x / 100) * cardW;
+                const fnY = (layout.fan_name.y / 100) * cardH;
+                const fontFn = Math.round(((layout.fan_name.font_size || 16) / 400) * cardW * 0.75);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `900 ${fontFn}px Outfit`;
+                ctx.textAlign = 'center';
+                ctx.shadowColor = 'rgba(0,0,0,0.95)';
                 ctx.shadowBlur = 10;
-                ctx.fillText(activeName, cardW / 2, cardH * 0.975);
+                ctx.fillText(activeName, fnX, fnY);
+                ctx.shadowBlur = 0;
+            }
+
+            // Category Badge
+            if (layout.category_badge && layout.category_badge.visible !== false && KIOSK_CONFIG.showCategory) {
+                const catX = (layout.category_badge.x / 100) * cardW;
+                const catY = (layout.category_badge.y / 100) * cardH;
+                const fontCat = Math.round(((layout.category_badge.font_size || 10) / 400) * cardW * 0.75);
+                const catName = (kioskState.selectedCategory && kioskState.selectedCategory.name) ? kioskState.selectedCategory.name.toUpperCase() : 'VIP';
+                const fmt = KIOSK_CONFIG.categoryLabelFormat || '{category} • MATCHDAY COLLECTIBLE';
+                const catText = fmt.replace('{category}', catName);
+                ctx.fillStyle = accentColor;
+                ctx.font = `800 ${fontCat}px Outfit`;
+                ctx.textAlign = 'center';
+                ctx.fillText(catText, catX, catY);
+            }
+
+            // Footer Text
+            if (layout.footer_text && layout.footer_text.visible !== false) {
+                const ftX = (layout.footer_text.x / 100) * cardW;
+                const ftY = (layout.footer_text.y / 100) * cardH;
+                const fontFt = Math.round(((layout.footer_text.font_size || 9) / 400) * cardW * 0.75);
+                ctx.fillStyle = '#cbd5e1';
+                ctx.font = `700 ${fontFt}px Outfit`;
+                ctx.textAlign = 'center';
+                ctx.fillText(KIOSK_CONFIG.footerText || 'SATU LIGA, SATU SEMANGAT', ftX, ftY);
+            }
+
+            // Header Slogan
+            if (layout.header_slogan && layout.header_slogan.visible !== false) {
+                const hsX = (layout.header_slogan.x / 100) * cardW;
+                const hsY = (layout.header_slogan.y / 100) * cardH;
+                const fontHs = Math.round(((layout.header_slogan.font_size || 14) / 400) * cardW * 0.75);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `900 ${fontHs}px Outfit`;
+                ctx.textAlign = 'center';
+                ctx.shadowColor = 'rgba(0,0,0,0.85)';
+                ctx.shadowBlur = 6;
+                ctx.fillText(KIOSK_CONFIG.headerTitle || 'I LEAGUE 2026/2027', hsX, hsY);
+                ctx.shadowBlur = 0;
+            }
+
+            // QR Code
+            if (layout.qr_code && layout.qr_code.visible !== false && KIOSK_CONFIG.showQr) {
+                const qrX = (layout.qr_code.x / 100) * cardW;
+                const qrY = (layout.qr_code.y / 100) * cardH;
+                const qrSize = Math.round(((layout.qr_code.size || 48) / 400) * cardW);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(qrX - (qrSize / 2), qrY - (qrSize / 2), qrSize, qrSize);
+                // Draw QR pattern
+                ctx.fillStyle = '#000000';
+                const cell = qrSize / 5;
+                ctx.fillRect(qrX - (qrSize / 2) + cell * 0.5, qrY - (qrSize / 2) + cell * 0.5, cell * 1.5, cell * 1.5);
+                ctx.fillRect(qrX + (qrSize / 2) - cell * 2, qrY - (qrSize / 2) + cell * 0.5, cell * 1.5, cell * 1.5);
+                ctx.fillRect(qrX - (qrSize / 2) + cell * 0.5, qrY + (qrSize / 2) - cell * 2, cell * 1.5, cell * 1.5);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '800 11px Outfit';
+                ctx.textAlign = 'center';
+                ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                ctx.shadowBlur = 4;
+                ctx.fillText('SCAN', qrX, qrY + (qrSize / 2) + 14);
                 ctx.shadowBlur = 0;
             }
         } else {
