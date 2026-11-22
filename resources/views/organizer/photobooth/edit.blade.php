@@ -214,10 +214,16 @@
 
                     <!-- Custom Graphic Assets Upload -->
                     <div class="border-t border-slate-100 pt-6 space-y-4">
-                        <div class="flex items-center justify-between">
-                            <h4 class="text-sm font-black text-slate-800 uppercase tracking-wider">Aset Grafis Custom Pertandingan</h4>
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                                <h4 class="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                                    <span>Aset Grafis Khusus Kartu PhotoBooth</span>
+                                    <span class="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">PhotoCard Only</span>
+                                </h4>
+                                <p class="text-[11px] text-slate-500 font-medium mt-0.5">Aset grafis ini khusus diterapkan untuk cetak/download foto suporter di kiosk PhotoBooth (tidak mempengaruhi tiket resmi e-voucher atau elemen web lain).</p>
+                            </div>
                             <button type="button" onclick="resetAllImagesToPlain()" 
-                                    class="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl border border-red-200 transition flex items-center gap-1.5 shadow-xs"
+                                    class="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl border border-red-200 transition flex items-center gap-1.5 shadow-xs shrink-0 self-start sm:self-auto"
                                     title="Hilangkan semua frame dan gambar agar preview kartu bersih polos">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                 <span>Reset Semua Gambar (Polos)</span>
@@ -249,17 +255,17 @@
                             </div>
                         </div>
 
-                        <!-- Background Stadion -->
+                        <!-- Background PhotoBooth -->
                         <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
                             <div class="flex items-center justify-between">
-                                <label class="block text-xs font-black uppercase tracking-wider text-slate-700">Background Stadion / Lapangan</label>
+                                <label class="block text-xs font-black uppercase tracking-wider text-slate-700">Background PhotoBooth</label>
                                 <div class="flex items-center gap-2">
                                     <span id="badgeBgStatus" class="text-[10px] font-bold {{ $hasBg ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600' }} px-2.5 py-0.5 rounded-full">
-                                        {{ $hasBg ? 'Background Terpasang' : 'Belum Diupload' }}
+                                        {{ $hasBg ? 'Background PhotoBooth Terpasang' : 'Belum Diupload' }}
                                     </span>
                                     <button type="button" id="btnResetBg" onclick="resetBackgroundImage(true)" 
                                             class="text-[11px] font-bold text-red-600 hover:text-red-700 bg-white hover:bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 transition flex items-center gap-1 shadow-xs {{ $hasBg ? '' : 'hidden' }}"
-                                            title="Hilangkan background stadion">
+                                            title="Hilangkan background photobooth">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                                         <span>Reset Background</span>
                                     </button>
@@ -268,7 +274,7 @@
                             <input type="file" name="background_image" id="backgroundImageInput" accept="image/jpeg,image/png,image/webp"
                                    onchange="handleBackgroundImageChange(this)"
                                    class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 cursor-pointer">
-                            <span class="text-[11px] text-slate-500 font-medium block">Latar belakang atmosfer stadion untuk kartu foto suporter.</span>
+                            <span class="text-[11px] text-slate-500 font-medium block">Latar belakang khusus untuk foto suporter pada kartu PhotoBooth. Saat suporter berfoto selfie di kiosk, background custom ini yang akan dipasang sebagai latar belakang fotonya.</span>
                         </div>
 
                         <!-- Quick Logo Uploads for Matchday -->
@@ -1274,7 +1280,7 @@
                         },
                         body: JSON.stringify({ target: 'background' })
                     });
-                    showResetToast('Background stadion berhasil direset (polos).');
+                    showResetToast('Background PhotoBooth berhasil direset (polos).');
                 } catch (e) {
                     console.warn(e);
                 }

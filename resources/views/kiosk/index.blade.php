@@ -11,6 +11,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
+    {{-- Google MediaPipe Selfie Segmentation for AI Virtual Background PhotoBooth --}}
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
+
     <style>
         :root {
             --primary-orange: #f95700;
@@ -708,6 +711,30 @@
             margin: 0 auto 20px;
         }
 
+        .kiosk-email-guidance-card {
+            width: 100%;
+            max-width: 620px;
+            margin: 0 auto 20px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            border-radius: 16px;
+            padding: 16px 20px;
+            text-align: left;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+
+        .kiosk-ticket-pill-item {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 11px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #ffffff;
+        }
+
         .evouchers-grid {
             display: flex;
             flex-wrap: wrap;
@@ -1325,14 +1352,24 @@
             <h2 class="welcome-title" style="font-size: 22px; margin-bottom: 4px;">PEMBAYARAN BERHASIL!</h2>
             <p class="email-sent-note" id="screen06EmailNote" style="margin-bottom: 16px;">E-ticket telah dikirim ke email Anda.</p>
 
-            <!-- Dynamic E-Vouchers Grid (1 tiket = 1 QR, >1 tiket = multiple QR) -->
-            <div class="evouchers-wrapper">
-                <div style="font-size: 11px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;" id="screen06EvoucherHeader">
-                    E-VOUCHER TIKET ANDA:
+            <!-- E-Voucher Email Guidance on Screen 06 (QR Code disembunyikan demi privasi & keamanan) -->
+            <div class="kiosk-email-guidance-card" style="margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                    <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#60a5fa">
+                            <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px;">E-Voucher Tiket Telah Dikirim ke Email</div>
+                        <div style="font-size: 11px; font-weight: 600; color: #94a3b8;">Periksa kotak masuk atau spam email Anda</div>
+                    </div>
                 </div>
-                <div class="evouchers-grid" id="screen06EvouchersWrap">
-                    <!-- Populated dynamically by renderScreen06EVouchers() -->
+                <div style="font-size: 11px; color: #94a3b8; display: flex; align-items: center; gap: 6px;">
+                    <span style="color: #f59e0b;">🔒</span>
+                    <span>Demi keamanan & privasi tiket Anda, QR Code hanya dapat diakses melalui E-Voucher di email.</span>
                 </div>
+                <div id="screen06TicketPillsWrap" style="display: flex; gap: 8px; justify-content: flex-start; flex-wrap: wrap; margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08);"></div>
             </div>
 
             <!-- Free Photo Experience Offer (Adjusts chances to quantity) -->
@@ -1477,12 +1514,34 @@
                     Selamat menikmati pertandingan!
                 </p>
 
-                <!-- Grid of E-Vouchers on Screen 09 -->
-                <div style="width: 100%; margin-bottom: 16px;">
-                    <div style="font-size: 11px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
-                        E-VOUCHER TIKET ANDA:
+                <!-- Petunjuk E-Voucher via Email (QR Code disembunyikan demi privasi & keamanan) -->
+                <div class="kiosk-email-guidance-card" style="width: 100%; max-width: 580px; margin: 0 auto 18px;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                        <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="#60a5fa">
+                                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px;">E-Voucher Tiket Telah Dikirim ke Email</div>
+                            <div style="font-size: 12px; font-weight: 700; color: #60a5fa;" id="screen09EmailTargetDisplay">email Anda</div>
+                        </div>
                     </div>
-                    <div class="evouchers-grid" id="screen09EvouchersGrid"></div>
+                    <div style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #cbd5e1; line-height: 1.4;">
+                        <div style="display: flex; align-items: flex-start; gap: 8px;">
+                            <span style="color: #22c55e; font-weight: bold;">✓</span>
+                            <span>Silakan periksa kotak masuk (Inbox) atau folder Spam pada email Anda untuk mengunduh E-Voucher resmi.</span>
+                        </div>
+                        <div style="display: flex; align-items: flex-start; gap: 8px;">
+                            <span style="color: #22c55e; font-weight: bold;">✓</span>
+                            <span>Tunjukkan file E-Voucher pada smartphone Anda kepada petugas saat masuk gate stadion.</span>
+                        </div>
+                        <div style="display: flex; align-items: flex-start; gap: 8px;">
+                            <span style="color: #f59e0b; font-weight: bold;">🔒</span>
+                            <span style="color: #94a3b8; font-size: 11px;">Demi keamanan & privasi tiket Anda, QR Code tidak ditampilkan di layar umum kiosk ini.</span>
+                        </div>
+                    </div>
+                    <div id="screen09TicketPillsWrap" style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);"></div>
                 </div>
 
                 <!-- Gallery of Captured Photos on Screen 09 -->
@@ -1494,7 +1553,7 @@
                 </div>
 
                 <button type="button" class="btn-kiosk-primary" onclick="resetToWelcome()" style="width: 100%; max-width: 340px; min-height: 52px;">
-                    KEMBALI KE MENU AWAL... (<span id="autoResetTimer">15</span>s)
+                    KEMBALI KE MENU AWAL... (<span id="autoResetTimer">5</span>s)
                 </button>
             </div>
         </div>
@@ -1729,6 +1788,35 @@
         }
     }
     initPreloadAssets();
+
+    // MediaPipe Selfie Segmentation for AI Virtual Background
+    let selfieSegmenter = null;
+    let latestSegmentationMask = null;
+
+    function initSelfieSegmentation() {
+        if (typeof SelfieSegmentation === 'undefined') {
+            setTimeout(() => {
+                if (typeof SelfieSegmentation !== 'undefined') initSelfieSegmentation();
+            }, 600);
+            return;
+        }
+        try {
+            selfieSegmenter = new SelfieSegmentation({
+                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
+            });
+            selfieSegmenter.setOptions({
+                modelSelection: 1, // 1: landscape/higher accuracy
+                selfieMode: false
+            });
+            selfieSegmenter.onResults((results) => {
+                latestSegmentationMask = results.segmentationMask;
+            });
+            console.log('MediaPipe SelfieSegmentation initialized successfully.');
+        } catch (e) {
+            console.warn('SelfieSegmentation initialization warning:', e);
+        }
+    }
+    initSelfieSegmentation();
 
     let kioskState = {
         currentScreen: 1,
@@ -2075,39 +2163,29 @@
         return `<svg viewBox="0 0 100 100" fill="black"><rect width="100" height="100" fill="white"/><rect x="8" y="8" width="28" height="28" fill="black"/><rect x="12" y="12" width="20" height="20" fill="white"/><rect x="16" y="16" width="12" height="12" fill="black"/><rect x="64" y="8" width="28" height="28" fill="black"/><rect x="68" y="12" width="20" height="20" fill="white"/><rect x="72" y="16" width="12" height="12" fill="black"/><rect x="8" y="64" width="28" height="28" fill="black"/><rect x="12" y="68" width="20" height="20" fill="white"/><rect x="16" y="72" width="12" height="12" fill="black"/><rect x="44" y="12" width="8" height="8" fill="black"/><rect x="44" y="28" width="8" height="8" fill="black"/><rect x="44" y="44" width="8" height="8" fill="black"/><rect x="44" y="60" width="8" height="8" fill="black"/><rect x="44" y="76" width="8" height="8" fill="black"/><rect x="60" y="44" width="12" height="12" fill="black"/><rect x="76" y="60" width="16" height="16" fill="black"/><rect x="60" y="76" width="12" height="12" fill="black"/></svg>`;
     }
 
-    // Render E-Voucher tickets dynamically on Screen 06
+    // Render E-Voucher tickets notification on Screen 06 (QR Code disembunyikan demi privasi)
     function renderScreen06EVouchers() {
-        const wrap = document.getElementById('screen06EvouchersWrap');
-        if (!wrap) return;
-
+        const email = kioskState.customer.email || 'email Anda';
         const emailNote = document.getElementById('screen06EmailNote');
         if (emailNote) {
-            emailNote.innerText = `E-ticket telah dikirim ke email: ${kioskState.customer.email || 'email Anda'}`;
+            emailNote.innerHTML = `E-ticket (${kioskState.tickets.length} tiket) telah dikirim ke: <strong style="color: #60a5fa;">${email}</strong>`;
         }
 
-        const header = document.getElementById('screen06EvoucherHeader');
-        if (header) {
-            if (kioskState.tickets.length === 1) {
-                header.innerText = 'E-VOUCHER TIKET ANDA (1 TIKET):';
-            } else {
-                header.innerText = `E-VOUCHER TIKET ANDA (${kioskState.tickets.length} TIKET):`;
-            }
+        const pillsWrap = document.getElementById('screen06TicketPillsWrap');
+        if (pillsWrap && kioskState.tickets) {
+            let html = '';
+            kioskState.tickets.forEach((t, idx) => {
+                const badgeLabel = (kioskState.tickets.length === 1) ? 'TIKET 1' : `TIKET ${idx + 1}`;
+                html += `
+                    <div class="kiosk-ticket-pill-item">
+                        <span style="color: #f97316; font-weight: 800;">${badgeLabel}</span>
+                        <span style="font-weight: 700;">${t.category_name}</span>
+                        <span style="color: #94a3b8; font-size: 10px;">(${t.ticket_code})</span>
+                    </div>
+                `;
+            });
+            pillsWrap.innerHTML = html;
         }
-
-        let html = '';
-        kioskState.tickets.forEach((t, idx) => {
-            const badgeLabel = (kioskState.tickets.length === 1) ? 'E-VOUCHER TIKET RESMI' : `TIKET ${idx + 1} DARI ${kioskState.tickets.length}`;
-            html += `
-                <div class="kiosk-ticket-card">
-                    <div class="ticket-card-badge">${badgeLabel}</div>
-                    <div class="ticket-qr-wrap">${t.qr_svg}</div>
-                    <div class="ticket-code-text">${t.ticket_code}</div>
-                    <div class="ticket-category-pill">${t.category_name}</div>
-                    <div style="font-size: 11px; color: #cbd5e1; margin-top: 2px;">${t.visitor_name}</div>
-                </div>
-            `;
-        });
-        wrap.innerHTML = html;
 
         // Configure Photo Experience banner
         const titleEl = document.getElementById('screen06PhotoBannerTitle');
@@ -2269,8 +2347,12 @@
             } else {
                 clearInterval(timer);
                 overlay.style.display = 'none';
-                capturePhotoNow();
-                btn.disabled = false;
+                capturePhotoNow().then(() => {
+                    btn.disabled = false;
+                }).catch((err) => {
+                    console.error('Error in capturePhotoNow:', err);
+                    btn.disabled = false;
+                });
             }
         }, 1000);
     }
@@ -2290,7 +2372,7 @@
     }
 
     // Capture & Composite PORTRAIT Matchday Collectible Card
-    function capturePhotoNow() {
+    async function capturePhotoNow() {
         const flash = document.getElementById('flashOverlay');
         if (flash) {
             flash.classList.add('flash');
@@ -2306,6 +2388,16 @@
         const cardH = 1536;
         canvas.width = cardW;
         canvas.height = cardH;
+
+        // Try AI selfie segmentation if custom Background PhotoBooth is available
+        latestSegmentationMask = null;
+        if (selfieSegmenter && preloadedBgImg && preloadedBgImg.complete && preloadedBgImg.naturalWidth > 0 && video && video.videoWidth > 0) {
+            try {
+                await selfieSegmenter.send({ image: video });
+            } catch (segErr) {
+                console.warn('Selfie segmentation send error:', segErr);
+            }
+        }
 
         const primaryColor = KIOSK_CONFIG.primaryColor || '#5A2D82';
         const accentColor = KIOSK_CONFIG.secondaryColor || '#F95700';
@@ -2348,10 +2440,34 @@
                     srcH = vW / targetRatio;
                     srcY = (vH - srcH) / 2;
                 }
-                // Mirrored draw
-                ctx.translate(photoX + photoW, photoY);
-                ctx.scale(-1, 1);
-                ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
+
+                if (latestSegmentationMask && preloadedBgImg && preloadedBgImg.complete && preloadedBgImg.naturalWidth > 0) {
+                    // Virtual background: composite segmented person over Background PhotoBooth
+                    const personCanvas = document.createElement('canvas');
+                    personCanvas.width = photoW;
+                    personCanvas.height = photoH;
+                    const pCtx = personCanvas.getContext('2d');
+
+                    pCtx.save();
+                    pCtx.translate(photoW, 0);
+                    pCtx.scale(-1, 1);
+                    pCtx.drawImage(latestSegmentationMask, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
+                    pCtx.restore();
+
+                    pCtx.globalCompositeOperation = 'source-in';
+                    pCtx.save();
+                    pCtx.translate(photoW, 0);
+                    pCtx.scale(-1, 1);
+                    pCtx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
+                    pCtx.restore();
+
+                    ctx.drawImage(personCanvas, photoX, photoY, photoW, photoH);
+                } else {
+                    // Standard mirrored draw
+                    ctx.translate(photoX + photoW, photoY);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
+                }
             } else {
                 ctx.fillStyle = '#1e1b4b';
                 ctx.fillRect(photoX, photoY, photoW, photoH);
@@ -2377,9 +2493,32 @@
                     srcH = vW / targetRatio;
                     srcY = (vH - srcH) / 2;
                 }
-                ctx.translate(photoX + photoW, photoY);
-                ctx.scale(-1, 1);
-                ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
+
+                if (latestSegmentationMask && preloadedBgImg && preloadedBgImg.complete && preloadedBgImg.naturalWidth > 0) {
+                    const personCanvas = document.createElement('canvas');
+                    personCanvas.width = photoW;
+                    personCanvas.height = photoH;
+                    const pCtx = personCanvas.getContext('2d');
+
+                    pCtx.save();
+                    pCtx.translate(photoW, 0);
+                    pCtx.scale(-1, 1);
+                    pCtx.drawImage(latestSegmentationMask, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
+                    pCtx.restore();
+
+                    pCtx.globalCompositeOperation = 'source-in';
+                    pCtx.save();
+                    pCtx.translate(photoW, 0);
+                    pCtx.scale(-1, 1);
+                    pCtx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
+                    pCtx.restore();
+
+                    ctx.drawImage(personCanvas, photoX, photoY, photoW, photoH);
+                } else {
+                    ctx.translate(photoX + photoW, photoY);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
+                }
             } else {
                 ctx.fillStyle = '#1e1b4b';
                 ctx.fillRect(photoX, photoY, photoW, photoH);
@@ -2783,30 +2922,41 @@
         goToScreen(7);
     }
 
-    // Render Screen 09 Finish Summary (All E-Vouchers and All Photos)
+    // Render Screen 09 Finish Summary (Email Guidance and All Photos)
     function renderScreen09Summary() {
+        const customerEmail = (kioskState.customer && kioskState.customer.email) ? kioskState.customer.email : 'email Anda';
         const summaryText = document.getElementById('screen09SummaryText');
+        const hasPhotos = kioskState.capturedPhotos && kioskState.capturedPhotos.length > 0;
+        const totalTickets = kioskState.tickets ? kioskState.tickets.length : 1;
+
         if (summaryText) {
-            summaryText.innerHTML = `Semua E-ticket (${kioskState.tickets.length} tiket) dan ${kioskState.capturedPhotos.length} foto Matchday Collectible telah dikirim ke email <strong>${kioskState.customer.email || 'Anda'}</strong>.<br>Selamat menikmati pertandingan!`;
+            if (hasPhotos) {
+                summaryText.innerHTML = `Semua E-ticket (${totalTickets} tiket) dan ${kioskState.capturedPhotos.length} foto Matchday Collectible telah dikirim ke email <strong>${customerEmail}</strong>.<br>Selamat menikmati pertandingan!`;
+            } else {
+                summaryText.innerHTML = `E-ticket (${totalTickets} tiket) Anda telah dikirim ke email <strong>${customerEmail}</strong>.<br>Selamat menikmati pertandingan!`;
+            }
         }
 
-        // Render all ticket QR cards in Screen 09
-        const grid = document.getElementById('screen09EvouchersGrid');
-        if (grid) {
+        const emailDisplay = document.getElementById('screen09EmailTargetDisplay');
+        if (emailDisplay) {
+            emailDisplay.innerText = customerEmail;
+        }
+
+        // Render ticket summary pills (without QR codes)
+        const pillsWrap = document.getElementById('screen09TicketPillsWrap');
+        if (pillsWrap && kioskState.tickets) {
             let html = '';
             kioskState.tickets.forEach((t, idx) => {
-                const badgeLabel = (kioskState.tickets.length === 1) ? 'E-VOUCHER TIKET RESMI' : `TIKET ${idx + 1} DARI ${kioskState.tickets.length}`;
+                const badgeLabel = (kioskState.tickets.length === 1) ? 'TIKET 1' : `TIKET ${idx + 1}`;
                 html += `
-                    <div class="kiosk-ticket-card" style="min-width: 170px;">
-                        <div class="ticket-card-badge">${badgeLabel}</div>
-                        <div class="ticket-qr-wrap" style="padding: 6px;">${t.qr_svg}</div>
-                        <div class="ticket-code-text" style="font-size: 12px;">${t.ticket_code}</div>
-                        <div class="ticket-category-pill">${t.category_name}</div>
-                        <div style="font-size: 10px; color: #cbd5e1; margin-top: 2px;">${t.visitor_name}</div>
+                    <div class="kiosk-ticket-pill-item">
+                        <span style="color: #f97316; font-weight: 800;">${badgeLabel}</span>
+                        <span style="font-weight: 700;">${t.category_name}</span>
+                        <span style="color: #94a3b8; font-size: 10px;">(${t.ticket_code})</span>
                     </div>
                 `;
             });
-            grid.innerHTML = html;
+            pillsWrap.innerHTML = html;
         }
 
         // Render all captured collectible cards in Screen 09
@@ -2872,9 +3022,9 @@
         }
     }
 
-    // Auto Reset Timer on Screen 09 (15 Seconds)
+    // Auto Reset Timer on Screen 09 (5 Seconds)
     function startAutoResetTimer() {
-        let sec = 15;
+        let sec = 5;
         const display = document.getElementById('autoResetTimer');
         if (display) display.innerText = sec;
 
