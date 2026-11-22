@@ -206,6 +206,54 @@
                         </div>
                     </div>
 
+                    <!-- Pengaturan Privasi & Data Identitas Peserta di E-Voucher -->
+                    <input type="hidden" name="evoucher_fields_configured" value="1">
+                    <div class="pt-6 border-t border-slate-100 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="text-sm font-black text-slate-700 uppercase tracking-[0.18em]">Privasi & Identitas di E-Voucher</h4>
+                                <p class="text-xs text-slate-400 mt-0.5">Pilih data identitas yang diizinkan tercetak pada lembar fisik E-Voucher (UU PDP & Pencegahan Penyalahgunaan Data).</p>
+                            </div>
+                            <span class="text-[10px] font-black px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
+                                Privacy Protected
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label class="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
+                                <input type="checkbox" name="evoucher_show_nik" value="1" class="w-4 h-4 mt-0.5 text-orange-500 rounded border-slate-300 focus:ring-orange-500" {{ old('evoucher_show_nik') ? 'checked' : '' }}>
+                                <div class="text-xs">
+                                    <span class="block font-black text-slate-800">Tampilkan Nomor Identitas / NIK</span>
+                                    <span class="block text-slate-500 text-[11px] mt-0.5 leading-snug">Disarankan dinonaktifkan jika tiket fisik rentan tercecer di tribun.</span>
+                                </div>
+                            </label>
+
+                            <label class="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
+                                <input type="checkbox" name="evoucher_show_phone" value="1" class="w-4 h-4 mt-0.5 text-orange-500 rounded border-slate-300 focus:ring-orange-500" {{ old('evoucher_show_phone') ? 'checked' : '' }}>
+                                <div class="text-xs">
+                                    <span class="block font-black text-slate-800">Tampilkan No. Telepon / WhatsApp</span>
+                                    <span class="block text-slate-500 text-[11px] mt-0.5 leading-snug">Cegah nomor telepon suporter tersebar saat tiket dibuang.</span>
+                                </div>
+                            </label>
+
+                            <label class="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
+                                <input type="checkbox" name="evoucher_show_gender" value="1" class="w-4 h-4 mt-0.5 text-orange-500 rounded border-slate-300 focus:ring-orange-500" {{ old('evoucher_show_gender') ? 'checked' : '' }}>
+                                <div class="text-xs">
+                                    <span class="block font-black text-slate-800">Tampilkan Gender / Jenis Kelamin</span>
+                                    <span class="block text-slate-500 text-[11px] mt-0.5 leading-snug">Hanya diperlukan jika ada tribun khusus pria/wanita.</span>
+                                </div>
+                            </label>
+
+                            <label class="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
+                                <input type="checkbox" name="evoucher_mask_sensitive_data" value="1" class="w-4 h-4 mt-0.5 text-orange-500 rounded border-slate-300 focus:ring-orange-500" {{ old('evoucher_mask_sensitive_data', true) ? 'checked' : '' }}>
+                                <div class="text-xs">
+                                    <span class="block font-black text-slate-800">Sensor Otomatis (Masking) NIK & HP</span>
+                                    <span class="block text-slate-500 text-[11px] mt-0.5 leading-snug">Contoh: <code class="font-bold text-orange-600">320412******0001</code> dan <code class="font-bold text-orange-600">62896****1907</code> agar aman saat dicetak.</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
                     <div class="pt-6 border-t border-slate-100 space-y-4"
                          x-data="{ flow: '{{ old('purchase_flow', 'redeem') }}' }">
                         <div>

@@ -323,6 +323,16 @@ class EventController extends Controller
         $meta['wristband_league_name'] = $request->input('wristband_league_name') ?: ($meta['wristband_league_name'] ?? null);
         $meta['evoucher_page_mode'] = $request->input('evoucher_page_mode', $meta['evoucher_page_mode'] ?? '1_page');
 
+        // E-Voucher attendee identity privacy configuration
+        if ($request->has('evoucher_fields_configured') || $request->has('evoucher_show_nik') || $request->has('evoucher_show_phone')) {
+            $meta['evoucher_fields'] = [
+                'show_nik' => $request->boolean('evoucher_show_nik', false),
+                'show_phone' => $request->boolean('evoucher_show_phone', false),
+                'show_gender' => $request->boolean('evoucher_show_gender', false),
+                'mask_sensitive_data' => $request->boolean('evoucher_mask_sensitive_data', true),
+            ];
+        }
+
         foreach ([
             'wristband_league_logo',
             'wristband_home_club_logo',

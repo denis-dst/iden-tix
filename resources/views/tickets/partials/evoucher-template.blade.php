@@ -431,6 +431,44 @@
                         @php
                             $hasCustomQuestions = !empty($customFields);
                             $mainAttendeeName = strtolower(trim((string)($ticket->visitor_data['name'] ?? $transaction->customer_name)));
+
+                            $evSettings = $event->meta['evoucher_fields'] ?? [];
+                            // By default, hide NIK, Phone, Gender to protect privacy unless explicitly enabled by organizer
+                            $showNik = isset($evSettings['show_nik']) ? (bool) $evSettings['show_nik'] : false;
+                            $showPhone = isset($evSettings['show_phone']) ? (bool) $evSettings['show_phone'] : false;
+                            $showGender = isset($evSettings['show_gender']) ? (bool) $evSettings['show_gender'] : false;
+                            $maskSensitiveData = isset($evSettings['mask_sensitive_data']) ? (bool) $evSettings['mask_sensitive_data'] : true;
+
+                            $maskNikFn = function(?string $val) use ($maskSensitiveData) {
+                                if (empty($val)) return '';
+                                $val = trim($val);
+                                if (!$maskSensitiveData) return $val;
+                                $len = strlen($val);
+                                if ($len <= 8) return substr($val, 0, 2) . str_repeat('*', max(2, $len - 4)) . substr($val, -2);
+                                return substr($val, 0, 6) . str_repeat('*', max(4, $len - 10)) . substr($val, -4);
+                            };
+
+                            $maskPhoneFn = function(?string $val) use ($maskSensitiveData) {
+                                if (empty($val)) return '';
+                                $val = trim($val);
+                                if (!$maskSensitiveData) return $val;
+                                $len = strlen($val);
+                                if ($len <= 6) return str_repeat('*', $len);
+                                return substr($val, 0, 4) . str_repeat('*', max(3, $len - 8)) . substr($val, -4);
+                            };
+
+                            $maskEmailFn = function(?string $val) use ($maskSensitiveData) {
+                                if (empty($val) || !str_contains($val, '@')) return $val ?: '';
+                                if (!$maskSensitiveData) return $val;
+                                [$user, $domain] = explode('@', $val, 2);
+                                $uLen = strlen($user);
+                                if ($uLen <= 2) {
+                                    $maskedUser = substr($user, 0, 1) . '*';
+                                } else {
+                                    $maskedUser = substr($user, 0, 2) . str_repeat('*', max(2, $uLen - 3)) . substr($user, -1);
+                                }
+                                return $maskedUser . '@' . $domain;
+                            };
                         @endphp
 
                         @if($hasCustomQuestions)
@@ -486,6 +524,19 @@
                                     if ($isNameField && strtolower(trim((string)$displayAns)) === $mainAttendeeName) {
                                         continue;
                                     }
+
+                                    // Privacy filter & masking for custom fields
+                                    if ($isNikField) {
+                                        if (!$showNik) continue;
+                                        $displayAns = $maskNikFn($displayAns);
+                                    } elseif ($isPhoneField) {
+                                        if (!$showPhone) continue;
+                                        $displayAns = $maskPhoneFn($displayAns);
+                                    } elseif ($isGenderField) {
+                                        if (!$showGender) continue;
+                                    } elseif ($isEmailField) {
+                                        $displayAns = $maskEmailFn($displayAns);
+                                    }
                                 @endphp
                                 @if($ans !== null && trim((string)$ans) !== '')
                                     <div class="flex items-start gap-2.5 text-xs">
@@ -537,21 +588,21 @@
                                 $evoucherPhone = $ticket->visitor_data['phone'] ?? ($transaction->customer_phone ?? null);
                             @endphp
 
-                            <!-- Nomor Identitas / NIK -->
-                            @if(!empty($evoucherNik))
+                            <!-- Nomor Identitas / NIK (Only shown if enabled by organizer) -->
+                            @if($showNik && !empty($evoucherNik))
                                 <div class="flex items-start gap-2.5 text-xs">
                                     <div class="w-5 h-5 rounded-md bg-slate-900 text-white flex items-center justify-center shrink-0 mt-0.5">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>
                                     </div>
                                     <div class="min-w-0 flex-1">
                                         <div class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">NO. IDENTITAS / NIK</div>
-                                        <div class="text-xs font-black text-slate-900 font-mono tracking-wider break-words">{{ $evoucherNik }}</div>
+                                        <div class="text-xs font-black text-slate-900 font-mono tracking-wider break-words">{{ $maskNikFn($evoucherNik) }}</div>
                                     </div>
                                 </div>
                             @endif
 
-                            <!-- Gender -->
-                            @if(!empty($evoucherGender))
+                            <!-- Gender (Only shown if enabled by organizer) -->
+                            @if($showGender && !empty($evoucherGender))
                                 <div class="flex items-start gap-2.5 text-xs">
                                     <div class="w-5 h-5 rounded-md bg-slate-900 text-white flex items-center justify-center shrink-0 mt-0.5">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
@@ -563,8 +614,8 @@
                                 </div>
                             @endif
 
-                            <!-- Phone / WhatsApp -->
-                            @if(!empty($evoucherPhone))
+                            <!-- Phone / WhatsApp (Only shown if enabled by organizer) -->
+                            @if($showPhone && !empty($evoucherPhone))
                                 <div class="flex items-start gap-2.5 text-xs">
                                     <div class="w-5 h-5 rounded-md bg-slate-900 text-white flex items-center justify-center shrink-0 mt-0.5">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
@@ -572,7 +623,7 @@
                                     <div class="min-w-0 flex-1">
                                         <div class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">NO. TELEPON / WHATSAPP</div>
                                         <div class="text-xs font-black text-slate-900 uppercase break-words">
-                                            {{ $evoucherPhone }}
+                                            {{ $maskPhoneFn($evoucherPhone) }}
                                         </div>
                                     </div>
                                 </div>
