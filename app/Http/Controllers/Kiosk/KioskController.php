@@ -223,32 +223,34 @@ class KioskController extends Controller
      */
     public function simulatePayment(Request $request, string $tenant_slug, string $reference)
     {
-        $transaction = Transaction::where('reference_no', $reference)->firstOrFail();
+        return DB::transaction(function () use ($reference) {
+            $transaction = Transaction::where('reference_no', $reference)->lockForUpdate()->firstOrFail();
 
-        if ($transaction->payment_status !== 'paid') {
-            $transaction->update([
-                'payment_status' => 'paid',
-                'paid_at'        => now(),
-                'payment_method' => 'QRIS (Simulasi)',
+            if ($transaction->payment_status !== 'paid') {
+                $transaction->update([
+                    'payment_status' => 'paid',
+                    'paid_at'        => now(),
+                    'payment_method' => 'QRIS (Simulasi)',
+                ]);
+
+                $this->issueTicketsForTransaction($transaction);
+            }
+
+            $tickets = $this->formatTicketsForKiosk($transaction);
+
+            return response()->json([
+                'success'        => true,
+                'status'         => 'paid',
+                'paid'           => true,
+                'reference_no'   => $transaction->reference_no,
+                'transaction_id' => $transaction->id,
+                'customer_name'  => $transaction->customer_name,
+                'customer_email' => $transaction->customer_email,
+                'quantity'       => $transaction->quantity,
+                'tickets'        => $tickets,
+                'message'        => 'Pembayaran simulasi berhasil diverifikasi.',
             ]);
-
-            $this->issueTicketsForTransaction($transaction);
-        }
-
-        $tickets = $this->formatTicketsForKiosk($transaction);
-
-        return response()->json([
-            'success'        => true,
-            'status'         => 'paid',
-            'paid'           => true,
-            'reference_no'   => $transaction->reference_no,
-            'transaction_id' => $transaction->id,
-            'customer_name'  => $transaction->customer_name,
-            'customer_email' => $transaction->customer_email,
-            'quantity'       => $transaction->quantity,
-            'tickets'        => $tickets,
-            'message'        => 'Pembayaran simulasi berhasil diverifikasi.',
-        ]);
+        });
     }
 
     /**
@@ -256,7 +258,7 @@ class KioskController extends Controller
      */
     protected function formatTicketsForKiosk(Transaction $transaction)
     {
-        return $transaction->tickets()->with('category')->get()->map(function ($ticket, $idx) use ($transaction) {
+        return $transaction->tickets()->with('category')->take($transaction->quantity)->get()->map(function ($ticket, $idx) use ($transaction) {
             $qrSvg = (string) QrCode::format('svg')
                 ->size(150)
                 ->errorCorrection('H')
@@ -399,11 +401,15 @@ class KioskController extends Controller
      */
     protected function issueTicketsForTransaction(Transaction $transaction): void
     {
-        if ($transaction->tickets()->count() > 0) {
+        if ($transaction->tickets()->exists()) {
             return;
         }
 
         DB::transaction(function () use ($transaction) {
+            // Strict idempotency check within transaction lock
+            if (Ticket::where('transaction_id', $transaction->id)->exists()) {
+                return;
+            }
             $event = $transaction->event;
             $category = $transaction->category;
 

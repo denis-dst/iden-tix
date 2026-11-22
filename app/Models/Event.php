@@ -329,38 +329,95 @@ class Event extends Model
 
     public function getEffectiveHomeTeamLogoUrlAttribute(): ?string
     {
-        $path = $this->home_team_logo ?: ($this->meta['wristband_home_club_logo'] ?? $this->tenant?->logo);
-        if (!$path) return null;
-        return str_starts_with($path, 'http') ? $path : asset('storage/' . $path);
+        $candidates = [
+            $this->home_team_logo,
+            $this->meta['wristband_home_club_logo'] ?? null,
+            $this->tenant?->logo
+        ];
+        foreach ($candidates as $path) {
+            if ($path && $this->logoFileExists($path)) {
+                return str_starts_with($path, 'http') ? $path : asset('storage/' . $path);
+            }
+        }
+        return null;
     }
 
     public function getEffectiveAwayTeamLogoUrlAttribute(): ?string
     {
-        $path = $this->away_team_logo ?: ($this->meta['wristband_away_club_logo'] ?? null);
-        if (!$path) return null;
-        return str_starts_with($path, 'http') ? $path : asset('storage/' . $path);
+        $candidates = [
+            $this->away_team_logo,
+            $this->meta['wristband_away_club_logo'] ?? null
+        ];
+        foreach ($candidates as $path) {
+            if ($path && $this->logoFileExists($path)) {
+                return str_starts_with($path, 'http') ? $path : asset('storage/' . $path);
+            }
+        }
+        return null;
     }
 
     public function getEffectiveLeagueLogoUrlAttribute(): ?string
     {
-        $path = $this->meta['wristband_league_logo'] ?? null;
-        if (!$path) return null;
-        return str_starts_with($path, 'http') ? $path : asset('storage/' . $path);
+        $candidates = [
+            $this->meta['wristband_league_logo'] ?? null
+        ];
+        foreach ($candidates as $path) {
+            if ($path && $this->logoFileExists($path)) {
+                return str_starts_with($path, 'http') ? $path : asset('storage/' . $path);
+            }
+        }
+        return null;
     }
 
     public function getEffectiveHomeTeamLogoDataUriAttribute(): ?string
     {
-        return $this->resolveLogoDataUri($this->home_team_logo ?: ($this->meta['wristband_home_club_logo'] ?? $this->tenant?->logo));
+        $candidates = [
+            $this->home_team_logo,
+            $this->meta['wristband_home_club_logo'] ?? null,
+            $this->tenant?->logo
+        ];
+        foreach ($candidates as $path) {
+            if ($path && ($uri = $this->resolveLogoDataUri($path))) {
+                return $uri;
+            }
+        }
+        return null;
     }
 
     public function getEffectiveAwayTeamLogoDataUriAttribute(): ?string
     {
-        return $this->resolveLogoDataUri($this->away_team_logo ?: ($this->meta['wristband_away_club_logo'] ?? null));
+        $candidates = [
+            $this->away_team_logo,
+            $this->meta['wristband_away_club_logo'] ?? null
+        ];
+        foreach ($candidates as $path) {
+            if ($path && ($uri = $this->resolveLogoDataUri($path))) {
+                return $uri;
+            }
+        }
+        return null;
     }
 
     public function getEffectiveLeagueLogoDataUriAttribute(): ?string
     {
-        return $this->resolveLogoDataUri($this->meta['wristband_league_logo'] ?? null);
+        $candidates = [
+            $this->meta['wristband_league_logo'] ?? null
+        ];
+        foreach ($candidates as $path) {
+            if ($path && ($uri = $this->resolveLogoDataUri($path))) {
+                return $uri;
+            }
+        }
+        return null;
+    }
+
+    protected function logoFileExists(?string $path): bool
+    {
+        if (!$path) return false;
+        if (str_starts_with($path, 'http') || str_starts_with($path, 'data:')) return true;
+        return file_exists($path)
+            || file_exists(public_path('storage/' . $path))
+            || file_exists(storage_path('app/public/' . $path));
     }
 
     protected function resolveLogoDataUri(?string $path): ?string

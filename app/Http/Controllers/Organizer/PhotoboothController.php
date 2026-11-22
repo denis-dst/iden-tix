@@ -78,11 +78,11 @@ class PhotoboothController extends Controller
         $template->is_active = $request->has('is_active');
         $template->primary_color = $validated['primary_color'];
         $template->secondary_color = $validated['secondary_color'];
-        $template->header_title = $validated['header_title'] ?? null;
-        $template->header_subtitle = $validated['header_subtitle'] ?? null;
-        $template->badge_text = $validated['badge_text'] ?? null;
-        $template->category_label_format = $validated['category_label_format'] ?? null;
-        $template->footer_text = $validated['footer_text'] ?? null;
+        $template->header_title = !empty(trim((string)($request->input('header_title') ?? ''))) ? trim((string)$request->input('header_title')) : null;
+        $template->header_subtitle = !empty(trim((string)($request->input('header_subtitle') ?? ''))) ? trim((string)$request->input('header_subtitle')) : null;
+        $template->badge_text = !empty(trim((string)($request->input('badge_text') ?? ''))) ? trim((string)$request->input('badge_text')) : null;
+        $template->category_label_format = !empty(trim((string)($request->input('category_label_format') ?? ''))) ? trim((string)$request->input('category_label_format')) : null;
+        $template->footer_text = !empty(trim((string)($request->input('footer_text') ?? ''))) ? trim((string)$request->input('footer_text')) : null;
         $template->show_qr = $request->has('show_qr');
         $template->show_fan_name = $request->has('show_fan_name');
         $template->show_category = $request->has('show_category');
@@ -352,12 +352,49 @@ class PhotoboothController extends Controller
 
         if ($layout) {
             $template->layout_config = $layout;
-            $template->save();
         }
+
+        if ($request->has('header_title')) {
+            $val = trim((string) $request->input('header_title'));
+            $template->header_title = $val !== '' ? $val : null;
+        }
+        if ($request->has('header_subtitle')) {
+            $val = trim((string) $request->input('header_subtitle'));
+            $template->header_subtitle = $val !== '' ? $val : null;
+        }
+        if ($request->has('badge_text')) {
+            $val = trim((string) $request->input('badge_text'));
+            $template->badge_text = $val !== '' ? $val : null;
+        }
+        if ($request->has('category_label_format')) {
+            $val = trim((string) $request->input('category_label_format'));
+            $template->category_label_format = $val !== '' ? $val : null;
+        }
+        if ($request->has('footer_text')) {
+            $val = trim((string) $request->input('footer_text'));
+            $template->footer_text = $val !== '' ? $val : null;
+        }
+        if ($request->has('show_team_logos')) {
+            $template->show_team_logos = $request->boolean('show_team_logos');
+        }
+        if ($request->has('show_match_info')) {
+            $template->show_match_info = $request->boolean('show_match_info');
+        }
+        if ($request->has('show_fan_name')) {
+            $template->show_fan_name = $request->boolean('show_fan_name');
+        }
+        if ($request->has('show_category')) {
+            $template->show_category = $request->boolean('show_category');
+        }
+        if ($request->has('show_qr')) {
+            $template->show_qr = $request->boolean('show_qr');
+        }
+
+        $template->save();
 
         return response()->json([
             'success' => true,
-            'message' => 'Posisi kolom berhasil disimpan!',
+            'message' => 'Posisi kolom dan pengaturan berhasil disimpan!',
             'layout_config' => $template->getEffectiveLayoutConfig()
         ]);
     }

@@ -159,27 +159,33 @@ class PhotoboothService
         $layout = $template ? $template->getEffectiveLayoutConfig() : (new PhotoboothTemplate())->getEffectiveLayoutConfig();
 
         if ($event) {
+            $showTeamLogos = $template ? ($template->show_team_logos ?? true) : true;
+            $showMatchInfo = $template ? ($template->show_match_info ?? true) : true;
+            $showFanName = $template ? ($template->show_fan_name ?? true) : true;
+            $showCategory = $template ? ($template->show_category ?? true) : true;
+            $showQr = $template ? ($template->show_qr ?? true) : true;
+
             // Draw League / Penyelenggara Logo
-            if (!empty($layout['league_logo']['visible'] ?? true)) {
-                $leagueLogoX = round($width * (($layout['league_logo']['x'] ?? 14) / 100));
-                $leagueLogoY = round($height * (($layout['league_logo']['y'] ?? 6) / 100));
+            if (!empty($layout['league_logo']['visible'] ?? true) && $event->effective_league_logo_url) {
+                $leagueLogoX = round($width * (($layout['league_logo']['x'] ?? 15) / 100));
+                $leagueLogoY = round($height * (($layout['league_logo']['y'] ?? 9) / 100));
                 $leagueLogoSize = round((($layout['league_logo']['size'] ?? 65) / 400) * $width);
                 $this->placeLogoOnCanvas($canvas, $event->effective_league_logo_url, $leagueLogoX, $leagueLogoY, $leagueLogoSize);
             }
 
-            // Draw Home Club Logo
-            if (!empty($layout['home_logo']['visible'] ?? true)) {
+            // Draw Home Club Logo (Respect show_team_logos)
+            if ($showTeamLogos && !empty($layout['home_logo']['visible'] ?? true) && $event->effective_home_team_logo_url) {
                 $homeLogoX = round($width * (($layout['home_logo']['x'] ?? 24) / 100));
-                $homeLogoY = round($height * (($layout['home_logo']['y'] ?? 72) / 100));
-                $homeLogoSize = round((($layout['home_logo']['size'] ?? 80) / 400) * $width);
+                $homeLogoY = round($height * (($layout['home_logo']['y'] ?? 68) / 100));
+                $homeLogoSize = round((($layout['home_logo']['size'] ?? 85) / 400) * $width);
                 $this->placeLogoOnCanvas($canvas, $event->effective_home_team_logo_url, $homeLogoX, $homeLogoY, $homeLogoSize);
             }
 
-            // Draw Away Club Logo
-            if (!empty($layout['away_logo']['visible'] ?? true)) {
+            // Draw Away Club Logo (Respect show_team_logos)
+            if ($showTeamLogos && !empty($layout['away_logo']['visible'] ?? true) && $event->effective_away_team_logo_url) {
                 $awayLogoX = round($width * (($layout['away_logo']['x'] ?? 76) / 100));
-                $awayLogoY = round($height * (($layout['away_logo']['y'] ?? 72) / 100));
-                $awayLogoSize = round((($layout['away_logo']['size'] ?? 80) / 400) * $width);
+                $awayLogoY = round($height * (($layout['away_logo']['y'] ?? 68) / 100));
+                $awayLogoSize = round((($layout['away_logo']['size'] ?? 85) / 400) * $width);
                 $this->placeLogoOnCanvas($canvas, $event->effective_away_team_logo_url, $awayLogoX, $awayLogoY, $awayLogoSize);
             }
 
@@ -201,63 +207,122 @@ class PhotoboothService
                 $white = imagecolorallocate($canvas, 255, 255, 255);
                 $navy = imagecolorallocate($canvas, 30, 27, 75);
                 $orange = imagecolorallocate($canvas, 249, 87, 0);
+                $amber = imagecolorallocate($canvas, 245, 158, 11);
+                $muted = imagecolorallocate($canvas, 203, 213, 225);
 
-                // Team Names
-                if (!empty($layout['home_name']['visible'] ?? true)) {
+                // Team Names (Respect show_team_logos)
+                if ($showTeamLogos && !empty($layout['home_name']['visible'] ?? true) && !empty($event->effective_home_team_name)) {
                     $hnX = round($width * (($layout['home_name']['x'] ?? 24) / 100));
-                    $hnY = round($height * (($layout['home_name']['y'] ?? 81) / 100));
-                    $fontSizeHn = round((($layout['home_name']['font_size'] ?? 14) / 400) * $width * 0.75);
+                    $hnY = round($height * (($layout['home_name']['y'] ?? 76) / 100));
+                    $fontSizeHn = round((($layout['home_name']['font_size'] ?? 14) / 400) * $width);
                     $boxHome = imagettfbbox($fontSizeHn, 0, $fontFile, $event->effective_home_team_name);
                     $wH = abs($boxHome[2] - $boxHome[0]);
                     imagettftext($canvas, $fontSizeHn, 0, round($hnX - ($wH / 2)), $hnY, $white, $fontFile, $event->effective_home_team_name);
                 }
 
-                if (!empty($layout['away_name']['visible'] ?? true)) {
+                if ($showTeamLogos && !empty($layout['away_name']['visible'] ?? true) && !empty($event->effective_away_team_name)) {
                     $anX = round($width * (($layout['away_name']['x'] ?? 76) / 100));
-                    $anY = round($height * (($layout['away_name']['y'] ?? 81) / 100));
-                    $fontSizeAn = round((($layout['away_name']['font_size'] ?? 14) / 400) * $width * 0.75);
+                    $anY = round($height * (($layout['away_name']['y'] ?? 76) / 100));
+                    $fontSizeAn = round((($layout['away_name']['font_size'] ?? 14) / 400) * $width);
                     $boxAway = imagettfbbox($fontSizeAn, 0, $fontFile, $event->effective_away_team_name);
                     $wA = abs($boxAway[2] - $boxAway[0]);
                     imagettftext($canvas, $fontSizeAn, 0, round($anX - ($wA / 2)), $anY, $white, $fontFile, $event->effective_away_team_name);
                 }
 
-                // VS Badge
-                if (!empty($layout['vs_badge']['visible'] ?? true)) {
+                // VS Badge (Respect show_team_logos)
+                if ($showTeamLogos && !empty($layout['vs_badge']['visible'] ?? true)) {
                     $vsX = round($width * (($layout['vs_badge']['x'] ?? 50) / 100));
-                    $vsY = round($height * (($layout['vs_badge']['y'] ?? 73) / 100));
-                    $fontSizeVs = round((($layout['vs_badge']['font_size'] ?? 22) / 400) * $width * 0.75);
+                    $vsY = round($height * (($layout['vs_badge']['y'] ?? 74) / 100));
+                    $fontSizeVs = round((($layout['vs_badge']['font_size'] ?? 22) / 400) * $width);
                     $boxVs = imagettfbbox($fontSizeVs, 0, $fontFile, 'VS');
                     $wVs = abs($boxVs[2] - $boxVs[0]);
-                    imagettftext($canvas, $fontSizeVs, 0, round($vsX - ($wVs / 2)), $vsY, $orange, $fontFile, 'VS');
+                    imagettftext($canvas, $fontSizeVs, 0, round($vsX - ($wVs / 2)), $vsY, $amber, $fontFile, 'VS');
                 }
 
-                // Match Details in White Bar
-                if (!empty($layout['match_info']['visible'] ?? true)) {
+                // Header Slogan (Hide if both header_title and header_subtitle are empty)
+                $hasTitle = !empty(trim($template->header_title ?? ''));
+                $hasSubtitle = !empty(trim($template->header_subtitle ?? ''));
+                if (($hasTitle || $hasSubtitle) && !empty($layout['header_slogan']['visible'] ?? true)) {
+                    $hsX = round($width * (($layout['header_slogan']['x'] ?? 50) / 100));
+                    $hsY = round($height * (($layout['header_slogan']['y'] ?? 5) / 100));
+                    $fontSizeHs = round((($layout['header_slogan']['font_size'] ?? 14) / 400) * $width);
+
+                    if ($hasTitle) {
+                        $boxT = imagettfbbox($fontSizeHs, 0, $fontFile, $template->header_title);
+                        $wT = abs($boxT[2] - $boxT[0]);
+                        imagettftext($canvas, $fontSizeHs, 0, round($hsX - ($wT / 2)), $hsY, $white, $fontFile, $template->header_title);
+                    }
+                    if ($hasSubtitle) {
+                        $fontSizeSub = round($fontSizeHs * 0.7);
+                        $subY = $hasTitle ? $hsY + round($fontSizeHs * 1.3) : $hsY;
+                        $boxS = imagettfbbox($fontSizeSub, 0, $fontFile, $template->header_subtitle);
+                        $wS = abs($boxS[2] - $boxS[0]);
+                        imagettftext($canvas, $fontSizeSub, 0, round($hsX - ($wS / 2)), $subY, $orange, $fontFile, $template->header_subtitle);
+                    }
+                }
+
+                // Match Details (Respect show_match_info - Date and Venue only)
+                if ($showMatchInfo && !empty($layout['match_info']['visible'] ?? true)) {
                     $parts = array_filter([
                         $event->event_start_date ? $event->event_start_date->translatedFormat('d F Y') : null,
                         $event->venue ?: null,
-                        $template->header_title ?: null,
                     ]);
-                    $matchInfo = strtoupper(implode('   |   ', $parts));
+                    $matchInfo = strtoupper(implode('   •   ', $parts));
                     if (!empty($matchInfo)) {
                         $miX = round($width * (($layout['match_info']['x'] ?? 50) / 100));
-                        $miY = round($height * (($layout['match_info']['y'] ?? 86) / 100));
-                        $fontSizeMi = round((($layout['match_info']['font_size'] ?? 11) / 400) * $width * 0.75);
+                        $miY = round($height * (($layout['match_info']['y'] ?? 94) / 100));
+                        $fontSizeMi = round((($layout['match_info']['font_size'] ?? 11) / 400) * $width);
                         $boxMatch = imagettfbbox($fontSizeMi, 0, $fontFile, $matchInfo);
                         $wM = abs($boxMatch[2] - $boxMatch[0]);
                         imagettftext($canvas, $fontSizeMi, 0, round($miX - ($wM / 2)), $miY, $white, $fontFile, $matchInfo);
                     }
                 }
 
-                // Fan Name
-                if (!empty($layout['fan_name']['visible'] ?? true)) {
+                // Category Badge (Respect show_category & category_label_format)
+                if ($showCategory && !empty($template->category_label_format) && !empty($layout['category_badge']['visible'] ?? true)) {
+                    $catX = round($width * (($layout['category_badge']['x'] ?? 50) / 100));
+                    $catY = round($height * (($layout['category_badge']['y'] ?? 80) / 100));
+                    $fontSizeCat = round((($layout['category_badge']['font_size'] ?? 16) / 400) * $width);
+                    $catText = strtoupper(str_replace('{category}', 'VIP BARAT', $template->category_label_format));
+                    $boxCat = imagettfbbox($fontSizeCat, 0, $fontFile, $catText);
+                    $wCat = abs($boxCat[2] - $boxCat[0]);
+                    imagettftext($canvas, $fontSizeCat, 0, round($catX - ($wCat / 2)), $catY, $orange, $fontFile, $catText);
+                }
+
+                // Fan Name (Respect show_fan_name)
+                if ($showFanName && !empty($layout['fan_name']['visible'] ?? true)) {
                     $fanStr = strtoupper($fanName);
                     $fnX = round($width * (($layout['fan_name']['x'] ?? 50) / 100));
-                    $fnY = round($height * (($layout['fan_name']['y'] ?? 93) / 100));
-                    $fontSizeFn = round((($layout['fan_name']['font_size'] ?? 16) / 400) * $width * 0.75);
+                    $fnY = round($height * (($layout['fan_name']['y'] ?? 86) / 100));
+                    $fontSizeFn = round((($layout['fan_name']['font_size'] ?? 18) / 400) * $width);
                     $boxFan = imagettfbbox($fontSizeFn, 0, $fontFile, $fanStr);
                     $wF = abs($boxFan[2] - $boxFan[0]);
+                    $hF = abs($boxFan[1] - $boxFan[7]);
+
+                    // Draw pill background
+                    $pPadX = round($fontSizeFn * 0.9);
+                    $pPadY = round($fontSizeFn * 0.45);
+                    $pW = $wF + ($pPadX * 2);
+                    $pH = $hF + ($pPadY * 2);
+                    $pX1 = round($fnX - ($pW / 2));
+                    $pY1 = round($fnY - $hF - $pPadY);
+                    $pX2 = $pX1 + $pW;
+                    $pY2 = $pY1 + $pH;
+
+                    imagefilledrectangle($canvas, $pX1, $pY1, $pX2, $pY2, $bgColor);
+                    imagerectangle($canvas, $pX1, $pY1, $pX2, $pY2, $orange);
                     imagettftext($canvas, $fontSizeFn, 0, round($fnX - ($wF / 2)), $fnY, $white, $fontFile, $fanStr);
+                }
+
+                // Footer Text (Respect footer_text null/empty check)
+                if (!empty(trim($template->footer_text ?? '')) && !empty($layout['footer_text']['visible'] ?? true)) {
+                    $ftX = round($width * (($layout['footer_text']['x'] ?? 50) / 100));
+                    $ftY = round($height * (($layout['footer_text']['y'] ?? 97) / 100));
+                    $fontSizeFt = round((($layout['footer_text']['font_size'] ?? 9) / 400) * $width);
+                    $ftText = strtoupper(trim($template->footer_text));
+                    $boxFt = imagettfbbox($fontSizeFt, 0, $fontFile, $ftText);
+                    $wFt = abs($boxFt[2] - $boxFt[0]);
+                    imagettftext($canvas, $fontSizeFt, 0, round($ftX - ($wFt / 2)), $ftY, $muted, $fontFile, $ftText);
                 }
             }
         }

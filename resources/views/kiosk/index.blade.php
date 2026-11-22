@@ -512,21 +512,35 @@
         .terms-checkbox-wrap {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             width: 100%;
             max-width: 540px;
             margin-bottom: 24px;
             text-align: left;
-            font-size: 12px;
+            font-size: 13px;
             color: #cbd5e1;
             cursor: pointer;
         }
 
         .terms-checkbox-wrap input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             accent-color: var(--primary-orange);
             cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .terms-link-text {
+            color: var(--primary-orange);
+            font-weight: 800;
+            text-decoration: underline;
+            cursor: pointer;
+            transition: opacity 0.15s, color 0.15s;
+        }
+
+        .terms-link-text:hover {
+            color: #fb923c;
+            opacity: 0.85;
         }
 
         /* Payment Screen Elements (Screen 04 & 05) */
@@ -1234,10 +1248,15 @@
                     </div>
                 </div>
 
-                <label class="terms-checkbox-wrap">
+                <div class="terms-checkbox-wrap">
                     <input type="checkbox" id="termsCheck" required>
-                    <span>Saya menyetujui Syarat & Ketentuan dan Kebijakan Privasi.</span>
-                </label>
+                    <label for="termsCheck" style="cursor: pointer; margin: 0; font-size: inherit; color: inherit; user-select: none;">
+                        Saya menyetujui 
+                        <span class="terms-link-text" onclick="event.preventDefault(); event.stopPropagation(); openModal('termsModal');">Syarat & Ketentuan</span> 
+                        dan 
+                        <span class="terms-link-text" onclick="event.preventDefault(); event.stopPropagation(); openModal('privacyModal');">Kebijakan Privasi</span>.
+                    </label>
+                </div>
 
                 <div class="action-buttons-wrap">
                     <button type="button" class="btn-kiosk-secondary" onclick="goToScreen(2)">KEMBALI</button>
@@ -1291,7 +1310,7 @@
             </div>
 
             <!-- Testing helper for demo kiosk -->
-            <button type="button" class="btn-test-pay" onclick="simulatePaymentSuccess()">
+            <button type="button" class="btn-test-pay" id="btnSimulatePay" onclick="simulatePaymentSuccess()">
                 &check; Simulasi Bayar Instan (Test Mode)
             </button>
         </div>
@@ -1540,6 +1559,100 @@
 </div>
 
 <!-- ==========================================
+     MODAL: SYARAT & KETENTUAN
+     ========================================== -->
+<div class="kiosk-modal-backdrop" id="termsModal">
+    <div class="kiosk-modal-card" style="max-width: 720px; max-height: 85vh; display: flex; flex-direction: column; background: #0f172a; border: 1px solid rgba(255,255,255,0.15);">
+        <div class="kiosk-modal-header" style="flex-shrink: 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 16px;">
+            <div class="kiosk-modal-title" style="display: flex; align-items: center; gap: 8px;">
+                <svg style="width: 20px; height: 20px; color: var(--primary-orange);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>SYARAT & KETENTUAN PEMBELIAN TIKET</span>
+            </div>
+            <button type="button" class="btn-modal-close" onclick="closeModal('termsModal')">&times;</button>
+        </div>
+
+        <div style="flex: 1; overflow-y: auto; padding: 22px 24px; color: #cbd5e1; font-size: 13px; line-height: 1.7; text-align: left;">
+            @if(!empty($event->terms_conditions))
+                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; margin-bottom: 20px; color: #ffffff;">
+                    <div style="font-weight: 800; font-size: 13px; margin-bottom: 6px; color: var(--primary-orange); text-transform: uppercase;">Ketentuan Khusus Pertandingan:</div>
+                    {!! $event->terms_conditions !!}
+                </div>
+            @endif
+
+            <div style="font-weight: 800; color: #ffffff; margin-bottom: 6px; font-size: 14px;">1. Ketentuan E-Voucher & Tiket Resmi</div>
+            <p style="margin-bottom: 14px;">
+                E-Ticket / E-Voucher diterbitkan secara otomatis setelah pembayaran terverifikasi. QR Code pada E-Voucher berlaku untuk 1 (satu) kali penukaran gelang masuk (wristband) atau akses gate resmi di {{ $event->venue ?? 'Stadion Indomilk Arena' }}.
+            </p>
+
+            <div style="font-weight: 800; color: #ffffff; margin-bottom: 6px; font-size: 14px;">2. Akses Masuk & Identitas</div>
+            <p style="margin-bottom: 14px;">
+                Pengunjung wajib menunjukkan e-voucher dengan QR Code yang jelas dan membawa kartu identitas (KTP/SIM/Kartu Pelajar) yang sah sesuai nama pemesan saat penukaran gelang atau pemeriksaan petugas gate.
+            </p>
+
+            <div style="font-weight: 800; color: #ffffff; margin-bottom: 6px; font-size: 14px;">3. Fasilitas Free Photobooth Experience</div>
+            <p style="margin-bottom: 14px;">
+                Setiap pembelian tiket berhak menikmati sesi foto suporter berbingkai resmi matchday (Matchday Collectible Card). Jumlah kesempatan foto diberikan tepat sejumlah tiket yang dibeli dalam transaksi ini.
+            </p>
+
+            <div style="font-weight: 800; color: #ffffff; margin-bottom: 6px; font-size: 14px;">4. Larangan & Tata Tertib Pertandingan</div>
+            <p style="margin-bottom: 14px;">
+                Dilarang membawa senjata tajam, kembang api/flare, minuman keras/alkohol, flare, laser pointer, benda tumpul berbahaya, maupun zat terlarang lainnya ke dalam stadion. Pihak keamanan berhak menolak masuk atau mengeluarkan pengunjung yang melanggar ketertiban.
+            </p>
+
+            <div style="font-weight: 800; color: #ffffff; margin-bottom: 6px; font-size: 14px;">5. Kebijakan Non-Refundable</div>
+            <p style="margin-bottom: 0;">
+                Tiket yang sudah berhasil dibayar tidak dapat dibatalkan, ditukar, dipindahtangankan tanpa persetujuan, atau diuangkan kembali, kecuali terdapat pembatalan resmi pertandingan dari pihak penyelenggara.
+            </p>
+        </div>
+
+        <div style="padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.1); background: #0b1120; flex-shrink: 0; display: flex; gap: 12px;">
+            <button type="button" class="btn-kiosk-primary" style="width: 100%;" onclick="closeModal('termsModal')">SAYA MENGERTI & TUTUP</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     MODAL: KEBIJAKAN PRIVASI
+     ========================================== -->
+<div class="kiosk-modal-backdrop" id="privacyModal">
+    <div class="kiosk-modal-card" style="max-width: 720px; max-height: 85vh; display: flex; flex-direction: column; background: #0f172a; border: 1px solid rgba(255,255,255,0.15);">
+        <div class="kiosk-modal-header" style="flex-shrink: 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 16px;">
+            <div class="kiosk-modal-title" style="display: flex; align-items: center; gap: 8px;">
+                <svg style="width: 20px; height: 20px; color: var(--primary-orange);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <span>KEBIJAKAN PRIVASI DATA PENGUNJUNG</span>
+            </div>
+            <button type="button" class="btn-modal-close" onclick="closeModal('privacyModal')">&times;</button>
+        </div>
+
+        <div style="flex: 1; overflow-y: auto; padding: 22px 24px; color: #cbd5e1; font-size: 13px; line-height: 1.7; text-align: left;">
+            <div style="font-weight: 800; color: #ffffff; margin-bottom: 6px; font-size: 14px;">1. Pengumpulan Data Pribadi</div>
+            <p style="margin-bottom: 14px;">
+                Terminal Kiosk mencatat data nama lengkap, nomor telepon/WhatsApp, alamat email, jenis kelamin, dan tanggal lahir semata-mata untuk penerbitan E-Voucher tiket resmi, verifikasi pengunjung di gate stadion, serta pengiriman e-ticket dan collectible digital.
+            </p>
+
+            <div style="font-weight: 800; color: #ffffff; margin-bottom: 6px; font-size: 14px;">2. Penggunaan Data Kontak</div>
+            <p style="margin-bottom: 14px;">
+                Alamat email Anda digunakan untuk mengirimkan salinan E-Ticket barcode dan file kartu foto digital Matchday Collectible. Nomor telepon digunakan untuk konfirmasi status pesanan atau notifikasi penting darurat terkait pertandingan. Data Anda tidak akan pernah dijual kepada pihak ketiga.
+            </p>
+
+            <div style="font-weight: 800; color: #ffffff; margin-bottom: 6px; font-size: 14px;">3. Perlindungan & Kerahasiaan Foto Suporter</div>
+            <p style="margin-bottom: 14px;">
+                Foto yang diambil melalui kamera kiosk diproses secara aman untuk mencetak kartu foto suporter berbingkai resmi matchday. Foto hanya dapat diakses melalui tautan token terenkripsi yang dikirimkan ke email Anda dan kode QR unik pada kartu suporter Anda.
+            </p>
+
+            <div style="font-weight: 800; color: #ffffff; margin-bottom: 6px; font-size: 14px;">4. Keamanan Transaksi QRIS</div>
+            <p style="margin-bottom: 0;">
+                Seluruh pemrosesan pembayaran QRIS menggunakan gateway pembayaran berlisensi Bank Indonesia dengan standar keamanan enkripsi SSL tingkat tinggi. Terminal Kiosk tidak pernah menyimpan data rahasia perbankan atau PIN dompet digital Anda.
+            </p>
+        </div>
+
+        <div style="padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.1); background: #0b1120; flex-shrink: 0; display: flex; gap: 12px;">
+            <button type="button" class="btn-kiosk-primary" style="width: 100%;" onclick="closeModal('privacyModal')">SAYA MENGERTI & TUTUP</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
      KIOSK JAVASCRIPT ENGINE
      ========================================== -->
 <script>
@@ -1558,21 +1671,21 @@
         homeTeamLogoDataUri: @json($event->effective_home_team_logo_data_uri),
         awayTeamLogoDataUri: @json($event->effective_away_team_logo_data_uri),
         leagueLogoDataUri: @json($event->effective_league_logo_data_uri),
-        layoutConfig: @json($photoboothTemplate->getEffectiveLayoutConfig()),
-        frameOverlayUrl: @json(!empty($photoboothTemplate->frame_overlay) ? asset('storage/' . $photoboothTemplate->frame_overlay) : null),
-        backgroundUrl: @json(!empty($photoboothTemplate->background_image) ? asset('storage/' . $photoboothTemplate->background_image) : null),
-        primaryColor: @json($photoboothTemplate->primary_color ?? '#5A2D82'),
-        secondaryColor: @json($photoboothTemplate->secondary_color ?? '#F95700'),
-        headerTitle: @json($photoboothTemplate->header_title),
-        headerSubtitle: @json($photoboothTemplate->header_subtitle),
-        badgeText: @json($photoboothTemplate->badge_text),
-        categoryLabelFormat: @json($photoboothTemplate->category_label_format),
-        footerText: @json($photoboothTemplate->footer_text),
-        showCategory: {{ ($photoboothTemplate->show_category ?? true) ? 'true' : 'false' }},
-        showFanName: {{ ($photoboothTemplate->show_fan_name ?? true) ? 'true' : 'false' }},
-        showQr: {{ ($photoboothTemplate->show_qr ?? true) ? 'true' : 'false' }},
-        showMatchInfo: {{ ($photoboothTemplate->show_match_info ?? true) ? 'true' : 'false' }},
-        showTeamLogos: {{ ($photoboothTemplate->show_team_logos ?? true) ? 'true' : 'false' }},
+        layoutConfig: @json($photoboothTemplate ? $photoboothTemplate->getEffectiveLayoutConfig() : []),
+        frameOverlayUrl: @json(!empty($photoboothTemplate?->frame_overlay) ? asset('storage/' . $photoboothTemplate->frame_overlay) : null),
+        backgroundUrl: @json(!empty($photoboothTemplate?->background_image) ? asset('storage/' . $photoboothTemplate->background_image) : null),
+        primaryColor: @json($photoboothTemplate?->primary_color ?? '#5A2D82'),
+        secondaryColor: @json($photoboothTemplate?->secondary_color ?? '#F95700'),
+        headerTitle: @json($photoboothTemplate?->header_title),
+        headerSubtitle: @json($photoboothTemplate?->header_subtitle),
+        badgeText: @json($photoboothTemplate?->badge_text),
+        categoryLabelFormat: @json($photoboothTemplate?->category_label_format),
+        footerText: @json($photoboothTemplate?->footer_text),
+        showCategory: {{ ($photoboothTemplate?->show_category ?? true) ? 'true' : 'false' }},
+        showFanName: {{ ($photoboothTemplate?->show_fan_name ?? true) ? 'true' : 'false' }},
+        showQr: {{ ($photoboothTemplate?->show_qr ?? true) ? 'true' : 'false' }},
+        showMatchInfo: {{ ($photoboothTemplate?->show_match_info ?? true) ? 'true' : 'false' }},
+        showTeamLogos: {{ ($photoboothTemplate?->show_team_logos ?? true) ? 'true' : 'false' }},
         sampleCardUrl: '{{ asset('images/kiosk/matchday_card_sample.jpg') }}',
         routes: {
             checkout: '{{ route('kiosk.checkout', $tenant->slug) }}',
@@ -1640,7 +1753,9 @@
         cameraStream: null,
         pollInterval: null,
         autoResetInterval: null,
-        autoPhotoTimer: null
+        autoPhotoTimer: null,
+        isPaid: false,
+        isProcessingPayment: false
     };
 
     // Initialize Default Category
@@ -1758,6 +1873,18 @@
 
             if (data.success) {
                 kioskState.transaction = data;
+                kioskState.isPaid = false;
+                kioskState.isProcessingPayment = false;
+                const btnSimulate = document.getElementById('btnSimulatePay');
+                if (btnSimulate) {
+                    btnSimulate.disabled = false;
+                    btnSimulate.style.opacity = '1';
+                    btnSimulate.style.cursor = 'pointer';
+                    btnSimulate.innerHTML = '&check; Simulasi Bayar Instan (Test Mode)';
+                }
+                const waitEl = document.getElementById('waitingStatusText');
+                if (waitEl) waitEl.innerText = 'Menunggu konfirmasi pembayaran...';
+
                 // Render QR code SVG
                 document.getElementById('qrisContainer').innerHTML = data.qr_svg;
                 document.getElementById('qrisTotalAmount').innerText = data.formatted_total;
@@ -1801,6 +1928,28 @@
             alert('Belum ada transaksi aktif.');
             return;
         }
+
+        // Prevent double click or concurrent execution
+        if (kioskState.isProcessingPayment || kioskState.isPaid) {
+            return;
+        }
+        kioskState.isProcessingPayment = true;
+
+        const btn = document.getElementById('btnSimulatePay');
+        const originalText = btn ? btn.innerHTML : '&check; Simulasi Bayar Instan (Test Mode)';
+        if (btn) {
+            btn.disabled = true;
+            btn.style.opacity = '0.65';
+            btn.style.cursor = 'not-allowed';
+            btn.innerHTML = '<span style="display:inline-block; animation: spin 1s linear infinite; margin-right: 6px;">&#9696;</span> Memproses Pembayaran...';
+        }
+
+        // Stop polling immediately while processing simulation
+        if (kioskState.pollInterval) {
+            clearInterval(kioskState.pollInterval);
+            kioskState.pollInterval = null;
+        }
+
         try {
             const res = await fetch(`${KIOSK_CONFIG.routes.simulatePay}/${kioskState.transaction.reference_no}`, {
                 method: 'POST',
@@ -1812,27 +1961,74 @@
             const data = await res.json();
             if (data.success) {
                 onPaymentSuccess(data);
+            } else {
+                alert(data.message || 'Pembayaran gagal diproses.');
+                if (!kioskState.isPaid) {
+                    kioskState.isProcessingPayment = false;
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                        btn.style.cursor = 'pointer';
+                        btn.innerHTML = originalText;
+                    }
+                    startPaymentPolling(kioskState.transaction.reference_no);
+                }
             }
         } catch (e) {
             console.error('Simulate payment error:', e);
+            if (!kioskState.isPaid) {
+                kioskState.isProcessingPayment = false;
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.style.cursor = 'pointer';
+                    btn.innerHTML = originalText;
+                }
+                startPaymentPolling(kioskState.transaction.reference_no);
+            }
         }
     }
 
     // Payment Success Transition: generates exact number of E-Voucher QR codes and photo chances
     function onPaymentSuccess(data) {
+        // Strict idempotency: if already paid or processed, ignore duplicate triggers
+        if (kioskState.isPaid) return;
+        kioskState.isPaid = true;
+        kioskState.isProcessingPayment = false;
+
+        // Clear poll interval
+        if (kioskState.pollInterval) {
+            clearInterval(kioskState.pollInterval);
+            kioskState.pollInterval = null;
+        }
+
+        // Update button status
+        const btn = document.getElementById('btnSimulatePay');
+        if (btn) {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+            btn.innerHTML = '&check; Pembayaran Berhasil Diproses';
+        }
+
         document.getElementById('waitingStatusText').innerText = 'PEMBAYARAN BERHASIL!';
 
+        // Determine exact quantity purchased
+        const targetQuantity = (data && data.quantity) ? parseInt(data.quantity) : (kioskState.quantity || 1);
+        kioskState.quantity = targetQuantity;
+
         if (data && data.tickets && data.tickets.length > 0) {
-            kioskState.tickets = data.tickets;
+            // Strictly bound tickets to quantity purchased (prevents duplicate vouchers)
+            kioskState.tickets = data.tickets.slice(0, targetQuantity);
         } else {
             // Fallback: create simulated tickets matching quantity
             kioskState.tickets = [];
             const ref = (kioskState.transaction && kioskState.transaction.reference_no) ? kioskState.transaction.reference_no : ('KIOSK-' + Date.now());
-            for (let i = 1; i <= kioskState.quantity; i++) {
+            for (let i = 1; i <= targetQuantity; i++) {
                 const code = ref + '-' + String(i).padStart(2, '0');
                 kioskState.tickets.push({
                     ticket_number: i,
-                    total_tickets: kioskState.quantity,
+                    total_tickets: targetQuantity,
                     ticket_code: code,
                     category_name: kioskState.selectedCategory ? kioskState.selectedCategory.name : 'VIP BARAT',
                     visitor_name: kioskState.customer.name || 'SUPORTER',
@@ -1842,7 +2038,7 @@
         }
 
         // Set photobooth chances strictly according to quantity purchased
-        kioskState.totalPhotos = kioskState.quantity;
+        kioskState.totalPhotos = targetQuantity;
         kioskState.currentPhotoIndex = 1;
         kioskState.capturedPhotos = [];
 
@@ -2220,19 +2416,22 @@
 
         // 4. Draw Club Logos & Real Match Details
         const layout = KIOSK_CONFIG.layoutConfig || {
-            league_logo: { x: 14, y: 6, size: 65, visible: true },
+            league_logo: { x: 15, y: 9, size: 65, visible: true },
             header_slogan: { x: 50, y: 5, font_size: 14, visible: true },
-            home_logo: { x: 24, y: 72, size: 80, visible: true },
-            home_name: { x: 24, y: 81, font_size: 14, visible: true },
-            vs_badge: { x: 50, y: 73, font_size: 22, visible: true },
-            away_logo: { x: 76, y: 72, size: 80, visible: true },
-            away_name: { x: 76, y: 81, font_size: 14, visible: true },
-            match_info: { x: 50, y: 86, font_size: 11, visible: true },
-            fan_name: { x: 50, y: 93, font_size: 16, visible: true },
-            category_badge: { x: 50, y: 89, font_size: 10, visible: true },
-            qr_code: { x: 88, y: 92, size: 48, visible: true },
+            home_logo: { x: 24, y: 68, size: 85, visible: true },
+            home_name: { x: 24, y: 76, font_size: 14, visible: true },
+            vs_badge: { x: 50, y: 74, font_size: 22, visible: true },
+            away_logo: { x: 76, y: 68, size: 85, visible: true },
+            away_name: { x: 76, y: 76, font_size: 14, visible: true },
+            category_badge: { x: 50, y: 80, font_size: 16, visible: true },
+            fan_name: { x: 50, y: 86, font_size: 18, visible: true },
+            match_info: { x: 50, y: 94, font_size: 11, visible: true },
+            qr_code: { x: 90.7, y: 82.4, size: 48, visible: true },
             footer_text: { x: 50, y: 97, font_size: 9, visible: true },
         };
+
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
 
         if (hasFrame) {
             // Draw League / Penyelenggara Logo
@@ -2243,147 +2442,193 @@
                 drawCenteredLogo(ctx, preloadedLeagueLogo, lX, lY, lSize);
             }
 
-            // Draw Home Club Logo
-            if (layout.home_logo && layout.home_logo.visible !== false && preloadedHomeLogo && (preloadedHomeLogo.complete || preloadedHomeLogo.naturalWidth > 0)) {
+            // Draw Home Club Logo (Respect showTeamLogos checkbox)
+            if (KIOSK_CONFIG.showTeamLogos && layout.home_logo && layout.home_logo.visible !== false && preloadedHomeLogo && (preloadedHomeLogo.complete || preloadedHomeLogo.naturalWidth > 0)) {
                 const hX = (layout.home_logo.x / 100) * cardW;
                 const hY = (layout.home_logo.y / 100) * cardH;
-                const hSize = ((layout.home_logo.size || 80) / 400) * cardW;
+                const hSize = ((layout.home_logo.size || 85) / 400) * cardW;
                 drawCenteredLogo(ctx, preloadedHomeLogo, hX, hY, hSize);
             }
 
-            // Draw Away Club Logo
-            if (layout.away_logo && layout.away_logo.visible !== false && preloadedAwayLogo && (preloadedAwayLogo.complete || preloadedAwayLogo.naturalWidth > 0)) {
+            // Draw Away Club Logo (Respect showTeamLogos checkbox)
+            if (KIOSK_CONFIG.showTeamLogos && layout.away_logo && layout.away_logo.visible !== false && preloadedAwayLogo && (preloadedAwayLogo.complete || preloadedAwayLogo.naturalWidth > 0)) {
                 const aX = (layout.away_logo.x / 100) * cardW;
                 const aY = (layout.away_logo.y / 100) * cardH;
-                const aSize = ((layout.away_logo.size || 80) / 400) * cardW;
+                const aSize = ((layout.away_logo.size || 85) / 400) * cardW;
                 drawCenteredLogo(ctx, preloadedAwayLogo, aX, aY, aSize);
             }
 
-            // Team Names
-            ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = 'rgba(0,0,0,0.85)';
-            ctx.shadowBlur = 8;
-            ctx.textAlign = 'center';
-
-            if (layout.home_name && layout.home_name.visible !== false) {
+            // Home Team Name (Respect showTeamLogos checkbox)
+            if (KIOSK_CONFIG.showTeamLogos && layout.home_name && layout.home_name.visible !== false && KIOSK_CONFIG.homeTeam) {
                 const hnX = (layout.home_name.x / 100) * cardW;
                 const hnY = (layout.home_name.y / 100) * cardH;
-                const fontHn = Math.round(((layout.home_name.font_size || 14) / 400) * cardW * 0.75);
-                ctx.font = `900 ${fontHn}px Outfit`;
-                ctx.fillText(KIOSK_CONFIG.homeTeam, hnX, hnY);
-            }
-
-            if (layout.away_name && layout.away_name.visible !== false) {
-                const anX = (layout.away_name.x / 100) * cardW;
-                const anY = (layout.away_name.y / 100) * cardH;
-                const fontAn = Math.round(((layout.away_name.font_size || 14) / 400) * cardW * 0.75);
-                ctx.font = `900 ${fontAn}px Outfit`;
-                ctx.fillText(KIOSK_CONFIG.awayTeam, anX, anY);
-            }
-
-            if (layout.vs_badge && layout.vs_badge.visible !== false) {
-                const vsX = (layout.vs_badge.x / 100) * cardW;
-                const vsY = (layout.vs_badge.y / 100) * cardH;
-                const fontVs = Math.round(((layout.vs_badge.font_size || 22) / 400) * cardW * 0.75);
-                ctx.fillStyle = accentColor;
-                ctx.font = `900 ${fontVs}px Outfit`;
-                ctx.fillText('VS', vsX, vsY);
+                const fontHn = Math.round(((layout.home_name.font_size || 14) / 400) * cardW);
                 ctx.fillStyle = '#ffffff';
-            }
-            ctx.shadowBlur = 0;
-
-            // Match Details (Date • Venue • League)
-            if (layout.match_info && layout.match_info.visible !== false && KIOSK_CONFIG.showMatchInfo) {
-                const miX = (layout.match_info.x / 100) * cardW;
-                const miY = (layout.match_info.y / 100) * cardH;
-                const fontMi = Math.round(((layout.match_info.font_size || 11) / 400) * cardW * 0.75);
-                ctx.fillStyle = '#ffffff';
-                ctx.font = `800 ${fontMi}px Outfit`;
-                ctx.textAlign = 'center';
+                ctx.font = `900 ${fontHn}px Outfit, sans-serif`;
                 ctx.shadowColor = 'rgba(0,0,0,0.85)';
-                ctx.shadowBlur = 6;
-                const matchInfoText = `${KIOSK_CONFIG.matchDate}   |   ${KIOSK_CONFIG.venue}   |   ${KIOSK_CONFIG.headerTitle}`;
-                ctx.fillText(matchInfoText, miX, miY);
+                ctx.shadowBlur = 8;
+                ctx.fillText(KIOSK_CONFIG.homeTeam, hnX, hnY);
                 ctx.shadowBlur = 0;
             }
 
-            // Fan Name
-            if (layout.fan_name && layout.fan_name.visible !== false && KIOSK_CONFIG.showFanName) {
+            // Away Team Name (Respect showTeamLogos checkbox)
+            if (KIOSK_CONFIG.showTeamLogos && layout.away_name && layout.away_name.visible !== false && KIOSK_CONFIG.awayTeam) {
+                const anX = (layout.away_name.x / 100) * cardW;
+                const anY = (layout.away_name.y / 100) * cardH;
+                const fontAn = Math.round(((layout.away_name.font_size || 14) / 400) * cardW);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `900 ${fontAn}px Outfit, sans-serif`;
+                ctx.shadowColor = 'rgba(0,0,0,0.85)';
+                ctx.shadowBlur = 8;
+                ctx.fillText(KIOSK_CONFIG.awayTeam, anX, anY);
+                ctx.shadowBlur = 0;
+            }
+
+            // VS Badge (Respect showTeamLogos checkbox)
+            if (KIOSK_CONFIG.showTeamLogos && layout.vs_badge && layout.vs_badge.visible !== false) {
+                const vsX = (layout.vs_badge.x / 100) * cardW;
+                const vsY = (layout.vs_badge.y / 100) * cardH;
+                const fontVs = Math.round(((layout.vs_badge.font_size || 22) / 400) * cardW);
+                ctx.fillStyle = '#f59e0b';
+                ctx.font = `900 ${fontVs}px monospace`;
+                ctx.shadowColor = 'rgba(0,0,0,0.85)';
+                ctx.shadowBlur = 8;
+                ctx.fillText('VS', vsX, vsY);
+                ctx.shadowBlur = 0;
+            }
+
+            // Header Slogan (Hide completely if both title and subtitle are empty/null)
+            const hasHeaderTitle = KIOSK_CONFIG.headerTitle && KIOSK_CONFIG.headerTitle.trim() !== '';
+            const hasHeaderSubtitle = KIOSK_CONFIG.headerSubtitle && KIOSK_CONFIG.headerSubtitle.trim() !== '';
+            if (layout.header_slogan && layout.header_slogan.visible !== false && (hasHeaderTitle || hasHeaderSubtitle)) {
+                const hsX = (layout.header_slogan.x / 100) * cardW;
+                const hsY = (layout.header_slogan.y / 100) * cardH;
+                const fontHs = Math.round(((layout.header_slogan.font_size || 14) / 400) * cardW);
+                ctx.shadowColor = 'rgba(0,0,0,0.85)';
+                ctx.shadowBlur = 6;
+                if (hasHeaderTitle && hasHeaderSubtitle) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = `900 ${fontHs}px Outfit, sans-serif`;
+                    ctx.fillText(KIOSK_CONFIG.headerTitle, hsX, hsY - (fontHs * 0.45));
+
+                    ctx.fillStyle = accentColor;
+                    ctx.font = `900 ${Math.round(fontHs * 0.7)}px Outfit, sans-serif`;
+                    ctx.fillText(KIOSK_CONFIG.headerSubtitle, hsX, hsY + (fontHs * 0.55));
+                } else if (hasHeaderTitle) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = `900 ${fontHs}px Outfit, sans-serif`;
+                    ctx.fillText(KIOSK_CONFIG.headerTitle, hsX, hsY);
+                } else if (hasHeaderSubtitle) {
+                    ctx.fillStyle = accentColor;
+                    ctx.font = `900 ${Math.round(fontHs * 0.7)}px Outfit, sans-serif`;
+                    ctx.fillText(KIOSK_CONFIG.headerSubtitle, hsX, hsY);
+                }
+                ctx.shadowBlur = 0;
+            }
+
+            // Category Badge (Hide if showCategory is false or categoryLabelFormat is null/empty)
+            const hasCatFormat = KIOSK_CONFIG.categoryLabelFormat && KIOSK_CONFIG.categoryLabelFormat.trim() !== '';
+            if (KIOSK_CONFIG.showCategory && hasCatFormat && layout.category_badge && layout.category_badge.visible !== false) {
+                const catX = (layout.category_badge.x / 100) * cardW;
+                const catY = (layout.category_badge.y / 100) * cardH;
+                const fontCat = Math.round(((layout.category_badge.font_size || 10) / 400) * cardW);
+                const catName = (kioskState.selectedCategory && kioskState.selectedCategory.name) ? kioskState.selectedCategory.name.toUpperCase() : 'VIP BARAT';
+                let catText = KIOSK_CONFIG.categoryLabelFormat.replace('{category}', catName);
+                if (KIOSK_CONFIG.badgeText && KIOSK_CONFIG.badgeText.trim() !== '') {
+                    catText = catText.replace('{badge}', KIOSK_CONFIG.badgeText.trim());
+                } else {
+                    catText = catText.replace('{badge}', '').trim();
+                }
+                ctx.fillStyle = accentColor;
+                ctx.font = `900 ${fontCat}px Outfit, sans-serif`;
+                ctx.shadowColor = 'rgba(0,0,0,0.85)';
+                ctx.shadowBlur = 6;
+                ctx.fillText(catText, catX, catY);
+                ctx.shadowBlur = 0;
+            }
+
+            // Fan Name (With styled pill badge matching Layout Editor)
+            if (KIOSK_CONFIG.showFanName && layout.fan_name && layout.fan_name.visible !== false) {
                 const fnX = (layout.fan_name.x / 100) * cardW;
                 const fnY = (layout.fan_name.y / 100) * cardH;
-                const fontFn = Math.round(((layout.fan_name.font_size || 16) / 400) * cardW * 0.75);
+                const fontFn = Math.round(((layout.fan_name.font_size || 18) / 400) * cardW);
+                ctx.font = `900 ${fontFn}px Outfit, sans-serif`;
+
+                const metrics = ctx.measureText(activeName);
+                const padX = fontFn * 0.9;
+                const padY = fontFn * 0.45;
+                const bW = metrics.width + padX * 2;
+                const bH = fontFn + padY * 2;
+
+                ctx.save();
+                ctx.shadowColor = 'rgba(0,0,0,0.7)';
+                ctx.shadowBlur = 14;
+                ctx.shadowOffsetY = 4;
+                ctx.fillStyle = primaryColor;
+                roundedRect(ctx, fnX - (bW / 2), fnY - (bH / 2), bW, bH, bH / 2);
+                ctx.fill();
+                ctx.strokeStyle = accentColor;
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                ctx.restore();
+
                 ctx.fillStyle = '#ffffff';
-                ctx.font = `900 ${fontFn}px Outfit`;
-                ctx.textAlign = 'center';
-                ctx.shadowColor = 'rgba(0,0,0,0.95)';
-                ctx.shadowBlur = 10;
+                ctx.shadowColor = 'rgba(0,0,0,0.85)';
+                ctx.shadowBlur = 6;
                 ctx.fillText(activeName, fnX, fnY);
                 ctx.shadowBlur = 0;
             }
 
-            // Category Badge
-            if (layout.category_badge && layout.category_badge.visible !== false && KIOSK_CONFIG.showCategory && KIOSK_CONFIG.categoryLabelFormat) {
-                const catX = (layout.category_badge.x / 100) * cardW;
-                const catY = (layout.category_badge.y / 100) * cardH;
-                const fontCat = Math.round(((layout.category_badge.font_size || 10) / 400) * cardW * 0.75);
-                const catName = (kioskState.selectedCategory && kioskState.selectedCategory.name) ? kioskState.selectedCategory.name.toUpperCase() : 'VIP';
-                const fmt = KIOSK_CONFIG.categoryLabelFormat;
-                let catText = fmt.replace('{category}', catName);
-                if (KIOSK_CONFIG.badgeText) {
-                    catText = catText.replace('{badge}', KIOSK_CONFIG.badgeText);
+            // Match Details (Date & Venue only - do not duplicate header title)
+            if (KIOSK_CONFIG.showMatchInfo && layout.match_info && layout.match_info.visible !== false) {
+                const miParts = [];
+                if (KIOSK_CONFIG.matchDate) miParts.push(KIOSK_CONFIG.matchDate);
+                if (KIOSK_CONFIG.venue) miParts.push(KIOSK_CONFIG.venue);
+                const matchInfoText = miParts.join('  •  ').toUpperCase();
+                if (matchInfoText) {
+                    const miX = (layout.match_info.x / 100) * cardW;
+                    const miY = (layout.match_info.y / 100) * cardH;
+                    const fontMi = Math.round(((layout.match_info.font_size || 11) / 400) * cardW);
+                    ctx.fillStyle = '#f1f5f9';
+                    ctx.font = `800 ${fontMi}px Outfit, sans-serif`;
+                    ctx.shadowColor = 'rgba(0,0,0,0.85)';
+                    ctx.shadowBlur = 6;
+                    ctx.fillText(matchInfoText, miX, miY);
+                    ctx.shadowBlur = 0;
                 }
-                ctx.fillStyle = accentColor;
-                ctx.font = `800 ${fontCat}px Outfit`;
-                ctx.textAlign = 'center';
-                ctx.fillText(catText, catX, catY);
             }
 
-            // Footer Text
-            if (layout.footer_text && layout.footer_text.visible !== false && KIOSK_CONFIG.footerText) {
-                const ftX = (layout.footer_text.x / 100) * cardW;
-                const ftY = (layout.footer_text.y / 100) * cardH;
-                const fontFt = Math.round(((layout.footer_text.font_size || 9) / 400) * cardW * 0.75);
-                ctx.fillStyle = '#cbd5e1';
-                ctx.font = `700 ${fontFt}px Outfit`;
-                ctx.textAlign = 'center';
-                ctx.fillText(KIOSK_CONFIG.footerText, ftX, ftY);
-            }
-
-            // Header Slogan
-            if (layout.header_slogan && layout.header_slogan.visible !== false && (KIOSK_CONFIG.headerTitle || KIOSK_CONFIG.headerSubtitle)) {
-                const hsX = (layout.header_slogan.x / 100) * cardW;
-                const hsY = (layout.header_slogan.y / 100) * cardH;
-                const fontHs = Math.round(((layout.header_slogan.font_size || 14) / 400) * cardW * 0.75);
-                ctx.fillStyle = '#ffffff';
-                ctx.font = `900 ${fontHs}px Outfit`;
-                ctx.textAlign = 'center';
-                ctx.shadowColor = 'rgba(0,0,0,0.85)';
-                ctx.shadowBlur = 6;
-                if (KIOSK_CONFIG.headerTitle) {
-                    ctx.fillText(KIOSK_CONFIG.headerTitle, hsX, hsY);
-                }
-                ctx.shadowBlur = 0;
-            }
-
-            // QR Code
-            if (layout.qr_code && layout.qr_code.visible !== false && KIOSK_CONFIG.showQr) {
+            // QR Code (Respect showQr checkbox)
+            if (KIOSK_CONFIG.showQr && layout.qr_code && layout.qr_code.visible !== false) {
                 const qrX = (layout.qr_code.x / 100) * cardW;
                 const qrY = (layout.qr_code.y / 100) * cardH;
                 const qrSize = Math.round(((layout.qr_code.size || 48) / 400) * cardW);
                 ctx.fillStyle = '#ffffff';
                 ctx.fillRect(qrX - (qrSize / 2), qrY - (qrSize / 2), qrSize, qrSize);
-                // Draw QR pattern
                 ctx.fillStyle = '#000000';
                 const cell = qrSize / 5;
                 ctx.fillRect(qrX - (qrSize / 2) + cell * 0.5, qrY - (qrSize / 2) + cell * 0.5, cell * 1.5, cell * 1.5);
                 ctx.fillRect(qrX + (qrSize / 2) - cell * 2, qrY - (qrSize / 2) + cell * 0.5, cell * 1.5, cell * 1.5);
                 ctx.fillRect(qrX - (qrSize / 2) + cell * 0.5, qrY + (qrSize / 2) - cell * 2, cell * 1.5, cell * 1.5);
                 ctx.fillStyle = '#ffffff';
-                ctx.font = '800 11px Outfit';
-                ctx.textAlign = 'center';
+                ctx.font = '800 11px Outfit, sans-serif';
                 ctx.shadowColor = 'rgba(0,0,0,0.8)';
                 ctx.shadowBlur = 4;
                 ctx.fillText('SCAN', qrX, qrY + (qrSize / 2) + 14);
+                ctx.shadowBlur = 0;
+            }
+
+            // Footer Text (Hide if footerText is null or empty)
+            const hasFooterText = KIOSK_CONFIG.footerText && KIOSK_CONFIG.footerText.trim() !== '';
+            if (hasFooterText && layout.footer_text && layout.footer_text.visible !== false) {
+                const ftX = (layout.footer_text.x / 100) * cardW;
+                const ftY = (layout.footer_text.y / 100) * cardH;
+                const fontFt = Math.round(((layout.footer_text.font_size || 9) / 400) * cardW);
+                ctx.fillStyle = '#cbd5e1';
+                ctx.font = `700 ${fontFt}px Outfit, sans-serif`;
+                ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                ctx.shadowBlur = 4;
+                ctx.fillText(KIOSK_CONFIG.footerText.trim(), ftX, ftY);
                 ctx.shadowBlur = 0;
             }
         } else {
@@ -2396,84 +2641,86 @@
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            // Draw Logos on fallback footer
-            const homeLogoX = (cardW / 2) - 140;
-            const awayLogoX = (cardW / 2) + 140;
-            const logosCenterY = footerY + 55;
-            if (preloadedHomeLogo && preloadedHomeLogo.complete) {
-                drawCenteredLogo(ctx, preloadedHomeLogo, homeLogoX, logosCenterY, 70);
-            }
-            if (preloadedAwayLogo && preloadedAwayLogo.complete) {
-                drawCenteredLogo(ctx, preloadedAwayLogo, awayLogoX, logosCenterY, 70);
-            }
-            ctx.fillStyle = '#f59e0b';
-            ctx.font = '900 24px monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText('VS', cardW / 2, logosCenterY + 8);
+            // Draw Logos and match details on fallback footer ONLY if showTeamLogos is checked
+            if (KIOSK_CONFIG.showTeamLogos) {
+                const homeLogoX = (cardW / 2) - 140;
+                const awayLogoX = (cardW / 2) + 140;
+                const logosCenterY = footerY + 55;
+                if (preloadedHomeLogo && preloadedHomeLogo.complete) {
+                    drawCenteredLogo(ctx, preloadedHomeLogo, homeLogoX, logosCenterY, 70);
+                }
+                if (preloadedAwayLogo && preloadedAwayLogo.complete) {
+                    drawCenteredLogo(ctx, preloadedAwayLogo, awayLogoX, logosCenterY, 70);
+                }
+                ctx.fillStyle = '#f59e0b';
+                ctx.font = '900 24px monospace';
+                ctx.fillText('VS', cardW / 2, logosCenterY);
 
-            // Match Title (Persita VS Persib)
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '900 36px Outfit';
-            ctx.textAlign = 'center';
-            ctx.fillText(`${KIOSK_CONFIG.homeTeam}  VS  ${KIOSK_CONFIG.awayTeam}`, cardW / 2, footerY + 115);
-
-            // Date & Venue
-            ctx.fillStyle = '#cbd5e1';
-            ctx.font = '600 20px Outfit';
-            ctx.fillText(`${KIOSK_CONFIG.matchDate}  |  ${KIOSK_CONFIG.venue}`, cardW / 2, footerY + 148);
-
-            // Fan Name Badge Banner
-            const badgeY = footerY + 170;
-            const bannerW = cardW - 200;
-            const bannerH = 72;
-            const bannerX = 100;
-            ctx.beginPath();
-            ctx.moveTo(bannerX, badgeY + bannerH / 2);
-            ctx.lineTo(bannerX + 30, badgeY);
-            ctx.lineTo(bannerX + bannerW - 30, badgeY);
-            ctx.lineTo(bannerX + bannerW, badgeY + bannerH / 2);
-            ctx.lineTo(bannerX + bannerW - 30, badgeY + bannerH);
-            ctx.lineTo(bannerX + 30, badgeY + bannerH);
-            ctx.closePath();
-            ctx.fillStyle = primaryColor;
-            ctx.fill();
-            ctx.strokeStyle = accentColor;
-            ctx.lineWidth = 3;
-            ctx.stroke();
-
-            if (KIOSK_CONFIG.showFanName) {
+                // Match Title (Persita VS Persib)
                 ctx.fillStyle = '#ffffff';
-                ctx.font = '900 28px Outfit';
-                ctx.fillText(activeName, cardW / 2, badgeY + 45);
+                ctx.font = '900 34px Outfit, sans-serif';
+                ctx.fillText(`${KIOSK_CONFIG.homeTeam}  VS  ${KIOSK_CONFIG.awayTeam}`, cardW / 2, footerY + 115);
             }
 
-            // Category Sub-badge
-            let catText = KIOSK_CONFIG.badgeText || 'MATCHDAY COLLECTIBLE';
-            if (KIOSK_CONFIG.showCategory) {
-                const catName = (kioskState.selectedCategory && kioskState.selectedCategory.name) ? kioskState.selectedCategory.name.toUpperCase() : 'VIP';
-                const fmt = KIOSK_CONFIG.categoryLabelFormat || '{category} • MATCHDAY COLLECTIBLE';
-                catText = fmt.replace('{category}', catName);
+            // Date & Venue (Respect showMatchInfo)
+            if (KIOSK_CONFIG.showMatchInfo) {
+                ctx.fillStyle = '#cbd5e1';
+                ctx.font = '600 20px Outfit, sans-serif';
+                ctx.fillText(`${KIOSK_CONFIG.matchDate}  |  ${KIOSK_CONFIG.venue}`, cardW / 2, footerY + 148);
             }
-            ctx.fillStyle = accentColor;
-            ctx.font = '800 18px Outfit';
-            ctx.fillText(catText, cardW / 2, badgeY + 105);
 
-            // Bottom Slogan
-            ctx.fillStyle = '#cbd5e1';
-            ctx.font = '700 16px Outfit';
-            ctx.textAlign = 'left';
-            ctx.fillText(KIOSK_CONFIG.footerText || 'SATU LIGA, SATU SEMANGAT', 60, footerY + 315);
+            // Fan Name Badge Banner (Respect showFanName)
+            if (KIOSK_CONFIG.showFanName) {
+                const badgeY = footerY + 170;
+                const bannerW = cardW - 200;
+                const bannerH = 64;
+                const bannerX = 100;
+                ctx.fillStyle = primaryColor;
+                roundedRect(ctx, bannerX, badgeY, bannerW, bannerH, 16);
+                ctx.fill();
+                ctx.strokeStyle = accentColor;
+                ctx.lineWidth = 3;
+                ctx.stroke();
 
-            // QR Code area
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '900 28px Outfit, sans-serif';
+                ctx.fillText(activeName, cardW / 2, badgeY + bannerH / 2);
+            }
+
+            // Category Sub-badge (Respect showCategory and categoryLabelFormat)
+            const hasCatFmt = KIOSK_CONFIG.categoryLabelFormat && KIOSK_CONFIG.categoryLabelFormat.trim() !== '';
+            if (KIOSK_CONFIG.showCategory && hasCatFmt) {
+                const catName = (kioskState.selectedCategory && kioskState.selectedCategory.name) ? kioskState.selectedCategory.name.toUpperCase() : 'VIP BARAT';
+                let catText = KIOSK_CONFIG.categoryLabelFormat.replace('{category}', catName);
+                if (KIOSK_CONFIG.badgeText && KIOSK_CONFIG.badgeText.trim() !== '') {
+                    catText = catText.replace('{badge}', KIOSK_CONFIG.badgeText.trim());
+                } else {
+                    catText = catText.replace('{badge}', '').trim();
+                }
+                ctx.fillStyle = accentColor;
+                ctx.font = '800 18px Outfit, sans-serif';
+                ctx.fillText(catText, cardW / 2, footerY + 275);
+            }
+
+            // Bottom Slogan (Hide if footerText is null or empty)
+            const hasFtText = KIOSK_CONFIG.footerText && KIOSK_CONFIG.footerText.trim() !== '';
+            if (hasFtText) {
+                ctx.fillStyle = '#cbd5e1';
+                ctx.font = '700 16px Outfit, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(KIOSK_CONFIG.footerText.trim(), 60, footerY + 315);
+                ctx.textAlign = 'center';
+            }
+
+            // QR Code area (Respect showQr)
             if (KIOSK_CONFIG.showQr) {
                 ctx.fillStyle = '#ffffff';
                 ctx.fillRect(cardW - 140, footerY + 230, 80, 80);
                 ctx.fillStyle = '#000000';
                 ctx.font = 'bold 10px monospace';
-                ctx.textAlign = 'center';
-                ctx.fillText('QR CODE', cardW - 100, footerY + 275);
+                ctx.fillText('QR CODE', cardW - 100, footerY + 270);
                 ctx.fillStyle = '#ffffff';
-                ctx.font = '800 10px Outfit';
+                ctx.font = '800 10px Outfit, sans-serif';
                 ctx.fillText('SCAN TO DOWNLOAD', cardW - 100, footerY + 325);
             }
         }
@@ -2663,7 +2910,13 @@
     function resetToWelcome() {
         clearInterval(kioskState.pollInterval);
         clearInterval(kioskState.autoResetInterval);
+        if (kioskState.autoPhotoTimer) {
+            clearInterval(kioskState.autoPhotoTimer);
+            kioskState.autoPhotoTimer = null;
+        }
         stopCamera();
+        kioskState.isPaid = false;
+        kioskState.isProcessingPayment = false;
         kioskState.quantity = 1;
         kioskState.totalPhotos = 1;
         kioskState.currentPhotoIndex = 1;
@@ -2675,20 +2928,33 @@
         kioskState.customer = { name: '', email: '', phone: '', nik: '', gender: '', birthdate: '' };
         const form = document.getElementById('userDataForm');
         if (form) form.reset();
+        const btnSimulate = document.getElementById('btnSimulatePay');
+        if (btnSimulate) {
+            btnSimulate.disabled = false;
+            btnSimulate.style.opacity = '1';
+            btnSimulate.style.cursor = 'pointer';
+            btnSimulate.innerHTML = '&check; Simulasi Bayar Instan (Test Mode)';
+        }
         goToScreen(1);
     }
 
     // Modals
+    function openModal(id) {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('active');
+    }
+
     function openRedeemModal() {
-        document.getElementById('redeemModal').classList.add('active');
+        openModal('redeemModal');
     }
 
     function openMerchModal() {
-        document.getElementById('merchModal').classList.add('active');
+        openModal('merchModal');
     }
 
     function closeModal(id) {
-        document.getElementById(id).classList.remove('active');
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
     }
 
     async function lookupTicketRedeem() {
@@ -2731,11 +2997,20 @@
         }
     }
 
+    // Close modal when clicking backdrop
+    window.addEventListener('click', (e) => {
+        if (e.target && e.target.classList && e.target.classList.contains('kiosk-modal-backdrop')) {
+            e.target.classList.remove('active');
+        }
+    });
+
     // Keyboard navigation (R-32 accessibility)
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeModal('redeemModal');
             closeModal('merchModal');
+            closeModal('termsModal');
+            closeModal('privacyModal');
         }
     });
 </script>

@@ -928,6 +928,20 @@
             btn.innerHTML = `<svg class="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Menyimpan...</span>`;
 
             try {
+                const payload = {
+                    layout_config: currentLayout,
+                    header_title: document.getElementById('headerTitleInput') ? document.getElementById('headerTitleInput').value.trim() : '',
+                    header_subtitle: document.getElementById('headerSubtitleInput') ? document.getElementById('headerSubtitleInput').value.trim() : '',
+                    badge_text: document.getElementById('badgeTextInput') ? document.getElementById('badgeTextInput').value.trim() : '',
+                    category_label_format: document.getElementById('categoryLabelFormatInput') ? document.getElementById('categoryLabelFormatInput').value.trim() : '',
+                    footer_text: document.getElementById('footerTextInput') ? document.getElementById('footerTextInput').value.trim() : '',
+                    show_team_logos: document.getElementById('toggleTeamLogos') && document.getElementById('toggleTeamLogos').checked ? 1 : 0,
+                    show_match_info: document.getElementById('toggleMatchInfo') && document.getElementById('toggleMatchInfo').checked ? 1 : 0,
+                    show_fan_name: document.getElementById('toggleFanName') && document.getElementById('toggleFanName').checked ? 1 : 0,
+                    show_category: document.getElementById('toggleCategory') && document.getElementById('toggleCategory').checked ? 1 : 0,
+                    show_qr: document.getElementById('toggleQr') && document.getElementById('toggleQr').checked ? 1 : 0
+                };
+
                 const response = await fetch("{{ route('organizer.photobooth.save-layout', $event) }}", {
                     method: 'POST',
                     headers: {
@@ -935,12 +949,12 @@
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({ layout_config: currentLayout })
+                    body: JSON.stringify(payload)
                 });
 
                 const data = await response.json();
                 if (data.success) {
-                    showResetToast('Posisi semua kolom berhasil disimpan!');
+                    showResetToast(data.message || 'Posisi semua kolom dan pengaturan berhasil disimpan!');
                     if (data.layout_config) {
                         currentLayout = data.layout_config;
                         applyLayoutStateToDom(currentLayout);
