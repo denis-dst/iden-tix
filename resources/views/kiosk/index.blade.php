@@ -1453,7 +1453,7 @@
                 Isi data kontak untuk menerima E-Voucher dan kartu Matchday Collectible.
             </p>
 
-            <form id="userDataForm" onsubmit="event.preventDefault(); submitScreen03();">
+            <form id="userDataForm" novalidate onsubmit="event.preventDefault(); submitScreen03();">
                 <div class="kiosk-form-section-title">
                     <span>DATA PEMESAN (PENANGGUNG JAWAB)</span>
                 </div>
@@ -1516,7 +1516,7 @@
 
                 <div class="action-buttons-wrap">
                     <button type="button" class="btn-kiosk-secondary" onclick="goToScreen(2)">KEMBALI</button>
-                    <button type="submit" class="btn-kiosk-primary">LANJUTKAN</button>
+                    <button type="button" class="btn-kiosk-primary" onclick="submitScreen03()">LANJUTKAN</button>
                 </div>
             </form>
         </div>
@@ -2234,7 +2234,7 @@
                             <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
                                 <div class="form-group" style="margin-bottom: 6px;">
                                     <label class="form-label" style="font-size: 11px;">Nama Pengunjung / Suporter</label>
-                                    <input type="text" class="form-input visitor-input-name" placeholder="Nama lengkap pengunjung" style="height: 42px; font-size: 13px;" required>
+                                    <input type="text" class="form-input visitor-input-name" placeholder="Nama lengkap pengunjung" style="height: 42px; font-size: 13px;">
                                 </div>
                                 <div class="form-group" style="margin-bottom: 6px;">
                                     <label class="form-label" style="font-size: 11px;">NIK (Opsional)</label>
@@ -2242,7 +2242,7 @@
                                 </div>
                                 <div class="form-group" style="margin-bottom: 6px;">
                                     <label class="form-label" style="font-size: 11px;">Gender</label>
-                                    <select class="form-input form-select visitor-input-gender" style="height: 42px; font-size: 13px;" required>
+                                    <select class="form-input form-select visitor-input-gender" style="height: 42px; font-size: 13px;">
                                         <option value="" disabled selected>Pilih Gender</option>
                                         <option value="Pria">Pria</option>
                                         <option value="Wanita">Wanita</option>
@@ -2300,12 +2300,45 @@
 
     // Submit Screen 03 Form
     function submitScreen03() {
-        kioskState.customer.name = document.getElementById('custName').value.trim();
-        kioskState.customer.email = document.getElementById('custEmail').value.trim();
-        kioskState.customer.phone = document.getElementById('custPhone').value.trim();
-        kioskState.customer.nik = document.getElementById('custNik').value.trim();
-        kioskState.customer.gender = document.getElementById('custGender').value;
-        kioskState.customer.birthdate = document.getElementById('custBirthdate').value;
+        const custName = document.getElementById('custName')?.value.trim();
+        const custEmail = document.getElementById('custEmail')?.value.trim();
+        const custPhone = document.getElementById('custPhone')?.value.trim();
+        const custNik = document.getElementById('custNik')?.value.trim();
+        const custGender = document.getElementById('custGender')?.value;
+        const custBirthdate = document.getElementById('custBirthdate')?.value.trim();
+        const termsCheck = document.getElementById('termsCheck');
+
+        if (!custName) {
+            alert('Silakan masukkan nama lengkap.');
+            document.getElementById('custName')?.focus();
+            return;
+        }
+        if (!custEmail) {
+            alert('Silakan masukkan alamat email.');
+            document.getElementById('custEmail')?.focus();
+            return;
+        }
+        if (!custPhone) {
+            alert('Silakan masukkan nomor telepon / WhatsApp.');
+            document.getElementById('custPhone')?.focus();
+            return;
+        }
+        if (!custGender) {
+            alert('Silakan pilih gender.');
+            document.getElementById('custGender')?.focus();
+            return;
+        }
+        if (!termsCheck || !termsCheck.checked) {
+            alert('Silakan centang persetujuan Syarat & Ketentuan dan Kebijakan Privasi terlebih dahulu.');
+            return;
+        }
+
+        kioskState.customer.name = custName;
+        kioskState.customer.email = custEmail;
+        kioskState.customer.phone = custPhone;
+        kioskState.customer.nik = custNik;
+        kioskState.customer.gender = custGender;
+        kioskState.customer.birthdate = custBirthdate;
 
         const mode = KIOSK_CONFIG.identityMode || 'both';
         const checkbox = document.getElementById('useBuyerDataCheckbox');
