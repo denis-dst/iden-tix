@@ -109,6 +109,49 @@
                         @enderror
                     </div>
                 </div>
+
+                <!-- Kiosk Identity Mode Setting -->
+                <div class="p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl space-y-4">
+                    <div>
+                        <h4 class="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                            <span>Metode Pengisian Identitas di Kiosk</span>
+                            <span class="text-[10px] font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">Kiosk Settings</span>
+                        </h4>
+                        <p class="text-[11px] text-slate-500 font-medium mt-0.5">
+                            Tentukan cara suporter mengisi data diri ketika membeli lebih dari 1 tiket pada mesin Kiosk.
+                        </p>
+                    </div>
+
+                    @php
+                        $currentKioskMode = old('kiosk_identity_mode', $tenant->meta['kiosk_identity_mode'] ?? 'both');
+                    @endphp
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                        <label class="p-4 bg-white border-2 rounded-2xl cursor-pointer hover:border-orange-400 transition flex items-start gap-3 {{ $currentKioskMode === 'both' ? 'border-orange-500 bg-orange-50/20' : 'border-slate-200' }}">
+                            <input type="radio" name="kiosk_identity_mode" value="both" {{ $currentKioskMode === 'both' ? 'checked' : '' }} class="mt-1 text-orange-600 focus:ring-orange-500">
+                            <div>
+                                <p class="text-xs font-black text-slate-800">Pilihan Fleksibel (Rekomendasi)</p>
+                                <p class="text-[10px] text-slate-500 mt-1">Pembeli dapat memilih sekali isi (ceklis gunakan data) ATAU mengisi identitas per tiket masing-masing.</p>
+                            </div>
+                        </label>
+
+                        <label class="p-4 bg-white border-2 rounded-2xl cursor-pointer hover:border-orange-400 transition flex items-start gap-3 {{ $currentKioskMode === 'single' ? 'border-orange-500 bg-orange-50/20' : 'border-slate-200' }}">
+                            <input type="radio" name="kiosk_identity_mode" value="single" {{ $currentKioskMode === 'single' ? 'checked' : '' }} class="mt-1 text-orange-600 focus:ring-orange-500">
+                            <div>
+                                <p class="text-xs font-black text-slate-800">Sekali Isi Saja</p>
+                                <p class="text-[10px] text-slate-500 mt-1">Cukup 1x isi data pemesan di awal, otomatis berlaku untuk seluruh tiket yang dibeli.</p>
+                            </div>
+                        </label>
+
+                        <label class="p-4 bg-white border-2 rounded-2xl cursor-pointer hover:border-orange-400 transition flex items-start gap-3 {{ $currentKioskMode === 'per_ticket' ? 'border-orange-500 bg-orange-50/20' : 'border-slate-200' }}">
+                            <input type="radio" name="kiosk_identity_mode" value="per_ticket" {{ $currentKioskMode === 'per_ticket' ? 'checked' : '' }} class="mt-1 text-orange-600 focus:ring-orange-500">
+                            <div>
+                                <p class="text-xs font-black text-slate-800">Wajib Isi Per Tiket</p>
+                                <p class="text-[10px] text-slate-500 mt-1">Setiap tiket wajib diisi data suporter/pengunjung masing-masing secara terpisah.</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
                 
                 <div class="space-y-4">
                     <label for="terms_conditions" class="block text-sm font-black text-slate-700 uppercase tracking-widest">Konten Syarat & Ketentuan</label>

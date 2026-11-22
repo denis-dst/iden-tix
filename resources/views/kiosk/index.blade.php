@@ -11,9 +11,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    {{-- Google MediaPipe Selfie Segmentation for AI Virtual Background PhotoBooth --}}
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
-
     <style>
         :root {
             --primary-orange: #f95700;
@@ -285,119 +282,292 @@
             margin-bottom: 24px;
         }
 
-        .category-item {
+        /* Category Selection Cards with Inline Steppers */
+        .category-list {
             width: 100%;
-            min-height: 58px;
+            max-width: 540px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+            max-height: 48vh;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .category-card-item {
+            width: 100%;
+            min-height: 64px;
             background: #fed7aa;
             color: #0f172a;
-            border-radius: 12px;
-            padding: 12px 20px;
+            border-radius: 14px;
+            padding: 12px 16px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            cursor: pointer;
             border: 3px solid transparent;
             transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            box-sizing: border-box;
         }
 
-        .category-item.selected {
+        .category-card-item.has-qty {
             background: #ffedd5;
             border-color: var(--primary-orange);
-            box-shadow: 0 4px 16px rgba(249, 87, 0, 0.3);
+            box-shadow: 0 4px 18px rgba(249, 87, 0, 0.35);
         }
 
-        .category-item .radio-dot {
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            background: #ffffff;
-            border: 2px solid #cbd5e1;
-            margin-right: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
+        .category-card-item.sold-out {
+            opacity: 0.55;
+            background: #cbd5e1;
+            filter: grayscale(0.8);
+            pointer-events: none;
         }
 
-        .category-item.selected .radio-dot {
-            background: var(--primary-orange);
-            border-color: var(--primary-orange);
-        }
-
-        .category-item.selected .radio-dot::after {
-            content: '';
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #ffffff;
-        }
-
-        .category-details {
+        .category-card-main {
             flex-grow: 1;
             text-align: left;
         }
 
-        .category-name {
-            font-size: 17px;
+        .category-name-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 3px;
+        }
+
+        .category-title {
+            font-size: 16px;
             font-weight: 800;
             text-transform: uppercase;
             color: #0f172a;
-            margin-bottom: 2px;
         }
 
-        .category-price {
-            font-size: 15px;
+        .quota-pill {
+            font-size: 11px;
             font-weight: 700;
-            color: #334155;
+            padding: 2px 7px;
+            border-radius: 6px;
+            background: rgba(15, 23, 42, 0.1);
+            color: #475569;
         }
 
-        /* Ticket Quantity Stepper */
-        .quantity-stepper-wrap {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 28px;
-        }
-
-        .quantity-stepper-label {
-            font-size: 15px;
-            font-weight: 700;
+        .quota-pill.sold-out-pill {
+            background: #ef4444;
             color: #ffffff;
         }
 
-        .quantity-stepper {
+        .category-pricing-row {
             display: flex;
-            align-items: center;
-            background: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
+            align-items: baseline;
+            gap: 8px;
         }
 
-        .stepper-btn {
-            width: 44px;
-            height: 44px;
-            background: transparent;
-            border: none;
-            font-size: 20px;
+        .category-price-num {
+            font-size: 15px;
             font-weight: 800;
+            color: #ea580c;
+        }
+
+        .category-fee-tag {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        /* Stepper per Kategori */
+        .category-card-stepper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 3px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            flex-shrink: 0;
+            margin-left: 12px;
+        }
+
+        .cat-step-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: none;
+            background: #f1f5f9;
             color: #0f172a;
+            font-size: 18px;
+            font-weight: 800;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.15s ease;
         }
 
-        .stepper-btn:active {
-            background: #e2e8f0;
+        .category-card-item.has-qty .cat-step-btn {
+            background: var(--primary-orange);
+            color: #ffffff;
         }
 
-        .stepper-value {
-            width: 40px;
+        .cat-step-btn:active {
+            transform: scale(0.92);
+        }
+
+        .cat-step-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .cat-step-value {
+            min-width: 30px;
             text-align: center;
-            font-size: 18px;
-            font-weight: 800;
+            font-size: 16px;
+            font-weight: 900;
             color: #0f172a;
+        }
+
+        /* Ringkasan Akumulasi Pembelian */
+        .kiosk-order-summary-card {
+            width: 100%;
+            max-width: 540px;
+            background: rgba(249, 87, 0, 0.12);
+            border: 1px solid rgba(249, 87, 0, 0.4);
+            border-radius: 12px;
+            padding: 12px 18px;
+            margin: 4px 0 16px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .order-summary-left {
+            text-align: left;
+        }
+
+        .summary-total-tickets {
+            font-size: 14px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-max-limit {
+            font-size: 11px;
+            font-weight: 600;
+            color: #f97316;
+            margin-left: 4px;
+        }
+
+        .summary-breakdown-tags {
+            font-size: 12px;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-top: 2px;
+        }
+
+        .order-summary-right {
+            text-align: right;
+        }
+
+        .summary-label-sub {
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-total-price {
+            font-size: 20px;
+            font-weight: 900;
+            color: #f97316;
+        }
+
+        /* Screen 03 Dynamic Multi-Attendee Styles */
+        .kiosk-form-section-title {
+            width: 100%;
+            font-size: 12px;
+            font-weight: 800;
+            color: #f97316;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-align: left;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .attendee-toggle-wrap {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin: 14px 0;
+            text-align: left;
+            box-sizing: border-box;
+        }
+
+        .kiosk-checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffffff;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .kiosk-checkbox-label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-orange);
+            cursor: pointer;
+        }
+
+        .attendee-cards-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 38vh;
+            overflow-y: auto;
+            padding-right: 4px;
+            margin-bottom: 12px;
+        }
+
+        .attendee-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 14px;
+            text-align: left;
+        }
+
+        .attendee-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .attendee-card-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: #f97316;
+            text-transform: uppercase;
+        }
+
+        .attendee-card-cat {
+            font-size: 11px;
+            font-weight: 700;
+            color: #cbd5e1;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 2px 8px;
+            border-radius: 4px;
         }
 
         /* Action Buttons (Kembali & Lanjutkan) */
@@ -1194,46 +1364,83 @@
                 </div>
             </div>
 
-            <div class="section-label">PILIH KATEGORI TIKET</div>
+            <div class="section-label">PILIH KATEGORI TIKET (DAPAT PILIH LEBIH DARI 1 KATEGORI)</div>
 
             <div class="category-list" id="categoryList">
                 @forelse($categories as $index => $cat)
-                    <div class="category-item {{ $index === 0 ? 'selected' : '' }}" 
+                    @php
+                        $sisaQuota = max(0, $cat->quota - $cat->sold_count);
+                        $isSoldOut = ($cat->quota > 0 && $sisaQuota <= 0);
+                    @endphp
+                    <div class="category-card-item {{ $isSoldOut ? 'sold-out' : '' }}" 
+                         id="cat-card-{{ $cat->id }}"
                          data-id="{{ $cat->id }}" 
                          data-name="{{ $cat->name }}" 
                          data-price="{{ $cat->price }}" 
                          data-fee="{{ $cat->service_fee ?? 0 }}"
-                         onclick="selectCategory(this)">
-                        <div class="radio-dot"></div>
-                        <div class="category-details">
-                            <div class="category-name">{{ $cat->name }}</div>
-                            <div class="category-price">Rp {{ number_format($cat->price, 0, ',', '.') }}</div>
+                         data-quota="{{ $sisaQuota }}">
+                        <div class="category-card-main">
+                            <div class="category-name-badge">
+                                <span class="category-title">{{ $cat->name }}</span>
+                                @if($isSoldOut)
+                                    <span class="quota-pill sold-out-pill">HABIS</span>
+                                @else
+                                    <span class="quota-pill">Sisa: {{ $sisaQuota }}</span>
+                                @endif
+                            </div>
+                            <div class="category-pricing-row">
+                                <span class="category-price-num">Rp {{ number_format($cat->price, 0, ',', '.') }}</span>
+                                @if(!empty($cat->service_fee) && $cat->service_fee > 0)
+                                    <span class="category-fee-tag">+ Layanan Rp {{ number_format($cat->service_fee, 0, ',', '.') }}</span>
+                                @endif
+                            </div>
                         </div>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="#64748b"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+
+                        <!-- Stepper per Kategori -->
+                        <div class="category-card-stepper">
+                            <button type="button" class="cat-step-btn" onclick="changeCategoryQty({{ $cat->id }}, -1)" {{ $isSoldOut ? 'disabled' : '' }}>−</button>
+                            <div class="cat-step-value" id="cat-qty-{{ $cat->id }}">0</div>
+                            <button type="button" class="cat-step-btn" onclick="changeCategoryQty({{ $cat->id }}, 1)" {{ $isSoldOut ? 'disabled' : '' }}>+</button>
+                        </div>
                     </div>
                 @empty
-                    <div class="category-item selected" data-id="1" data-name="VIP BARAT" data-price="150000" data-fee="0">
-                        <div class="radio-dot"></div>
-                        <div class="category-details">
-                            <div class="category-name">VIP BARAT</div>
-                            <div class="category-price">Rp 150.000</div>
+                    <div class="category-card-item" id="cat-card-1" data-id="1" data-name="VIP BARAT" data-price="150000" data-fee="0" data-quota="100">
+                        <div class="category-card-main">
+                            <div class="category-name-badge">
+                                <span class="category-title">VIP BARAT</span>
+                                <span class="quota-pill">Tersedia</span>
+                            </div>
+                            <div class="category-pricing-row">
+                                <span class="category-price-num">Rp 150.000</span>
+                            </div>
+                        </div>
+                        <div class="category-card-stepper">
+                            <button type="button" class="cat-step-btn" onclick="changeCategoryQty(1, -1)">−</button>
+                            <div class="cat-step-value" id="cat-qty-1">0</div>
+                            <button type="button" class="cat-step-btn" onclick="changeCategoryQty(1, 1)">+</button>
                         </div>
                     </div>
                 @endforelse
             </div>
 
-            <div class="quantity-stepper-wrap">
-                <span class="quantity-stepper-label">Jumlah tiket</span>
-                <div class="quantity-stepper">
-                    <button type="button" class="stepper-btn" onclick="updateQty(-1)">−</button>
-                    <div class="stepper-value" id="qtyDisplay">1</div>
-                    <button type="button" class="stepper-btn" onclick="updateQty(1)">+</button>
+            <!-- Ringkasan Akumulasi Pembelian Kiosk -->
+            <div class="kiosk-order-summary-card" id="kioskOrderSummaryBar">
+                <div class="order-summary-left">
+                    <div class="summary-total-tickets">
+                        <span id="summaryTotalTicketsCount">0</span> TIKET TERPILIH
+                        <span class="summary-max-limit">(Maks. {{ $maxTickets }} tiket per transaksi)</span>
+                    </div>
+                    <div class="summary-breakdown-tags" id="summaryBreakdownTags">Belum ada tiket dipilih</div>
+                </div>
+                <div class="order-summary-right">
+                    <div class="summary-label-sub">TOTAL HARGA</div>
+                    <div class="summary-total-price" id="summaryTotalPriceDisplay">Rp 0</div>
                 </div>
             </div>
 
             <div class="action-buttons-wrap">
                 <button type="button" class="btn-kiosk-secondary" onclick="goToScreen(1)">KEMBALI</button>
-                <button type="button" class="btn-kiosk-primary" onclick="goToScreen(3)">LANJUTKAN</button>
+                <button type="button" class="btn-kiosk-primary" id="btnContinueToScreen03" onclick="validateAndGoToScreen03()" disabled style="opacity: 0.5; cursor: not-allowed;">LANJUTKAN</button>
             </div>
         </div>
 
@@ -1241,9 +1448,15 @@
              SCREEN 03: ISI DATA DIRI
              ========================================== -->
         <div class="kiosk-screen" id="screen03">
-            <h2 class="welcome-title" style="font-size: 24px; margin-bottom: 24px;">LENGKAPI DATA DIRI ANDA</h2>
+            <h2 class="welcome-title" style="font-size: 24px; margin-bottom: 6px;">LENGKAPI DATA DIRI ANDA</h2>
+            <p style="font-size: 13px; color: #94a3b8; margin-bottom: 18px;" id="screen03Subtitle">
+                Isi data kontak untuk menerima E-Voucher dan kartu Matchday Collectible.
+            </p>
 
-            <form id="userDataForm" onsubmit="event.preventDefault(); goToScreen(4);">
+            <form id="userDataForm" onsubmit="event.preventDefault(); submitScreen03();">
+                <div class="kiosk-form-section-title">
+                    <span>DATA PEMESAN (PENANGGUNG JAWAB)</span>
+                </div>
                 <div class="form-grid">
                     <div class="form-group">
                         <label class="form-label">Nama Lengkap</label>
@@ -1270,12 +1483,28 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Tanggal Lahir</label>
+                        <label class="form-label">Tanggal Lahir (Opsional)</label>
                         <input type="text" id="custBirthdate" class="form-input" placeholder="DD / MM / YYYY">
                     </div>
                 </div>
 
-                <div class="terms-checkbox-wrap">
+                <!-- Mode Pengisian Identitas Pengunjung (Dinamis sesuai Tenant Setting) -->
+                <div id="attendeeIdentityToggleWrap" class="attendee-toggle-wrap" style="{{ ($kioskIdentityMode === 'both') ? '' : 'display: none;' }}">
+                    <label class="kiosk-checkbox-label" for="useBuyerDataCheckbox">
+                        <input type="checkbox" id="useBuyerDataCheckbox" checked onchange="toggleAttendeeCards()">
+                        <span>Gunakan data pemesan untuk semua tiket (<span id="totalTicketsNotice">1</span> tiket)</span>
+                    </label>
+                </div>
+
+                <!-- Daftar Pengunjung Per Tiket (Muncul jika identityMode === 'per_ticket' atau toggle dimatikan) -->
+                <div id="attendeeCardsContainer" style="display: none; margin-top: 14px; width: 100%;">
+                    <div class="kiosk-form-section-title" style="margin-top: 6px;">
+                        <span>DATA PENGUNJUNG / SUPORTER PER TIKET</span>
+                    </div>
+                    <div id="attendeeCardsList" class="attendee-cards-list"></div>
+                </div>
+
+                <div class="terms-checkbox-wrap" style="margin-top: 16px;">
                     <input type="checkbox" id="termsCheck" required>
                     <label for="termsCheck" style="cursor: pointer; margin: 0; font-size: inherit; color: inherit; user-select: none;">
                         Saya menyetujui 
@@ -1720,6 +1949,8 @@
         tenantSlug: '{{ $tenant->slug }}',
         eventId: {{ $event->id }},
         eventName: @json($event->name),
+        maxTickets: {{ (int) $maxTickets }},
+        identityMode: @json($kioskIdentityMode),
         matchDate: @json($event->event_start_date ? $event->event_start_date->translatedFormat('d F Y | H:i') . ' WIB' : '29 NOVEMBER 2026 | 19.00 WIB'),
         venue: @json($event->venue ?? 'STADION INDOMILK ARENA'),
         homeTeam: @json($event->effective_home_team_name),
@@ -1789,44 +2020,19 @@
     }
     initPreloadAssets();
 
-    // MediaPipe Selfie Segmentation for AI Virtual Background
-    let selfieSegmenter = null;
-    let latestSegmentationMask = null;
-
-    function initSelfieSegmentation() {
-        if (typeof SelfieSegmentation === 'undefined') {
-            setTimeout(() => {
-                if (typeof SelfieSegmentation !== 'undefined') initSelfieSegmentation();
-            }, 600);
-            return;
-        }
-        try {
-            selfieSegmenter = new SelfieSegmentation({
-                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
-            });
-            selfieSegmenter.setOptions({
-                modelSelection: 1, // 1: landscape/higher accuracy
-                selfieMode: false
-            });
-            selfieSegmenter.onResults((results) => {
-                latestSegmentationMask = results.segmentationMask;
-            });
-            console.log('MediaPipe SelfieSegmentation initialized successfully.');
-        } catch (e) {
-            console.warn('SelfieSegmentation initialization warning:', e);
-        }
-    }
-    initSelfieSegmentation();
-
     let kioskState = {
         currentScreen: 1,
         selectedCategory: null,
-        quantity: 1,
-        totalPhotos: 1,
+        selectedQuantities: {}, // { [catId]: number }
+        items: [],              // [ { category_id, category_name, price, fee, quantity, subtotal } ]
+        quantity: 0,
+        totalAmount: 0,
+        totalPhotos: 0,
         currentPhotoIndex: 1,
         currentPhotoFanName: '',
         capturedPhotos: [],
         tickets: [],
+        visitors: [],
         customer: {
             name: '',
             email: '',
@@ -1846,14 +2052,6 @@
         isProcessingPayment: false
     };
 
-    // Initialize Default Category
-    document.addEventListener('DOMContentLoaded', () => {
-        const firstCat = document.querySelector('.category-item.selected');
-        if (firstCat) {
-            selectCategory(firstCat);
-        }
-    });
-
     // Screen Navigation
     function goToScreen(screenNumber) {
         clearInterval(kioskState.pollInterval);
@@ -1872,7 +2070,7 @@
 
         // Screen specific hooks
         if (screenNumber === 4) {
-            calculateTotal();
+            updateScreen04Total();
         } else if (screenNumber === 7) {
             startCamera();
             updateScreen07UI();
@@ -1886,40 +2084,278 @@
         }
     }
 
-    // Category Selection
-    function selectCategory(el) {
-        document.querySelectorAll('.category-item').forEach(c => c.classList.remove('selected'));
-        el.classList.add('selected');
+    // Category Stepper (+ / -) Per Kategori
+    function changeCategoryQty(catId, delta) {
+        catId = String(catId);
+        const card = document.getElementById('cat-card-' + catId);
+        if (!card) return;
 
-        kioskState.selectedCategory = {
-            id: el.dataset.id,
-            name: el.dataset.name,
-            price: parseInt(el.dataset.price || 0),
-            fee: parseFloat(el.dataset.fee || 0)
-        };
-        calculateTotal();
+        const maxAvailable = parseInt(card.dataset.quota || 999);
+        const currentCatQty = kioskState.selectedQuantities[catId] || 0;
+        let newCatQty = currentCatQty + delta;
+        if (newCatQty < 0) newCatQty = 0;
+
+        // Check category quota
+        if (delta > 0 && newCatQty > maxAvailable) {
+            alert('Maaf, kuota untuk kategori ini hanya tersisa ' + maxAvailable + ' tiket.');
+            return;
+        }
+
+        // Calculate prospective total quantity across all categories
+        let prospectiveTotal = 0;
+        for (const [id, qty] of Object.entries(kioskState.selectedQuantities)) {
+            if (id === catId) prospectiveTotal += newCatQty;
+            else prospectiveTotal += qty;
+        }
+
+        const maxAllowed = KIOSK_CONFIG.maxTickets || 4;
+        if (delta > 0 && prospectiveTotal > maxAllowed) {
+            alert('Maksimal total pembelian adalah ' + maxAllowed + ' tiket per transaksi.');
+            return;
+        }
+
+        // Update state
+        kioskState.selectedQuantities[catId] = newCatQty;
+        const qtyDisplay = document.getElementById('cat-qty-' + catId);
+        if (qtyDisplay) qtyDisplay.innerText = newCatQty;
+
+        if (newCatQty > 0) {
+            card.classList.add('has-qty');
+        } else {
+            card.classList.remove('has-qty');
+        }
+
+        recalculateCart();
     }
 
-    // Quantity Stepper (1 to 10)
-    function updateQty(delta) {
-        let newQty = kioskState.quantity + delta;
-        if (newQty >= 1 && newQty <= 10) {
-            kioskState.quantity = newQty;
-            kioskState.totalPhotos = newQty;
-            document.getElementById('qtyDisplay').innerText = newQty;
-            calculateTotal();
+    // Recalculate Cart & Accumulate Pricing
+    function recalculateCart() {
+        const cards = document.querySelectorAll('.category-card-item');
+        let totalQty = 0;
+        let totalPrice = 0;
+        const items = [];
+        const breakdownParts = [];
+
+        cards.forEach(card => {
+            const catId = card.dataset.id;
+            const catName = card.dataset.name;
+            const price = parseInt(card.dataset.price || 0);
+            const fee = parseFloat(card.dataset.fee || 0);
+            const qty = kioskState.selectedQuantities[catId] || 0;
+
+            if (qty > 0) {
+                const subtotal = (price + fee) * qty;
+                totalQty += qty;
+                totalPrice += subtotal;
+                items.push({
+                    category_id: parseInt(catId),
+                    category_name: catName,
+                    price: price,
+                    service_fee: fee,
+                    quantity: qty,
+                    subtotal: subtotal
+                });
+                breakdownParts.push(`${qty}x ${catName}`);
+            }
+        });
+
+        kioskState.quantity = totalQty;
+        kioskState.totalAmount = totalPrice;
+        kioskState.items = items;
+        kioskState.totalPhotos = totalQty;
+
+        // Set primary category fallback
+        kioskState.selectedCategory = items.length > 0 ? items[0] : null;
+
+        // Update UI Summary Bar
+        const countDisplay = document.getElementById('summaryTotalTicketsCount');
+        if (countDisplay) countDisplay.innerText = totalQty;
+
+        const breakdownDisplay = document.getElementById('summaryBreakdownTags');
+        if (breakdownDisplay) {
+            breakdownDisplay.innerText = breakdownParts.length > 0 ? breakdownParts.join('  •  ') : 'Belum ada tiket dipilih';
+        }
+
+        const priceDisplay = document.getElementById('summaryTotalPriceDisplay');
+        const formattedPrice = 'Rp ' + totalPrice.toLocaleString('id-ID');
+        if (priceDisplay) priceDisplay.innerText = formattedPrice;
+
+        const btnContinue = document.getElementById('btnContinueToScreen03');
+        if (btnContinue) {
+            btnContinue.disabled = (totalQty === 0);
+            btnContinue.style.opacity = (totalQty === 0) ? '0.5' : '1';
+            btnContinue.style.cursor = (totalQty === 0) ? 'not-allowed' : 'pointer';
+        }
+
+        updateScreen04Total();
+    }
+
+    function updateScreen04Total() {
+        const formattedPrice = 'Rp ' + (kioskState.totalAmount || 0).toLocaleString('id-ID');
+        const totalPayDisplay = document.getElementById('totalPaymentDisplay');
+        if (totalPayDisplay) totalPayDisplay.innerText = formattedPrice;
+        const qrisTotalEl = document.getElementById('qrisTotalAmount');
+        if (qrisTotalEl) qrisTotalEl.innerText = formattedPrice;
+    }
+
+    // Step from Screen 02 to Screen 03
+    function validateAndGoToScreen03() {
+        if (kioskState.quantity <= 0) {
+            alert('Silakan pilih minimal 1 tiket untuk melanjutkan.');
+            return;
+        }
+        setupScreen03Visitors();
+        goToScreen(3);
+    }
+
+    // Setup Dynamic Attendee Form in Screen 03
+    function setupScreen03Visitors() {
+        const mode = KIOSK_CONFIG.identityMode || 'both';
+        const toggleWrap = document.getElementById('attendeeIdentityToggleWrap');
+        const container = document.getElementById('attendeeCardsContainer');
+        const listEl = document.getElementById('attendeeCardsList');
+        const noticeEl = document.getElementById('totalTicketsNotice');
+
+        if (noticeEl) noticeEl.innerText = kioskState.quantity;
+
+        // Build individual visitor cards per ticket
+        if (listEl) {
+            let html = '';
+            let ticketCounter = 0;
+            kioskState.items.forEach(item => {
+                for (let i = 0; i < item.quantity; i++) {
+                    ticketCounter++;
+                    html += `
+                        <div class="attendee-card" data-ticket-num="${ticketCounter}" data-cat-id="${item.category_id}">
+                            <div class="attendee-card-header">
+                                <span class="attendee-card-title">TIKET #${ticketCounter}</span>
+                                <span class="attendee-card-cat">${item.category_name}</span>
+                            </div>
+                            <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                                <div class="form-group" style="margin-bottom: 6px;">
+                                    <label class="form-label" style="font-size: 11px;">Nama Pengunjung / Suporter</label>
+                                    <input type="text" class="form-input visitor-input-name" placeholder="Nama lengkap pengunjung" style="height: 42px; font-size: 13px;" required>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 6px;">
+                                    <label class="form-label" style="font-size: 11px;">NIK (Opsional)</label>
+                                    <input type="text" class="form-input visitor-input-nik" placeholder="16 digit NIK" maxlength="16" style="height: 42px; font-size: 13px;">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 6px;">
+                                    <label class="form-label" style="font-size: 11px;">Gender</label>
+                                    <select class="form-input form-select visitor-input-gender" style="height: 42px; font-size: 13px;" required>
+                                        <option value="" disabled selected>Pilih Gender</option>
+                                        <option value="Pria">Pria</option>
+                                        <option value="Wanita">Wanita</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 6px;">
+                                    <label class="form-label" style="font-size: 11px;">No. Telepon / WA (Opsional)</label>
+                                    <input type="tel" class="form-input visitor-input-phone" placeholder="08xxxxxxxxxx" style="height: 42px; font-size: 13px;">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            listEl.innerHTML = html;
+        }
+
+        const checkbox = document.getElementById('useBuyerDataCheckbox');
+        if (mode === 'single') {
+            if (toggleWrap) toggleWrap.style.display = 'none';
+            if (container) container.style.display = 'none';
+            if (checkbox) checkbox.checked = true;
+        } else if (mode === 'per_ticket') {
+            if (toggleWrap) toggleWrap.style.display = 'none';
+            if (container) container.style.display = 'block';
+            if (checkbox) checkbox.checked = false;
+        } else { // 'both'
+            if (toggleWrap) toggleWrap.style.display = 'block';
+            if (checkbox) checkbox.checked = true;
+            if (container) container.style.display = 'none';
         }
     }
 
-    // Calculate Total Amount
-    function calculateTotal() {
-        if (!kioskState.selectedCategory) return;
-        const total = (kioskState.selectedCategory.price + kioskState.selectedCategory.fee) * kioskState.quantity;
-        const formatted = 'Rp ' + total.toLocaleString('id-ID');
-        const displayEl = document.getElementById('totalPaymentDisplay');
-        if (displayEl) displayEl.innerText = formatted;
-        const qrisEl = document.getElementById('qrisTotalAmount');
-        if (qrisEl) qrisEl.innerText = formatted;
+    // Toggle Attendee Cards in Mode 'both'
+    function toggleAttendeeCards() {
+        const checkbox = document.getElementById('useBuyerDataCheckbox');
+        const container = document.getElementById('attendeeCardsContainer');
+        if (!container) return;
+
+        if (checkbox && checkbox.checked) {
+            container.style.display = 'none';
+        } else {
+            container.style.display = 'block';
+            const custName = document.getElementById('custName')?.value.trim();
+            const custGender = document.getElementById('custGender')?.value;
+            const firstCard = container.querySelector('.attendee-card');
+            if (firstCard && custName) {
+                const nameInput = firstCard.querySelector('.visitor-input-name');
+                if (nameInput && !nameInput.value) nameInput.value = custName;
+                const genderSelect = firstCard.querySelector('.visitor-input-gender');
+                if (genderSelect && !genderSelect.value && custGender) genderSelect.value = custGender;
+            }
+        }
+    }
+
+    // Submit Screen 03 Form
+    function submitScreen03() {
+        kioskState.customer.name = document.getElementById('custName').value.trim();
+        kioskState.customer.email = document.getElementById('custEmail').value.trim();
+        kioskState.customer.phone = document.getElementById('custPhone').value.trim();
+        kioskState.customer.nik = document.getElementById('custNik').value.trim();
+        kioskState.customer.gender = document.getElementById('custGender').value;
+        kioskState.customer.birthdate = document.getElementById('custBirthdate').value;
+
+        const mode = KIOSK_CONFIG.identityMode || 'both';
+        const checkbox = document.getElementById('useBuyerDataCheckbox');
+        const isIndividual = (mode === 'per_ticket') || (mode === 'both' && checkbox && !checkbox.checked);
+
+        kioskState.visitors = [];
+
+        if (isIndividual) {
+            const cards = document.querySelectorAll('.attendee-card');
+            let hasError = false;
+            cards.forEach((card, idx) => {
+                const nameInput = card.querySelector('.visitor-input-name');
+                const genderSelect = card.querySelector('.visitor-input-gender');
+                const name = nameInput ? nameInput.value.trim() : '';
+                const gender = genderSelect ? genderSelect.value : '';
+                const nik = card.querySelector('.visitor-input-nik')?.value.trim() || null;
+                const phone = card.querySelector('.visitor-input-phone')?.value.trim() || kioskState.customer.phone;
+
+                if (!name || !gender) {
+                    hasError = true;
+                }
+
+                kioskState.visitors.push({
+                    name: name || kioskState.customer.name,
+                    nik: nik,
+                    gender: gender || kioskState.customer.gender,
+                    phone: phone,
+                    email: kioskState.customer.email,
+                    category_id: parseInt(card.dataset.catId || 0)
+                });
+            });
+
+            if (hasError) {
+                alert('Silakan lengkapi nama dan gender untuk setiap tiket pengunjung.');
+                return;
+            }
+        } else {
+            // Use buyer data for all tickets
+            for (let i = 0; i < kioskState.quantity; i++) {
+                kioskState.visitors.push({
+                    name: kioskState.customer.name,
+                    nik: kioskState.customer.nik || null,
+                    gender: kioskState.customer.gender,
+                    phone: kioskState.customer.phone,
+                    email: kioskState.customer.email
+                });
+            }
+        }
+
+        goToScreen(4);
     }
 
     // QRIS Checkout Process
@@ -1927,14 +2363,6 @@
         const btn = document.getElementById('btnPayNow');
         btn.disabled = true;
         btn.innerText = 'MEMPROSES...';
-
-        // Gather form data
-        kioskState.customer.name = document.getElementById('custName').value.trim();
-        kioskState.customer.email = document.getElementById('custEmail').value.trim();
-        kioskState.customer.phone = document.getElementById('custPhone').value.trim();
-        kioskState.customer.nik = document.getElementById('custNik').value.trim();
-        kioskState.customer.gender = document.getElementById('custGender').value;
-        kioskState.customer.birthdate = document.getElementById('custBirthdate').value;
 
         try {
             const response = await fetch(KIOSK_CONFIG.routes.checkout, {
@@ -1946,8 +2374,8 @@
                 },
                 body: JSON.stringify({
                     event_id: KIOSK_CONFIG.eventId,
-                    ticket_category_id: kioskState.selectedCategory.id,
-                    quantity: kioskState.quantity,
+                    items: kioskState.items.map(it => ({ category_id: it.category_id, quantity: it.quantity })),
+                    visitors: kioskState.visitors,
                     customer_name: kioskState.customer.name,
                     customer_email: kioskState.customer.email,
                     customer_phone: kioskState.customer.phone,
@@ -1969,6 +2397,29 @@
                     btnSimulate.style.opacity = '1';
                     btnSimulate.style.cursor = 'pointer';
                     btnSimulate.innerHTML = '&check; Simulasi Bayar Instan (Test Mode)';
+                }
+                const waitEl = document.getElementById('waitingStatusText');
+                if (waitEl) waitEl.innerText = 'Menunggu konfirmasi pembayaran...';
+
+                // Render QR code SVG
+                document.getElementById('qrisContainer').innerHTML = data.qr_svg;
+                document.getElementById('qrisTotalAmount').innerText = data.formatted_total;
+                
+                // Go to screen 05
+                goToScreen(5);
+                startQrisTimer();
+                startPaymentPolling(data.reference_no);
+            } else {
+                alert(data.message || 'Gagal memproses pemesanan.');
+            }
+        } catch (err) {
+            console.error('Checkout error:', err);
+            alert('Terjadi kesalahan jaringan saat memproses pesanan.');
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'BAYAR SEKARANG';
+        }
+    }
                 }
                 const waitEl = document.getElementById('waitingStatusText');
                 if (waitEl) waitEl.innerText = 'Menunggu konfirmasi pembayaran...';
@@ -2294,9 +2745,13 @@
             }
         }
 
-        // Set default name for current photo
+        // Set default name for current photo from attendee data
         let defaultName = kioskState.customer.name || 'SUPORTER';
-        if (kioskState.totalPhotos > 1 && kioskState.currentPhotoIndex > 1) {
+        if (kioskState.tickets && kioskState.tickets[kioskState.currentPhotoIndex - 1]) {
+            defaultName = kioskState.tickets[kioskState.currentPhotoIndex - 1].visitor_name || defaultName;
+        } else if (kioskState.visitors && kioskState.visitors[kioskState.currentPhotoIndex - 1]) {
+            defaultName = kioskState.visitors[kioskState.currentPhotoIndex - 1].name || defaultName;
+        } else if (kioskState.totalPhotos > 1 && kioskState.currentPhotoIndex > 1) {
             defaultName = kioskState.customer.name ? `${kioskState.customer.name} #${kioskState.currentPhotoIndex}` : `SUPORTER ${kioskState.currentPhotoIndex}`;
         }
         kioskState.currentPhotoFanName = defaultName;
@@ -2389,20 +2844,10 @@
         canvas.width = cardW;
         canvas.height = cardH;
 
-        // Try AI selfie segmentation if custom Background PhotoBooth is available
-        latestSegmentationMask = null;
-        if (selfieSegmenter && preloadedBgImg && preloadedBgImg.complete && preloadedBgImg.naturalWidth > 0 && video && video.videoWidth > 0) {
-            try {
-                await selfieSegmenter.send({ image: video });
-            } catch (segErr) {
-                console.warn('Selfie segmentation send error:', segErr);
-            }
-        }
-
         const primaryColor = KIOSK_CONFIG.primaryColor || '#5A2D82';
         const accentColor = KIOSK_CONFIG.secondaryColor || '#F95700';
 
-        // 1. Draw Background
+        // 1. Draw Background (Custom Background PhotoBooth or Club Gradient)
         if (preloadedBgImg && preloadedBgImg.complete && preloadedBgImg.naturalWidth > 0) {
             ctx.drawImage(preloadedBgImg, 0, 0, cardW, cardH);
         } else {
@@ -2417,7 +2862,7 @@
 
         const hasFrame = preloadedFrameImg && preloadedFrameImg.complete && preloadedFrameImg.naturalWidth > 0;
 
-        // 2. Draw Fan Photo from Webcam Feed
+        // 2. Draw Fan Photo directly from Webcam Feed (Webcam is 100% visible, never covered by background)
         ctx.save();
         if (hasFrame) {
             // Cutout area behind PNG frame
@@ -2441,33 +2886,9 @@
                     srcY = (vH - srcH) / 2;
                 }
 
-                if (latestSegmentationMask && preloadedBgImg && preloadedBgImg.complete && preloadedBgImg.naturalWidth > 0) {
-                    // Virtual background: composite segmented person over Background PhotoBooth
-                    const personCanvas = document.createElement('canvas');
-                    personCanvas.width = photoW;
-                    personCanvas.height = photoH;
-                    const pCtx = personCanvas.getContext('2d');
-
-                    pCtx.save();
-                    pCtx.translate(photoW, 0);
-                    pCtx.scale(-1, 1);
-                    pCtx.drawImage(latestSegmentationMask, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
-                    pCtx.restore();
-
-                    pCtx.globalCompositeOperation = 'source-in';
-                    pCtx.save();
-                    pCtx.translate(photoW, 0);
-                    pCtx.scale(-1, 1);
-                    pCtx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
-                    pCtx.restore();
-
-                    ctx.drawImage(personCanvas, photoX, photoY, photoW, photoH);
-                } else {
-                    // Standard mirrored draw
-                    ctx.translate(photoX + photoW, photoY);
-                    ctx.scale(-1, 1);
-                    ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
-                }
+                ctx.translate(photoX + photoW, photoY);
+                ctx.scale(-1, 1);
+                ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
             } else {
                 ctx.fillStyle = '#1e1b4b';
                 ctx.fillRect(photoX, photoY, photoW, photoH);
@@ -2494,31 +2915,9 @@
                     srcY = (vH - srcH) / 2;
                 }
 
-                if (latestSegmentationMask && preloadedBgImg && preloadedBgImg.complete && preloadedBgImg.naturalWidth > 0) {
-                    const personCanvas = document.createElement('canvas');
-                    personCanvas.width = photoW;
-                    personCanvas.height = photoH;
-                    const pCtx = personCanvas.getContext('2d');
-
-                    pCtx.save();
-                    pCtx.translate(photoW, 0);
-                    pCtx.scale(-1, 1);
-                    pCtx.drawImage(latestSegmentationMask, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
-                    pCtx.restore();
-
-                    pCtx.globalCompositeOperation = 'source-in';
-                    pCtx.save();
-                    pCtx.translate(photoW, 0);
-                    pCtx.scale(-1, 1);
-                    pCtx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
-                    pCtx.restore();
-
-                    ctx.drawImage(personCanvas, photoX, photoY, photoW, photoH);
-                } else {
-                    ctx.translate(photoX + photoW, photoY);
-                    ctx.scale(-1, 1);
-                    ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
-                }
+                ctx.translate(photoX + photoW, photoY);
+                ctx.scale(-1, 1);
+                ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
             } else {
                 ctx.fillStyle = '#1e1b4b';
                 ctx.fillRect(photoX, photoY, photoW, photoH);
@@ -2671,7 +3070,8 @@
                 const catX = (layout.category_badge.x / 100) * cardW;
                 const catY = (layout.category_badge.y / 100) * cardH;
                 const fontCat = Math.round(((layout.category_badge.font_size || 10) / 400) * cardW);
-                const catName = (kioskState.selectedCategory && kioskState.selectedCategory.name) ? kioskState.selectedCategory.name.toUpperCase() : 'VIP BARAT';
+                const currentTicket = (kioskState.tickets && kioskState.tickets[kioskState.currentPhotoIndex - 1]) ? kioskState.tickets[kioskState.currentPhotoIndex - 1] : null;
+                const catName = (currentTicket && currentTicket.category_name) ? currentTicket.category_name.toUpperCase() : ((kioskState.selectedCategory && kioskState.selectedCategory.name) ? kioskState.selectedCategory.name.toUpperCase() : 'VIP BARAT');
                 let catText = KIOSK_CONFIG.categoryLabelFormat.replace('{category}', catName);
                 if (KIOSK_CONFIG.badgeText && KIOSK_CONFIG.badgeText.trim() !== '') {
                     catText = catText.replace('{badge}', KIOSK_CONFIG.badgeText.trim());
@@ -2811,7 +3211,8 @@
             // Category Sub-badge (Respect showCategory and categoryLabelFormat)
             const hasCatFmt = KIOSK_CONFIG.categoryLabelFormat && KIOSK_CONFIG.categoryLabelFormat.trim() !== '';
             if (KIOSK_CONFIG.showCategory && hasCatFmt) {
-                const catName = (kioskState.selectedCategory && kioskState.selectedCategory.name) ? kioskState.selectedCategory.name.toUpperCase() : 'VIP BARAT';
+                const currentTicketFallback = (kioskState.tickets && kioskState.tickets[kioskState.currentPhotoIndex - 1]) ? kioskState.tickets[kioskState.currentPhotoIndex - 1] : null;
+                const catName = (currentTicketFallback && currentTicketFallback.category_name) ? currentTicketFallback.category_name.toUpperCase() : ((kioskState.selectedCategory && kioskState.selectedCategory.name) ? kioskState.selectedCategory.name.toUpperCase() : 'VIP BARAT');
                 let catText = KIOSK_CONFIG.categoryLabelFormat.replace('{category}', catName);
                 if (KIOSK_CONFIG.badgeText && KIOSK_CONFIG.badgeText.trim() !== '') {
                     catText = catText.replace('{badge}', KIOSK_CONFIG.badgeText.trim());
@@ -2998,6 +3399,9 @@
     // Save photo to server
     async function savePhotoToBackend(cardBase64, customFanName) {
         try {
+            const curTicket = (kioskState.tickets && kioskState.tickets[kioskState.currentPhotoIndex - 1]) ? kioskState.tickets[kioskState.currentPhotoIndex - 1] : null;
+            const curCatName = curTicket ? curTicket.category_name : (kioskState.selectedCategory ? kioskState.selectedCategory.name : null);
+
             const res = await fetch(KIOSK_CONFIG.routes.savePhoto, {
                 method: 'POST',
                 headers: {
@@ -3011,7 +3415,7 @@
                     customer_name: customFanName || kioskState.customer.name,
                     customer_email: kioskState.customer.email,
                     customer_phone: kioskState.customer.phone,
-                    category_name: kioskState.selectedCategory ? kioskState.selectedCategory.name : null,
+                    category_name: curCatName,
                     card_data: cardBase64
                 })
             });
@@ -3049,13 +3453,19 @@
         stopCamera();
         kioskState.isPaid = false;
         kioskState.isProcessingPayment = false;
-        kioskState.quantity = 1;
-        kioskState.totalPhotos = 1;
+        kioskState.quantity = 0;
+        kioskState.totalAmount = 0;
+        kioskState.totalPhotos = 0;
         kioskState.currentPhotoIndex = 1;
         kioskState.currentPhotoFanName = '';
         kioskState.capturedPhotos = [];
         kioskState.tickets = [];
-        document.getElementById('qtyDisplay').innerText = '1';
+        kioskState.visitors = [];
+        kioskState.items = [];
+        kioskState.selectedQuantities = {};
+        document.querySelectorAll('.cat-step-value').forEach(el => el.innerText = '0');
+        document.querySelectorAll('.category-card-item').forEach(el => el.classList.remove('has-qty'));
+        recalculateCart();
         kioskState.transaction = null;
         kioskState.customer = { name: '', email: '', phone: '', nik: '', gender: '', birthdate: '' };
         const form = document.getElementById('userDataForm');

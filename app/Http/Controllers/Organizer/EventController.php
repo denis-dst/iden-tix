@@ -333,6 +333,11 @@ class EventController extends Controller
             ];
         }
 
+        // Kiosk identity mode per event (optional override)
+        if ($request->has('kiosk_identity_mode')) {
+            $meta['kiosk_identity_mode'] = $request->input('kiosk_identity_mode');
+        }
+
         foreach ([
             'wristband_league_logo',
             'wristband_home_club_logo',

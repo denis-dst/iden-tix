@@ -22,6 +22,7 @@ class TenantSettingsController extends Controller
             'email_notifications_enabled' => 'nullable|boolean',
             'wa_notifications_enabled' => 'nullable|boolean',
             'max_tickets_per_person' => 'nullable|integer|min:1|max:100',
+            'kiosk_identity_mode' => 'nullable|string|in:both,single,per_ticket',
         ]);
 
         $tenant = Tenant::findOrFail(auth()->user()->tenant_id);
@@ -37,6 +38,11 @@ class TenantSettingsController extends Controller
         // Maximum tickets / order quantity per person
         if ($request->filled('max_tickets_per_person')) {
             $meta['max_tickets_per_person'] = max(1, (int) $request->input('max_tickets_per_person'));
+        }
+
+        // Kiosk identity input mode (both, single, per_ticket)
+        if ($request->has('kiosk_identity_mode')) {
+            $meta['kiosk_identity_mode'] = $request->input('kiosk_identity_mode', 'both');
         }
 
         $tenant->update([
