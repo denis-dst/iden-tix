@@ -11,6 +11,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
+    {{-- Local Google MediaPipe Selfie Segmentation for AI Virtual Background PhotoBooth --}}
+    <script src="{{ asset('vendor/mediapipe/selfie_segmentation/selfie_segmentation.js') }}"></script>
+
     <style>
         :root {
             --primary-orange: #f95700;
@@ -1001,6 +1004,19 @@
             height: 100%;
             object-fit: cover;
             transform: scaleX(-1); /* Mirror camera */
+            z-index: 1;
+            transition: opacity 0.25s ease;
+        }
+
+        .camera-live-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 24px;
+            z-index: 2;
+            pointer-events: none;
         }
 
         /* Portrait Live Camera Overlay */
@@ -1633,7 +1649,11 @@
             </p>
 
             <!-- Strictly Portrait Viewfinder on Landscape Kiosk Screen -->
-            <div class="camera-container">
+            <div class="camera-container" id="cameraContainer">
+                <!-- Real-time Virtual Background Viewfinder Canvas (Backdrop + Segmented Supporter) -->
+                <canvas id="cameraLiveCanvas" class="camera-live-canvas" style="display: none;"></canvas>
+
+                <!-- Live Camera Feed from Webcam -->
                 <video id="cameraVideo" class="camera-video" autoplay playsinline muted></video>
 
                 <!-- Custom PNG Frame Overlay on live camera feed -->
@@ -1996,29 +2016,176 @@
     function initPreloadAssets() {
         if (KIOSK_CONFIG.frameOverlayUrl) {
             preloadedFrameImg = new Image();
+            preloadedFrameImg.crossOrigin = 'anonymous';
             preloadedFrameImg.src = KIOSK_CONFIG.frameOverlayUrl;
         }
         const hSrc = KIOSK_CONFIG.homeTeamLogoDataUri || KIOSK_CONFIG.homeTeamLogo;
         if (hSrc) {
             preloadedHomeLogo = new Image();
+            preloadedHomeLogo.crossOrigin = 'anonymous';
             preloadedHomeLogo.src = hSrc;
         }
         const aSrc = KIOSK_CONFIG.awayTeamLogoDataUri || KIOSK_CONFIG.awayTeamLogo;
         if (aSrc) {
             preloadedAwayLogo = new Image();
+            preloadedAwayLogo.crossOrigin = 'anonymous';
             preloadedAwayLogo.src = aSrc;
         }
         const lSrc = KIOSK_CONFIG.leagueLogoDataUri || KIOSK_CONFIG.leagueLogo;
         if (lSrc) {
             preloadedLeagueLogo = new Image();
+            preloadedLeagueLogo.crossOrigin = 'anonymous';
             preloadedLeagueLogo.src = lSrc;
         }
         if (KIOSK_CONFIG.backgroundUrl) {
             preloadedBgImg = new Image();
+            preloadedBgImg.crossOrigin = 'anonymous';
             preloadedBgImg.src = KIOSK_CONFIG.backgroundUrl;
         }
     }
     initPreloadAssets();
+
+    // ============================================================
+    // GOOGLE MEDIAPIPE SELFIE SEGMENTATION (AI VIRTUAL BACKGROUND)
+    // ============================================================
+    let selfieSegmenter = null;
+    let isSegmenterReady = false;
+    let latestSegmentationResults = null;
+    let liveLoopRunning = false;
+    let isProcessingLiveFrame = false;
+
+    function initSelfieSegmentation() {
+        if (typeof SelfieSegmentation === 'undefined') {
+            setTimeout(initSelfieSegmentation, 300);
+            return;
+        }
+        try {
+            selfieSegmenter = new SelfieSegmentation({
+                locateFile: (file) => `{{ asset('vendor/mediapipe/selfie_segmentation') }}/${file}`
+            });
+            selfieSegmenter.setOptions({
+                modelSelection: 0, // 0: general (256x256), higher accuracy for portraits
+                selfieMode: false
+            });
+            selfieSegmenter.onResults((results) => {
+                isSegmenterReady = true;
+                latestSegmentationResults = results;
+                renderLiveSegmentation(results);
+            });
+            selfieSegmenter.initialize().then(() => {
+                console.log('MediaPipe SelfieSegmentation ready from local vendor assets.');
+            }).catch(err => {
+                console.warn('MediaPipe initialization warning:', err);
+            });
+        } catch (e) {
+            console.warn('SelfieSegmentation setup warning:', e);
+        }
+    }
+    initSelfieSegmentation();
+
+    function startLiveSegmentationLoop() {
+        if (liveLoopRunning) return;
+        liveLoopRunning = true;
+        requestAnimationFrame(liveSegmentationFrameStep);
+    }
+
+    function stopLiveSegmentationLoop() {
+        liveLoopRunning = false;
+        isProcessingLiveFrame = false;
+        const liveCanvas = document.getElementById('cameraLiveCanvas');
+        const video = document.getElementById('cameraVideo');
+        if (liveCanvas) liveCanvas.style.display = 'none';
+        if (video) video.style.opacity = '1';
+    }
+
+    async function liveSegmentationFrameStep() {
+        if (!liveLoopRunning || kioskState.currentScreen !== 7) return;
+
+        const video = document.getElementById('cameraVideo');
+        if (selfieSegmenter && video && video.readyState >= 2 && !isProcessingLiveFrame) {
+            isProcessingLiveFrame = true;
+            try {
+                await selfieSegmenter.send({ image: video });
+            } catch (e) {
+                // Ignore transient frame errors
+            }
+            isProcessingLiveFrame = false;
+        }
+
+        if (liveLoopRunning && kioskState.currentScreen === 7) {
+            requestAnimationFrame(liveSegmentationFrameStep);
+        }
+    }
+
+    function renderLiveSegmentation(results) {
+        if (!liveLoopRunning || kioskState.currentScreen !== 7) return;
+
+        const liveCanvas = document.getElementById('cameraLiveCanvas');
+        const video = document.getElementById('cameraVideo');
+        if (!liveCanvas || !video || video.readyState < 2 || !results.segmentationMask) return;
+
+        // Viewfinder size (2x DPI for sharp preview)
+        const w = 620;
+        const h = 900;
+
+        if (liveCanvas.width !== w || liveCanvas.height !== h) {
+            liveCanvas.width = w;
+            liveCanvas.height = h;
+        }
+
+        const ctx = liveCanvas.getContext('2d');
+        ctx.clearRect(0, 0, w, h);
+
+        const vW = video.videoWidth || 640;
+        const vH = video.videoHeight || 480;
+        const targetRatio = w / h;
+        let srcW = vW, srcH = vH, srcX = 0, srcY = 0;
+        if (vW / vH > targetRatio) {
+            srcW = vH * targetRatio;
+            srcX = (vW - srcW) / 2;
+        } else {
+            srcH = vW / targetRatio;
+            srcY = (vH - srcH) / 2;
+        }
+
+        // 1. Draw segmentation mask (mirrored)
+        ctx.save();
+        ctx.translate(w, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(results.segmentationMask, srcX, srcY, srcW, srcH, 0, 0, w, h);
+        ctx.restore();
+
+        // 2. 'source-in': Draw live webcam feed over the mask (isolates the person)
+        ctx.globalCompositeOperation = 'source-in';
+        ctx.save();
+        ctx.translate(w, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, w, h);
+        ctx.restore();
+
+        // 3. 'destination-atop': Draw custom Backdrop PhotoBooth behind the person
+        ctx.globalCompositeOperation = 'destination-atop';
+        if (preloadedBgImg && preloadedBgImg.complete && preloadedBgImg.naturalWidth > 0) {
+            ctx.drawImage(preloadedBgImg, 0, 0, w, h);
+        } else {
+            const grad = ctx.createLinearGradient(0, 0, 0, h);
+            grad.addColorStop(0, '#0c0714');
+            grad.addColorStop(0.35, KIOSK_CONFIG.primaryColor || '#5A2D82');
+            grad.addColorStop(0.7, '#0f0817');
+            grad.addColorStop(1, '#000000');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, w, h);
+        }
+
+        // Reset composite mode
+        ctx.globalCompositeOperation = 'source-over';
+
+        // Smoothly reveal live canvas over raw camera feed
+        if (liveCanvas.style.display !== 'block') {
+            liveCanvas.style.display = 'block';
+            video.style.opacity = '0';
+        }
+    }
 
     let kioskState = {
         currentScreen: 1,
@@ -2717,7 +2884,8 @@
                     });
                 }
                 video.srcObject = kioskState.cameraStream;
-                video.play().catch(e => console.warn('Video play interrupted:', e));
+                await video.play().catch(e => console.warn('Video play interrupted:', e));
+                startLiveSegmentationLoop();
             }
         } catch (err) {
             console.warn('Webcam not accessible:', err);
@@ -2725,6 +2893,7 @@
     }
 
     function stopCamera() {
+        stopLiveSegmentationLoop();
         if (kioskState.cameraStream) {
             kioskState.cameraStream.getTracks().forEach(track => track.stop());
             kioskState.cameraStream = null;
@@ -2857,85 +3026,104 @@
         const primaryColor = KIOSK_CONFIG.primaryColor || '#5A2D82';
         const accentColor = KIOSK_CONFIG.secondaryColor || '#F95700';
 
-        // 1. Draw Background (Custom Background PhotoBooth or Club Gradient)
-        if (preloadedBgImg && preloadedBgImg.complete && preloadedBgImg.naturalWidth > 0) {
-            ctx.drawImage(preloadedBgImg, 0, 0, cardW, cardH);
-        } else {
-            const grad = ctx.createLinearGradient(0, 0, 0, cardH);
-            grad.addColorStop(0, '#0c0714');
-            grad.addColorStop(0.35, primaryColor);
-            grad.addColorStop(0.7, '#0f0817');
-            grad.addColorStop(1, '#000000');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, cardW, cardH);
-        }
-
         const hasFrame = preloadedFrameImg && preloadedFrameImg.complete && preloadedFrameImg.naturalWidth > 0;
 
-        // 2. Draw Fan Photo directly from Webcam Feed (Webcam is 100% visible, never covered by background)
-        ctx.save();
-        if (hasFrame) {
-            // Cutout area behind PNG frame
+        // 1. Send current video frame to MediaPipe to ensure freshest segmentation mask
+        if (selfieSegmenter && video && video.readyState >= 2) {
+            try {
+                await selfieSegmenter.send({ image: video });
+            } catch (segErr) {
+                console.warn('Capture segmentation error:', segErr);
+            }
+        }
+
+        const vW = (video && video.videoWidth > 0) ? video.videoWidth : 640;
+        const vH = (video && video.videoHeight > 0) ? video.videoHeight : 480;
+        const targetRatio = cardW / cardH; // 2/3
+        let srcW = vW, srcH = vH, srcX = 0, srcY = 0;
+        if (vW / vH > targetRatio) {
+            srcW = vH * targetRatio;
+            srcX = (vW - srcW) / 2;
+        } else {
+            srcH = vW / targetRatio;
+            srcY = (vH - srcH) / 2;
+        }
+
+        ctx.clearRect(0, 0, cardW, cardH);
+
+        const hasSegmentation = latestSegmentationResults && latestSegmentationResults.segmentationMask && video && video.videoWidth > 0;
+
+        if (hasSegmentation) {
+            // ============================================================
+            // 3-LAYER VIRTUAL BACKGROUND COMPOSITING:
+            // Layer 1 (Backdrop) > Layer 2 (Person) > Layer 3 (Frame PNG)
+            // ============================================================
+
+            // A. Draw Segmentation Mask (Mirrored)
+            ctx.save();
+            ctx.translate(cardW, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(latestSegmentationResults.segmentationMask, srcX, srcY, srcW, srcH, 0, 0, cardW, cardH);
+            ctx.restore();
+
+            // B. 'source-in' composite: Draw Video Feed (Mirrored)
+            // This leaves ONLY the person, and turns real-world background completely transparent!
+            ctx.globalCompositeOperation = 'source-in';
+            ctx.save();
+            ctx.translate(cardW, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, cardW, cardH);
+            ctx.restore();
+
+            // C. 'destination-atop': Draw Custom Backdrop PhotoBooth behind the person
+            // Fills all empty/transparent space around the person with the stadium/field backdrop!
+            ctx.globalCompositeOperation = 'destination-atop';
+            if (preloadedBgImg && preloadedBgImg.complete && preloadedBgImg.naturalWidth > 0) {
+                ctx.drawImage(preloadedBgImg, 0, 0, cardW, cardH);
+            } else {
+                const grad = ctx.createLinearGradient(0, 0, 0, cardH);
+                grad.addColorStop(0, '#0c0714');
+                grad.addColorStop(0.35, primaryColor);
+                grad.addColorStop(0.7, '#0f0817');
+                grad.addColorStop(1, '#000000');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, cardW, cardH);
+            }
+
+            // Reset composite operation back to normal
+            ctx.globalCompositeOperation = 'source-over';
+        } else {
+            // Fallback: If AI segmentation is not available, draw background then draw video
+            if (preloadedBgImg && preloadedBgImg.complete && preloadedBgImg.naturalWidth > 0) {
+                ctx.drawImage(preloadedBgImg, 0, 0, cardW, cardH);
+            } else {
+                const grad = ctx.createLinearGradient(0, 0, 0, cardH);
+                grad.addColorStop(0, '#0c0714');
+                grad.addColorStop(0.35, primaryColor);
+                grad.addColorStop(0.7, '#0f0817');
+                grad.addColorStop(1, '#000000');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, cardW, cardH);
+            }
+
+            ctx.save();
             const photoX = 35;
             const photoY = 45;
-            const photoW = cardW - 70; // 954 px
+            const photoW = cardW - 70;
             const photoH = 1180;
             roundedRect(ctx, photoX, photoY, photoW, photoH, 20);
             ctx.clip();
-
             if (video && video.videoWidth > 0) {
-                const vW = video.videoWidth;
-                const vH = video.videoHeight;
-                const targetRatio = photoW / photoH;
-                let srcW = vW, srcH = vH, srcX = 0, srcY = 0;
-                if (vW / vH > targetRatio) {
-                    srcW = vH * targetRatio;
-                    srcX = (vW - srcW) / 2;
-                } else {
-                    srcH = vW / targetRatio;
-                    srcY = (vH - srcH) / 2;
-                }
-
                 ctx.translate(photoX + photoW, photoY);
                 ctx.scale(-1, 1);
                 ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
-            } else {
-                ctx.fillStyle = '#1e1b4b';
-                ctx.fillRect(photoX, photoY, photoW, photoH);
             }
-        } else {
-            // Fallback photo box
-            const photoY = 160;
-            const photoW = cardW - 120;
-            const photoH = 920;
-            const photoX = 60;
-            roundedRect(ctx, photoX, photoY, photoW, photoH, 24);
-            ctx.clip();
-
-            if (video && video.videoWidth > 0) {
-                const vW = video.videoWidth;
-                const vH = video.videoHeight;
-                const targetRatio = photoW / photoH;
-                let srcW = vW, srcH = vH, srcX = 0, srcY = 0;
-                if (vW / vH > targetRatio) {
-                    srcW = vH * targetRatio;
-                    srcX = (vW - srcW) / 2;
-                } else {
-                    srcH = vW / targetRatio;
-                    srcY = (vH - srcH) / 2;
-                }
-
-                ctx.translate(photoX + photoW, photoY);
-                ctx.scale(-1, 1);
-                ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, photoW, photoH);
-            } else {
-                ctx.fillStyle = '#1e1b4b';
-                ctx.fillRect(photoX, photoY, photoW, photoH);
-            }
+            ctx.restore();
         }
-        ctx.restore();
 
-        // 3. Draw Frame Overlay or Fallback Borders
+        // ============================================================
+        // Layer 3: Draw Frame Overlay or Fallback Borders (on top of person & backdrop)
+        // ============================================================
         if (hasFrame) {
             ctx.drawImage(preloadedFrameImg, 0, 0, cardW, cardH);
         } else {
