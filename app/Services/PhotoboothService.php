@@ -289,7 +289,7 @@ class PhotoboothService
                     imagettftext($canvas, $fontSizeCat, 0, round($catX - ($wCat / 2)), $catY, $orange, $fontFile, $catText);
                 }
 
-                // Fan Name (Respect show_fan_name)
+                // Fan Name (Respect show_fan_name - Clean text without background as custom frame already has its ribbon)
                 if ($showFanName && !empty($layout['fan_name']['visible'] ?? true)) {
                     $fanStr = strtoupper($fanName);
                     $fnX = round($width * (($layout['fan_name']['x'] ?? 50) / 100));
@@ -297,20 +297,7 @@ class PhotoboothService
                     $fontSizeFn = round((($layout['fan_name']['font_size'] ?? 18) / 400) * $width);
                     $boxFan = imagettfbbox($fontSizeFn, 0, $fontFile, $fanStr);
                     $wF = abs($boxFan[2] - $boxFan[0]);
-                    $hF = abs($boxFan[1] - $boxFan[7]);
 
-                    // Draw pill background
-                    $pPadX = round($fontSizeFn * 0.9);
-                    $pPadY = round($fontSizeFn * 0.45);
-                    $pW = $wF + ($pPadX * 2);
-                    $pH = $hF + ($pPadY * 2);
-                    $pX1 = round($fnX - ($pW / 2));
-                    $pY1 = round($fnY - $hF - $pPadY);
-                    $pX2 = $pX1 + $pW;
-                    $pY2 = $pY1 + $pH;
-
-                    imagefilledrectangle($canvas, $pX1, $pY1, $pX2, $pY2, $bgColor);
-                    imagerectangle($canvas, $pX1, $pY1, $pX2, $pY2, $orange);
                     imagettftext($canvas, $fontSizeFn, 0, round($fnX - ($wF / 2)), $fnY, $white, $fontFile, $fanStr);
                 }
 

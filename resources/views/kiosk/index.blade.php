@@ -2547,34 +2547,16 @@
                 ctx.shadowBlur = 0;
             }
 
-            // Fan Name (With styled pill badge matching Layout Editor)
+            // Fan Name (Clean text without background box as custom frame already has its own ribbon graphic)
             if (KIOSK_CONFIG.showFanName && layout.fan_name && layout.fan_name.visible !== false) {
                 const fnX = (layout.fan_name.x / 100) * cardW;
                 const fnY = (layout.fan_name.y / 100) * cardH;
                 const fontFn = Math.round(((layout.fan_name.font_size || 18) / 400) * cardW);
                 ctx.font = `900 ${fontFn}px Outfit, sans-serif`;
 
-                const metrics = ctx.measureText(activeName);
-                const padX = fontFn * 0.9;
-                const padY = fontFn * 0.45;
-                const bW = metrics.width + padX * 2;
-                const bH = fontFn + padY * 2;
-
-                ctx.save();
-                ctx.shadowColor = 'rgba(0,0,0,0.7)';
-                ctx.shadowBlur = 14;
-                ctx.shadowOffsetY = 4;
-                ctx.fillStyle = primaryColor;
-                roundedRect(ctx, fnX - (bW / 2), fnY - (bH / 2), bW, bH, bH / 2);
-                ctx.fill();
-                ctx.strokeStyle = accentColor;
-                ctx.lineWidth = 3;
-                ctx.stroke();
-                ctx.restore();
-
                 ctx.fillStyle = '#ffffff';
                 ctx.shadowColor = 'rgba(0,0,0,0.85)';
-                ctx.shadowBlur = 6;
+                ctx.shadowBlur = 8;
                 ctx.fillText(activeName, fnX, fnY);
                 ctx.shadowBlur = 0;
             }

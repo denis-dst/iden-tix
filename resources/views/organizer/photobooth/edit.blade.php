@@ -571,15 +571,15 @@
                             </div>
                         </div>
 
-                        <!-- 9. Fan Name Ribbon -->
+                        <!-- 9. Fan Name (Clean text without background) -->
                         <div id="dragItem_fan_name" 
                              class="drag-item text-center pointer-events-auto"
                              data-key="fan_name"
-                             data-title="Pita Nama Suporter"
+                             data-title="Nama Suporter"
                              data-type="font_size"
-                             title="Geser posisi Pita Nama Suporter"
+                             title="Geser posisi Nama Suporter"
                              style="left: {{ $layoutConfig['fan_name']['x'] ?? 50 }}%; top: {{ $layoutConfig['fan_name']['y'] ?? 86 }}%; font-size: calc(var(--card-w) * ({{ $layoutConfig['fan_name']['font_size'] ?? 18 }} / 400)); display: {{ ($template->show_fan_name && ($layoutConfig['fan_name']['visible'] ?? true)) ? 'block' : 'none' }};">
-                            <div id="previewFanNameBadge" class="py-1 px-4 rounded-xl font-black uppercase text-white shadow-2xl drop-shadow-lg whitespace-nowrap leading-none border" style="background-color: {{ $template->primary_color ?? '#5A2D82' }}; border-color: {{ $template->secondary_color ?? '#F95700' }};">
+                            <div id="previewFanNameBadge" class="font-black uppercase text-white drop-shadow-xl whitespace-nowrap leading-none tracking-wider">
                                 BRIAN ARIBOWO
                             </div>
                         </div>
@@ -660,7 +660,7 @@
 
                             <div class="flex items-center gap-2">
                                 <select id="inspectorElementSelect" class="flex-1 text-xs font-bold text-slate-800 bg-white border border-slate-300 rounded-xl px-3 py-2" onchange="selectElementByKey(this.value)">
-                                    <option value="fan_name">Pita Nama Suporter</option>
+                                    <option value="fan_name">Nama Suporter</option>
                                     <option value="home_logo">Logo Klub Home</option>
                                     <option value="away_logo">Logo Klub Away</option>
                                     <option value="vs_badge">Badge VS</option>
@@ -1072,12 +1072,6 @@
                     hSub.innerText = '';
                     hSub.style.display = 'none';
                 }
-            }
-
-            const fanBadge = document.getElementById('previewFanNameBadge');
-            if (fanBadge) {
-                fanBadge.style.backgroundColor = primaryColor;
-                fanBadge.style.borderColor = secondaryColor;
             }
 
             // 2. Category Badge: if formatCat is empty/null or toggleCategory unchecked, hide element!
