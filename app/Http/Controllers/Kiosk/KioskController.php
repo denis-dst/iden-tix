@@ -36,16 +36,20 @@ class KioskController extends Controller
         if ($event_slug) {
             $event = Event::where('tenant_id', $tenant->id)
                 ->where('slug', $event_slug)
-                ->with(['ticketCategories' => function ($q) {
-                    $q->where('is_active', true)->orderBy('sort_order')->orderBy('price');
-                }])
+                ->with([
+                    'ticketCategories' => function ($q) {
+                        $q->where('is_active', true)->orderBy('sort_order')->orderBy('price');
+                    }
+                ])
                 ->firstOrFail();
         } else {
             $event = Event::where('tenant_id', $tenant->id)
                 ->whereIn('status', ['published', 'private'])
-                ->with(['ticketCategories' => function ($q) {
-                    $q->where('is_active', true)->orderBy('sort_order')->orderBy('price');
-                }])
+                ->with([
+                    'ticketCategories' => function ($q) {
+                        $q->where('is_active', true)->orderBy('sort_order')->orderBy('price');
+                    }
+                ])
                 ->orderByDesc('event_start_date')
                 ->first();
 
@@ -100,18 +104,18 @@ class KioskController extends Controller
         $tenant = Tenant::where('slug', $tenant_slug)->firstOrFail();
 
         $validated = $request->validate([
-            'event_id'           => 'required|exists:events,id',
+            'event_id' => 'required|exists:events,id',
             'ticket_category_id' => 'nullable|exists:ticket_categories,id',
-            'quantity'           => 'nullable|integer|min:1',
-            'items'              => 'nullable|array',
-            'items.*.category_id'=> 'required_with:items|exists:ticket_categories,id',
-            'items.*.quantity'   => 'required_with:items|integer|min:1',
-            'visitors'           => 'nullable|array',
-            'customer_name'      => 'required|string|max:255',
-            'customer_email'     => 'required|email|max:255',
-            'customer_phone'     => 'required|string|max:30',
-            'customer_nik'       => 'nullable|string|max:20',
-            'customer_gender'    => 'nullable|string|in:Pria,Wanita',
+            'quantity' => 'nullable|integer|min:1',
+            'items' => 'nullable|array',
+            'items.*.category_id' => 'required_with:items|exists:ticket_categories,id',
+            'items.*.quantity' => 'required_with:items|integer|min:1',
+            'visitors' => 'nullable|array',
+            'customer_name' => 'required|string|max:255',
+            'customer_email' => 'required|email|max:255',
+            'customer_phone' => 'required|string|max:30',
+            'customer_nik' => 'nullable|string|max:20',
+            'customer_gender' => 'nullable|string|in:Pria,Wanita',
             'customer_birthdate' => 'nullable|string|max:20',
         ]);
 
@@ -128,10 +132,11 @@ class KioskController extends Controller
         if (!empty($validated['items']) && is_array($validated['items'])) {
             foreach ($validated['items'] as $item) {
                 $qty = (int) ($item['quantity'] ?? 0);
-                if ($qty <= 0) continue;
+                if ($qty <= 0)
+                    continue;
 
                 $cat = TicketCategory::where('event_id', $event->id)->findOrFail($item['category_id']);
-                
+
                 // Check quota per category
                 if (($cat->sold_count + $qty) > $cat->quota) {
                     return response()->json([
@@ -141,12 +146,12 @@ class KioskController extends Controller
                 }
 
                 $items[] = [
-                    'category_id'   => $cat->id,
+                    'category_id' => $cat->id,
                     'category_name' => $cat->name,
-                    'price'         => (int) $cat->price,
-                    'service_fee'   => (float) ($cat->service_fee ?? 0),
-                    'quantity'      => $qty,
-                    'subtotal'      => (int) (($cat->price + ($cat->service_fee ?? 0)) * $qty),
+                    'price' => (int) $cat->price,
+                    'service_fee' => (float) ($cat->service_fee ?? 0),
+                    'quantity' => $qty,
+                    'subtotal' => (int) (($cat->price + ($cat->service_fee ?? 0)) * $qty),
                 ];
 
                 $totalQuantity += $qty;
@@ -169,12 +174,12 @@ class KioskController extends Controller
             }
 
             $items[] = [
-                'category_id'   => $cat->id,
+                'category_id' => $cat->id,
                 'category_name' => $cat->name,
-                'price'         => (int) $cat->price,
-                'service_fee'   => (float) ($cat->service_fee ?? 0),
-                'quantity'      => $qty,
-                'subtotal'      => (int) (($cat->price + ($cat->service_fee ?? 0)) * $qty),
+                'price' => (int) $cat->price,
+                'service_fee' => (float) ($cat->service_fee ?? 0),
+                'quantity' => $qty,
+                'subtotal' => (int) (($cat->price + ($cat->service_fee ?? 0)) * $qty),
             ];
 
             $totalQuantity = $qty;
@@ -207,26 +212,34 @@ class KioskController extends Controller
 
         $referenceNo = 'KIOSK-' . date('Ymd') . '-' . strtoupper(Str::random(6));
 
+        // Compact items for reference storage
+        $compactItems = array_map(function ($it) {
+            return [
+                'category_id' => (int) $it['category_id'],
+                'quantity' => (int) $it['quantity'],
+            ];
+        }, $items);
+
         // Create transaction
         $transaction = Transaction::create([
-            'tenant_id'          => $tenant->id,
-            'event_id'           => $event->id,
+            'tenant_id' => $tenant->id,
+            'event_id' => $event->id,
             'ticket_category_id' => $primaryCategoryId,
-            'quantity'           => $totalQuantity,
-            'reference_no'       => $referenceNo,
-            'customer_name'      => $validated['customer_name'],
-            'customer_email'     => $validated['customer_email'],
-            'customer_phone'     => $phone,
-            'customer_nik'       => $validated['customer_nik'] ?? null,
-            'customer_gender'    => $validated['customer_gender'] ?? null,
-            'discount_amount'    => 0,
-            'service_fee'        => $totalServiceFee,
-            'total_amount'       => $totalAmount,
-            'payment_status'     => 'pending',
-            'payment_method'     => 'QRIS',
-            'channel'            => 'kiosk',
-            'payment_reference'  => json_encode([
-                'items'    => $items,
+            'quantity' => $totalQuantity,
+            'reference_no' => $referenceNo,
+            'customer_name' => $validated['customer_name'],
+            'customer_email' => $validated['customer_email'],
+            'customer_phone' => $phone,
+            'customer_nik' => $validated['customer_nik'] ?? null,
+            'customer_gender' => $validated['customer_gender'] ?? null,
+            'discount_amount' => 0,
+            'service_fee' => $totalServiceFee,
+            'total_amount' => $totalAmount,
+            'payment_status' => 'pending',
+            'payment_method' => 'QRIS',
+            'channel' => 'kiosk',
+            'payment_reference' => json_encode([
+                'items' => $compactItems,
                 'visitors' => $validated['visitors'] ?? [],
             ]),
         ]);
@@ -234,13 +247,13 @@ class KioskController extends Controller
         // Create WAGO QRIS Payment
         $wagoService = new WagoService();
         $wagoResult = $wagoService->createPayment([
-            'order_id'       => $referenceNo,
-            'nominal'        => $totalAmount,
-            'callback_url'   => route('wago.notification'),
-            'return_url'     => route('checkout.success', $referenceNo),
+            'order_id' => $referenceNo,
+            'nominal' => $totalAmount,
+            'callback_url' => route('wago.notification'),
+            'return_url' => route('checkout.success', $referenceNo),
             'payment_method' => 'QRIS',
         ], [
-            'name'  => $validated['customer_name'],
+            'name' => $validated['customer_name'],
             'email' => $validated['customer_email'],
             'phone' => $phone,
         ]);
@@ -253,14 +266,14 @@ class KioskController extends Controller
             ->generate($qrisDataString);
 
         return response()->json([
-            'success'        => true,
-            'reference_no'   => $referenceNo,
+            'success' => true,
+            'reference_no' => $referenceNo,
             'transaction_id' => $transaction->id,
-            'total_amount'   => $totalAmount,
-            'formatted_total'=> 'Rp ' . number_format($totalAmount, 0, ',', '.'),
-            'payment_url'    => $wagoResult['payment_url'] ?? null,
-            'qr_svg'         => (string) $qrSvg,
-            'qris_data'      => $qrisDataString,
+            'total_amount' => $totalAmount,
+            'formatted_total' => 'Rp ' . number_format($totalAmount, 0, ',', '.'),
+            'payment_url' => $wagoResult['payment_url'] ?? null,
+            'qr_svg' => (string) $qrSvg,
+            'qris_data' => $qrisDataString,
         ]);
     }
 
@@ -273,8 +286,8 @@ class KioskController extends Controller
 
         if (!$transaction) {
             return response()->json([
-                'status'  => 'not_found',
-                'paid'    => false,
+                'status' => 'not_found',
+                'paid' => false,
                 'message' => 'Transaksi tidak ditemukan.',
             ], 404);
         }
@@ -287,14 +300,14 @@ class KioskController extends Controller
         $tickets = ($transaction->payment_status === 'paid') ? $this->formatTicketsForKiosk($transaction) : [];
 
         return response()->json([
-            'status'         => $transaction->payment_status,
-            'paid'           => $transaction->payment_status === 'paid',
-            'reference_no'   => $transaction->reference_no,
+            'status' => $transaction->payment_status,
+            'paid' => $transaction->payment_status === 'paid',
+            'reference_no' => $transaction->reference_no,
             'transaction_id' => $transaction->id,
-            'customer_name'  => $transaction->customer_name,
+            'customer_name' => $transaction->customer_name,
             'customer_email' => $transaction->customer_email,
-            'quantity'       => $transaction->quantity,
-            'tickets'        => $tickets,
+            'quantity' => $transaction->quantity,
+            'tickets' => $tickets,
         ]);
     }
 
@@ -309,7 +322,7 @@ class KioskController extends Controller
             if ($transaction->payment_status !== 'paid') {
                 $transaction->update([
                     'payment_status' => 'paid',
-                    'paid_at'        => now(),
+                    'paid_at' => now(),
                     'payment_method' => 'QRIS (Simulasi)',
                 ]);
 
@@ -319,16 +332,16 @@ class KioskController extends Controller
             $tickets = $this->formatTicketsForKiosk($transaction);
 
             return response()->json([
-                'success'        => true,
-                'status'         => 'paid',
-                'paid'           => true,
-                'reference_no'   => $transaction->reference_no,
+                'success' => true,
+                'status' => 'paid',
+                'paid' => true,
+                'reference_no' => $transaction->reference_no,
                 'transaction_id' => $transaction->id,
-                'customer_name'  => $transaction->customer_name,
+                'customer_name' => $transaction->customer_name,
                 'customer_email' => $transaction->customer_email,
-                'quantity'       => $transaction->quantity,
-                'tickets'        => $tickets,
-                'message'        => 'Pembayaran simulasi berhasil diverifikasi.',
+                'quantity' => $transaction->quantity,
+                'tickets' => $tickets,
+                'message' => 'Pembayaran simulasi berhasil diverifikasi.',
             ]);
         });
     }
@@ -345,14 +358,14 @@ class KioskController extends Controller
                 ->generate($ticket->ticket_code);
 
             return [
-                'id'            => $ticket->id,
+                'id' => $ticket->id,
                 'ticket_number' => $idx + 1,
                 'total_tickets' => $transaction->quantity,
-                'ticket_code'   => $ticket->ticket_code,
+                'ticket_code' => $ticket->ticket_code,
                 'category_name' => $ticket->category->name ?? 'Regular',
-                'visitor_name'  => $ticket->visitor_data['name'] ?? $transaction->customer_name ?? 'Pengunjung',
-                'qr_svg'        => $qrSvg,
-                'status'        => $ticket->status,
+                'visitor_name' => $ticket->visitor_data['name'] ?? $transaction->customer_name ?? 'Pengunjung',
+                'qr_svg' => $qrSvg,
+                'status' => $ticket->status,
             ];
         });
     }
@@ -365,35 +378,35 @@ class KioskController extends Controller
         $tenant = Tenant::where('slug', $tenant_slug)->firstOrFail();
 
         $validated = $request->validate([
-            'event_id'        => 'required|exists:events,id',
-            'transaction_id'  => 'nullable|exists:transactions,id',
-            'customer_name'   => 'required|string|max:255',
-            'customer_email'  => 'required|email|max:255',
-            'customer_phone'  => 'nullable|string|max:30',
-            'category_name'   => 'nullable|string|max:100',
-            'card_data'       => 'required|string', // base64 composite card
-            'raw_photo_data'  => 'nullable|string', // base64 camera capture
+            'event_id' => 'required|exists:events,id',
+            'transaction_id' => 'nullable|exists:transactions,id',
+            'customer_name' => 'required|string|max:255',
+            'customer_email' => 'required|email|max:255',
+            'customer_phone' => 'nullable|string|max:30',
+            'category_name' => 'nullable|string|max:100',
+            'card_data' => 'required|string', // base64 composite card
+            'raw_photo_data' => 'nullable|string', // base64 camera capture
         ]);
 
         $photoboothService = new PhotoboothService();
         $photo = $photoboothService->saveKioskPhoto([
-            'tenant_id'      => $tenant->id,
-            'event_id'       => $validated['event_id'],
+            'tenant_id' => $tenant->id,
+            'event_id' => $validated['event_id'],
             'transaction_id' => $validated['transaction_id'] ?? null,
-            'customer_name'  => $validated['customer_name'],
+            'customer_name' => $validated['customer_name'],
             'customer_email' => $validated['customer_email'],
             'customer_phone' => $validated['customer_phone'] ?? null,
-            'category_name'  => $validated['category_name'] ?? null,
-            'card_data'      => $validated['card_data'],
+            'category_name' => $validated['category_name'] ?? null,
+            'card_data' => $validated['card_data'],
             'raw_photo_data' => $validated['raw_photo_data'] ?? null,
         ]);
 
         return response()->json([
-            'success'      => true,
-            'token'        => $photo->token,
-            'photo_url'    => asset('storage/' . $photo->card_photo),
+            'success' => true,
+            'token' => $photo->token,
+            'photo_url' => asset('storage/' . $photo->card_photo),
             'download_url' => route('kiosk.photo.view', $photo->token),
-            'message'      => 'Foto berhasil disimpan dan dikirim ke email.',
+            'message' => 'Foto berhasil disimpan dan dikirim ke email.',
         ]);
     }
 
@@ -465,14 +478,14 @@ class KioskController extends Controller
         }
 
         return response()->json([
-            'success'       => true,
-            'ticket_code'   => $ticket->ticket_code,
-            'status'        => $ticket->status,
-            'event_name'    => $ticket->event->name,
+            'success' => true,
+            'ticket_code' => $ticket->ticket_code,
+            'status' => $ticket->status,
+            'event_name' => $ticket->event->name,
             'category_name' => $ticket->category->name ?? 'Regular',
-            'visitor_name'  => $ticket->visitor_data['name'] ?? $ticket->transaction->customer_name ?? 'Pengunjung',
-            'is_redeemed'   => $ticket->status === 'redeemed',
-            'redeemed_at'   => $ticket->redeemed_at ? $ticket->redeemed_at->format('d M Y H:i') : null,
+            'visitor_name' => $ticket->visitor_data['name'] ?? $ticket->transaction->customer_name ?? 'Pengunjung',
+            'is_redeemed' => $ticket->status === 'redeemed',
+            'redeemed_at' => $ticket->redeemed_at ? $ticket->redeemed_at->format('d M Y H:i') : null,
         ]);
     }
 
@@ -515,20 +528,20 @@ class KioskController extends Controller
                         $vGender = !empty($visitor['gender']) ? $visitor['gender'] : $transaction->customer_gender;
 
                         $tickets->push(Ticket::create([
-                            'tenant_id'          => $transaction->tenant_id,
-                            'event_id'           => $transaction->event_id,
-                            'transaction_id'     => $transaction->id,
+                            'tenant_id' => $transaction->tenant_id,
+                            'event_id' => $transaction->event_id,
+                            'transaction_id' => $transaction->id,
                             'ticket_category_id' => $catId,
-                            'ticket_code'        => Ticket::generateTicketCode(),
-                            'status'             => 'sold',
-                            'visitor_data'       => [
-                                'name'          => $vName,
-                                'email'         => $vEmail,
-                                'phone'         => $vPhone,
-                                'nik'           => $vNik,
-                                'gender'        => $vGender,
+                            'ticket_code' => Ticket::generateTicketCode(),
+                            'status' => 'sold',
+                            'visitor_data' => [
+                                'name' => $vName,
+                                'email' => $vEmail,
+                                'phone' => $vPhone,
+                                'nik' => $vNik,
+                                'gender' => $vGender,
                                 'purchase_flow' => $event->purchase_flow ?? 'redeem',
-                                'channel'       => 'kiosk',
+                                'channel' => 'kiosk',
                             ],
                         ]));
                         $ticketIndex++;
@@ -548,20 +561,20 @@ class KioskController extends Controller
                     $vGender = !empty($visitor['gender']) ? $visitor['gender'] : $transaction->customer_gender;
 
                     $tickets->push(Ticket::create([
-                        'tenant_id'          => $transaction->tenant_id,
-                        'event_id'           => $transaction->event_id,
-                        'transaction_id'     => $transaction->id,
+                        'tenant_id' => $transaction->tenant_id,
+                        'event_id' => $transaction->event_id,
+                        'transaction_id' => $transaction->id,
                         'ticket_category_id' => $transaction->ticket_category_id,
-                        'ticket_code'        => Ticket::generateTicketCode(),
-                        'status'             => 'sold',
-                        'visitor_data'       => [
-                            'name'          => $vName,
-                            'email'         => $vEmail,
-                            'phone'         => $vPhone,
-                            'nik'           => $vNik,
-                            'gender'        => $vGender,
+                        'ticket_code' => Ticket::generateTicketCode(),
+                        'status' => 'sold',
+                        'visitor_data' => [
+                            'name' => $vName,
+                            'email' => $vEmail,
+                            'phone' => $vPhone,
+                            'nik' => $vNik,
+                            'gender' => $vGender,
                             'purchase_flow' => $event->purchase_flow ?? 'redeem',
-                            'channel'       => 'kiosk',
+                            'channel' => 'kiosk',
                         ],
                     ]));
                 }
