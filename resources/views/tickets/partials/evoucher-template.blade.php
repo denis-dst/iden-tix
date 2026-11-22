@@ -7,34 +7,83 @@
         $tenant = \App\Models\Tenant::find($event->tenant_id);
     }
 
-    $organizerName = $tenant->name ?? ($event->tenant->name ?? ($event->home_team_name ?? 'PROMOTOR'));
-    $organizerLogo = $tenant->logo ?? ($event->home_team_logo ?? ($event->meta['wristband_home_club_logo'] ?? null));
+    // Effective team names and logos
+    $homeTeamName = $event->effective_home_team_name ?: ($event->home_team_name ?: null);
+    $awayTeamName = $event->effective_away_team_name ?: ($event->away_team_name ?: null);
+    $homeLogoUrl = $event->effective_home_team_logo_url;
+    $awayLogoUrl = $event->effective_away_team_logo_url;
+    $leagueLogoUrl = $event->effective_league_logo_url;
+    $leagueName = $event->meta['wristband_league_name'] ?? ($event->season_name ?? null);
+
+    $organizerName = $tenant->name ?? ($event->tenant->name ?? ($homeTeamName ?? 'PROMOTOR'));
+
+    // Tenant / Promotor / Home Club logo resolution
+    $tenantLogoUrl = null;
+    if (!empty($tenant->logo) && (str_starts_with($tenant->logo, 'http') || file_exists(public_path('storage/' . $tenant->logo)))) {
+        $tenantLogoUrl = str_starts_with($tenant->logo, 'http') ? $tenant->logo : asset('storage/' . $tenant->logo);
+    }
+    if (!$tenantLogoUrl && $homeLogoUrl) {
+        $tenantLogoUrl = $homeLogoUrl;
+    }
+    if (!$tenantLogoUrl && $leagueLogoUrl) {
+        $tenantLogoUrl = $leagueLogoUrl;
+    }
 
     $isPromo100 = $transaction->payment_method === 'promo' || ($transaction->total_amount == 0 && ($transaction->discount_amount ?? 0) > 0);
     $isFree = $transaction->payment_method === 'free' || $isPromo100 || (bool) $event->is_free;
 
     // Banner image resolution & fallback
     $bannerUrl = null;
-    if ($event->banner_image) {
+    if ($event->banner_image && (str_starts_with($event->banner_image, 'http') || file_exists(public_path('storage/' . $event->banner_image)))) {
         $bannerUrl = str_starts_with($event->banner_image, 'http') ? $event->banner_image : asset('storage/' . $event->banner_image);
-    } elseif ($event->background_image) {
+    } elseif ($event->background_image && (str_starts_with($event->background_image, 'http') || file_exists(public_path('storage/' . $event->background_image)))) {
         $bannerUrl = str_starts_with($event->background_image, 'http') ? $event->background_image : asset('storage/' . $event->background_image);
     }
+
+    // Photobooth template background fallback (stadium atmosphere)
     if (!$bannerUrl) {
-        $bannerUrl = asset('images/concert.webp');
+        $pbTemplate = method_exists($event, 'getEffectivePhotoboothTemplate') ? $event->getEffectivePhotoboothTemplate() : null;
+        if ($pbTemplate && $pbTemplate->background_image && (file_exists(public_path('storage/' . $pbTemplate->background_image)) || file_exists(storage_path('app/public/' . $pbTemplate->background_image)))) {
+            $bannerUrl = asset('storage/' . $pbTemplate->background_image);
+        }
     }
 
-    // Tenant / Promotor / Home Club logo
-    $tenantLogoUrl = null;
-    if ($organizerLogo) {
-        $tenantLogoUrl = str_starts_with($organizerLogo, 'http') ? $organizerLogo : asset('storage/' . $organizerLogo);
+    // Athletic / Matchday / Stadium atmosphere fallback
+    if (!$bannerUrl) {
+        if ($homeTeamName || $awayTeamName || $leagueName) {
+            if (file_exists(public_path('images/kiosk/stadium_bg.jpg'))) {
+                $bannerUrl = asset('images/kiosk/stadium_bg.jpg');
+            } elseif (file_exists(public_path('images/stadium.webp'))) {
+                $bannerUrl = asset('images/stadium.webp');
+            }
+        }
     }
 
-    // Identix brand logo & icon from settings
+    if (!$bannerUrl) {
+        if (file_exists(public_path('images/stadium.webp'))) {
+            $bannerUrl = asset('images/stadium.webp');
+        } elseif (file_exists(public_path('images/concert.webp'))) {
+            $bannerUrl = asset('images/concert.webp');
+        } elseif (file_exists(public_path('images/hero.webp'))) {
+            $bannerUrl = asset('images/hero.webp');
+        }
+    }
+
+    // Identix brand logo & icon from settings (with disk verification)
     $identixLogo = $global_settings['app_logo'] ?? \App\Models\Setting::get('app_logo');
     $identixIcon = $global_settings['app_icon'] ?? \App\Models\Setting::get('app_icon');
-    $identixLogoUrl = $identixLogo ? (str_starts_with($identixLogo, 'http') ? $identixLogo : asset('storage/' . $identixLogo)) : null;
-    $identixIconUrl = $identixIcon ? (str_starts_with($identixIcon, 'http') ? $identixIcon : asset('storage/' . $identixIcon)) : null;
+    $identixLogoUrl = null;
+    if ($identixLogo) {
+        if (str_starts_with($identixLogo, 'http') || file_exists(public_path('storage/' . $identixLogo))) {
+            $identixLogoUrl = str_starts_with($identixLogo, 'http') ? $identixLogo : asset('storage/' . $identixLogo);
+        }
+    }
+    $identixIconUrl = null;
+    if ($identixIcon) {
+        if (str_starts_with($identixIcon, 'http') || file_exists(public_path('storage/' . $identixIcon))) {
+            $identixIconUrl = str_starts_with($identixIcon, 'http') ? $identixIcon : asset('storage/' . $identixIcon);
+        }
+    }
 
     // Custom attendee questions & answers
     $customFields = method_exists($event, 'getCustomFields') ? $event->getCustomFields() : [];
@@ -144,23 +193,58 @@
                  loading="eager" decoding="async">
 
             <!-- Matchup Header (Soccer / Sport / Team Match) -->
-            @if($event->home_team_name && $event->away_team_name)
-                <div class="absolute top-4 left-6 right-6 flex items-center justify-between text-white z-20">
-                    <div class="flex items-center gap-3">
-                        @if($event->home_team_logo)
-                            <img src="{{ str_starts_with($event->home_team_logo, 'http') ? $event->home_team_logo : asset('storage/' . $event->home_team_logo) }}" 
-                                 class="w-10 h-10 object-contain drop-shadow-md">
+            @if($homeTeamName && $awayTeamName)
+                <div class="absolute top-2.5 sm:top-3.5 left-2.5 right-2.5 sm:left-6 sm:right-6 flex items-center justify-between text-white z-20">
+                    <!-- Home Team -->
+                    <div class="flex items-center gap-2 sm:gap-3 max-w-[36%]">
+                        @if($homeLogoUrl)
+                            <div class="w-9 h-9 sm:w-12 sm:h-12 p-1 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 shadow-md shrink-0 flex items-center justify-center">
+                                <img src="{{ $homeLogoUrl }}" alt="{{ $homeTeamName }}" class="max-w-full max-h-full object-contain filter drop-shadow">
+                            </div>
+                        @else
+                            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-[10px] sm:text-xs font-black text-white shrink-0">
+                                {{ strtoupper(substr($homeTeamName, 0, 3)) }}
+                            </div>
                         @endif
-                        <span class="text-xs sm:text-sm font-black tracking-wider uppercase font-outfit drop-shadow">{{ $event->home_team_name }}</span>
+                        <div class="min-w-0">
+                            <span class="text-xs sm:text-sm font-black tracking-wider uppercase font-outfit drop-shadow truncate block leading-tight">
+                                {{ $homeTeamName }}
+                            </span>
+                            <span class="text-[7.5px] sm:text-[8.5px] font-bold tracking-widest text-orange-300 uppercase block">HOME</span>
+                        </div>
                     </div>
 
-                    <span class="px-2 py-0.5 bg-rose-600 text-white font-black text-[10px] rounded uppercase tracking-widest shadow-lg">VS</span>
+                    <!-- Center: League Logo / Competition Name & VS -->
+                    <div class="flex flex-col items-center justify-center text-center px-1 shrink-0">
+                        @if($leagueLogoUrl)
+                            <img src="{{ $leagueLogoUrl }}" alt="{{ $leagueName ?? 'League' }}" class="h-6 sm:h-8 w-auto max-w-[80px] sm:max-w-[100px] object-contain drop-shadow-lg mb-0.5">
+                        @endif
+                        @if($leagueName)
+                            <span class="text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-slate-200 drop-shadow line-clamp-1 mb-0.5 max-w-[130px] sm:max-w-[170px]">
+                                {{ $leagueName }}
+                            </span>
+                        @endif
+                        <span class="px-2.5 py-0.5 bg-gradient-to-r from-red-600 to-rose-600 text-white font-black text-[9px] sm:text-[10px] rounded uppercase tracking-widest shadow-lg border border-white/25">
+                            VS
+                        </span>
+                    </div>
 
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs sm:text-sm font-black tracking-wider uppercase font-outfit drop-shadow">{{ $event->away_team_name }}</span>
-                        @if($event->away_team_logo)
-                            <img src="{{ str_starts_with($event->away_team_logo, 'http') ? $event->away_team_logo : asset('storage/' . $event->away_team_logo) }}" 
-                                 class="w-10 h-10 object-contain drop-shadow-md">
+                    <!-- Away Team -->
+                    <div class="flex items-center justify-end gap-2 sm:gap-3 max-w-[36%] text-right">
+                        <div class="min-w-0">
+                            <span class="text-xs sm:text-sm font-black tracking-wider uppercase font-outfit drop-shadow truncate block leading-tight">
+                                {{ $awayTeamName }}
+                            </span>
+                            <span class="text-[7.5px] sm:text-[8.5px] font-bold tracking-widest text-slate-300 uppercase block">AWAY</span>
+                        </div>
+                        @if($awayLogoUrl)
+                            <div class="w-9 h-9 sm:w-12 sm:h-12 p-1 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 shadow-md shrink-0 flex items-center justify-center">
+                                <img src="{{ $awayLogoUrl }}" alt="{{ $awayTeamName }}" class="max-w-full max-h-full object-contain filter drop-shadow">
+                            </div>
+                        @else
+                            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-[10px] sm:text-xs font-black text-white shrink-0">
+                                {{ strtoupper(substr($awayTeamName, 0, 3)) }}
+                            </div>
                         @endif
                     </div>
                 </div>
@@ -259,9 +343,17 @@
 
                     <!-- Event Name / Match Title -->
                     <div class="pt-0.5">
+                        @if($leagueName)
+                            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-[8.5px] sm:text-[9px] font-black uppercase tracking-wider text-slate-700 mb-1.5">
+                                @if($leagueLogoUrl)
+                                    <img src="{{ $leagueLogoUrl }}" class="w-3.5 h-3.5 object-contain" alt="">
+                                @endif
+                                <span>{{ $leagueName }}</span>
+                            </div>
+                        @endif
                         <h2 class="text-lg sm:text-xl font-black text-slate-950 font-outfit uppercase tracking-tight leading-snug">
-                            @if($event->home_team_name && $event->away_team_name)
-                                {{ $event->home_team_name }} VS {{ $event->away_team_name }}
+                            @if($homeTeamName && $awayTeamName)
+                                {{ $homeTeamName }} VS {{ $awayTeamName }}
                             @else
                                 {{ $event->name }}
                             @endif
@@ -588,8 +680,7 @@
                             @if($tenantLogoUrl)
                                 <img src="{{ $tenantLogoUrl }}" 
                                      alt="{{ $organizerName }}" 
-                                     class="h-24 sm:h-28 md:h-32 max-h-32 w-auto max-w-[88%] sm:max-w-[92%] object-contain mx-auto drop-shadow-md"
-                                     onerror="this.style.display='none'">
+                                     class="h-20 sm:h-24 md:h-28 max-h-28 w-auto max-w-[88%] sm:max-w-[92%] object-contain mx-auto drop-shadow-md">
                             @else
                                 <div class="w-12 h-12 rounded-full bg-slate-800 text-orange-400 border border-slate-700 font-black text-base flex items-center justify-center mx-auto shadow-sm">
                                     {{ strtoupper(substr($organizerName, 0, 2)) }}

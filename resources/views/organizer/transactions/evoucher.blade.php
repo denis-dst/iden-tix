@@ -65,8 +65,18 @@
     @php
         $identixLogo = $global_settings['app_logo'] ?? \App\Models\Setting::get('app_logo');
         $identixIcon = $global_settings['app_icon'] ?? \App\Models\Setting::get('app_icon');
-        $identixLogoUrl = $identixLogo ? (str_starts_with($identixLogo, 'http') ? $identixLogo : asset('storage/' . $identixLogo)) : null;
-        $identixIconUrl = $identixIcon ? (str_starts_with($identixIcon, 'http') ? $identixIcon : asset('storage/' . $identixIcon)) : null;
+        $identixLogoUrl = null;
+        if ($identixLogo) {
+            if (str_starts_with($identixLogo, 'http') || file_exists(public_path('storage/' . $identixLogo))) {
+                $identixLogoUrl = str_starts_with($identixLogo, 'http') ? $identixLogo : asset('storage/' . $identixLogo);
+            }
+        }
+        $identixIconUrl = null;
+        if ($identixIcon) {
+            if (str_starts_with($identixIcon, 'http') || file_exists(public_path('storage/' . $identixIcon))) {
+                $identixIconUrl = str_starts_with($identixIcon, 'http') ? $identixIcon : asset('storage/' . $identixIcon);
+            }
+        }
     @endphp
 
     <!-- Print / Action Toolbar -->

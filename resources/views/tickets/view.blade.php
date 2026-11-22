@@ -91,8 +91,18 @@
         @php
             $identixLogo = $global_settings['app_logo'] ?? \App\Models\Setting::get('app_logo');
             $identixIcon = $global_settings['app_icon'] ?? \App\Models\Setting::get('app_icon');
-            $identixLogoUrl = $identixLogo ? (str_starts_with($identixLogo, 'http') ? $identixLogo : asset('storage/' . $identixLogo)) : null;
-            $identixIconUrl = $identixIcon ? (str_starts_with($identixIcon, 'http') ? $identixIcon : asset('storage/' . $identixIcon)) : null;
+            $identixLogoUrl = null;
+            if ($identixLogo) {
+                if (str_starts_with($identixLogo, 'http') || file_exists(public_path('storage/' . $identixLogo))) {
+                    $identixLogoUrl = str_starts_with($identixLogo, 'http') ? $identixLogo : asset('storage/' . $identixLogo);
+                }
+            }
+            $identixIconUrl = null;
+            if ($identixIcon) {
+                if (str_starts_with($identixIcon, 'http') || file_exists(public_path('storage/' . $identixIcon))) {
+                    $identixIconUrl = str_starts_with($identixIcon, 'http') ? $identixIcon : asset('storage/' . $identixIcon);
+                }
+            }
         @endphp
 
         <!-- Floating Action Header -->
@@ -144,6 +154,9 @@
     {{-- ============================================================
          RENDER TICKETS USING THE NEW TEMPLATE
          ============================================================ --}}
+    {{-- Anchor target for event slug (#ticket-{slug}) --}}
+    <div id="ticket-{{ $event->slug }}"></div>
+
     @if($isMultiTicket)
         @foreach($activeGroupTickets as $idx => $gt)
             <div id="ticket-{{ $gt->ticket_code }}">
