@@ -451,18 +451,23 @@
                         </div>
 
                         <!-- 2. Header Slogan (Liga & Football Unites Us) -->
+                        @php
+                            $hasHeaderTitle = !empty(trim($template->header_title ?? ''));
+                            $hasHeaderSubtitle = !empty(trim($template->header_subtitle ?? ''));
+                            $showHeaderSlogan = ($hasHeaderTitle || $hasHeaderSubtitle) && ($layoutConfig['header_slogan']['visible'] ?? true);
+                        @endphp
                         <div id="dragItem_header_slogan" 
                              class="drag-item text-center pointer-events-auto"
                              data-key="header_slogan"
                              data-title="Header Liga / Turnamen"
                              data-type="font_size"
                              title="Geser posisi Header Liga"
-                             style="left: {{ $layoutConfig['header_slogan']['x'] ?? 50 }}%; top: {{ $layoutConfig['header_slogan']['y'] ?? 5 }}%; font-size: calc(var(--card-w) * ({{ $layoutConfig['header_slogan']['font_size'] ?? 14 }} / 400)); display: {{ ($layoutConfig['header_slogan']['visible'] ?? true) ? 'block' : 'none' }};">
-                            <div id="previewHeaderTitle" class="font-black uppercase tracking-wider text-white drop-shadow whitespace-nowrap leading-tight">
-                                {{ $template->header_title ?? ($event->season_name ?: 'I LEAGUE 2026/2027') }}
+                             style="left: {{ $layoutConfig['header_slogan']['x'] ?? 50 }}%; top: {{ $layoutConfig['header_slogan']['y'] ?? 5 }}%; font-size: calc(var(--card-w) * ({{ $layoutConfig['header_slogan']['font_size'] ?? 14 }} / 400)); display: {{ $showHeaderSlogan ? 'block' : 'none' }};">
+                            <div id="previewHeaderTitle" class="font-black uppercase tracking-wider text-white drop-shadow whitespace-nowrap leading-tight" style="{{ $hasHeaderTitle ? '' : 'display:none;' }}">
+                                {{ $template->header_title }}
                             </div>
-                            <div id="previewHeaderSubtitle" class="font-black tracking-widest uppercase drop-shadow text-[0.7em] leading-tight" style="color: {{ $template->secondary_color ?? '#F95700' }};">
-                                {{ $template->header_subtitle ?? 'FOOTBALL UNITES US' }}
+                            <div id="previewHeaderSubtitle" class="font-black tracking-widest uppercase drop-shadow text-[0.7em] leading-tight" style="color: {{ $template->secondary_color ?? '#F95700' }}; {{ $hasHeaderSubtitle ? '' : 'display:none;' }}">
+                                {{ $template->header_subtitle }}
                             </div>
                         </div>
 
@@ -542,15 +547,19 @@
                         </div>
 
                         <!-- 8. Category Badge -->
+                        @php
+                            $hasCatFormat = !empty(trim($template->category_label_format ?? ''));
+                            $showCategoryBadge = $template->show_category && $hasCatFormat && ($layoutConfig['category_badge']['visible'] ?? true);
+                        @endphp
                         <div id="dragItem_category_badge" 
                              class="drag-item text-center pointer-events-auto"
                              data-key="category_badge"
                              data-title="Badge Kategori Tiket"
                              data-type="font_size"
                              title="Geser posisi Badge Kategori"
-                             style="left: {{ $layoutConfig['category_badge']['x'] ?? 50 }}%; top: {{ $layoutConfig['category_badge']['y'] ?? 82 }}%; font-size: calc(var(--card-w) * ({{ $layoutConfig['category_badge']['font_size'] ?? 10 }} / 400)); display: {{ ($template->show_category && ($layoutConfig['category_badge']['visible'] ?? true)) ? 'block' : 'none' }};">
+                             style="left: {{ $layoutConfig['category_badge']['x'] ?? 50 }}%; top: {{ $layoutConfig['category_badge']['y'] ?? 82 }}%; font-size: calc(var(--card-w) * ({{ $layoutConfig['category_badge']['font_size'] ?? 10 }} / 400)); display: {{ $showCategoryBadge ? 'block' : 'none' }};">
                             <div id="previewBadgeText" class="font-black uppercase tracking-wider drop-shadow-md whitespace-nowrap leading-none" style="color: {{ $template->secondary_color ?? '#F95700' }};">
-                                {{ str_replace('{category}', 'VIP BARAT', $template->category_label_format ?? '{category} • MATCHDAY COLLECTIBLE') }}
+                                {{ str_replace('{category}', 'VIP BARAT', $template->category_label_format ?? '') }}
                             </div>
                         </div>
 
@@ -594,15 +603,19 @@
                         </div>
 
                         <!-- 12. Footer Slogan -->
+                        @php
+                            $hasFooterText = !empty(trim($template->footer_text ?? ''));
+                            $showFooterText = $hasFooterText && ($layoutConfig['footer_text']['visible'] ?? true);
+                        @endphp
                         <div id="dragItem_footer_text" 
                              class="drag-item text-center pointer-events-auto"
                              data-key="footer_text"
                              data-title="Footer Slogan Bawah"
                              data-type="font_size"
                              title="Geser posisi Slogan Bawah"
-                             style="left: {{ $layoutConfig['footer_text']['x'] ?? 50 }}%; top: {{ $layoutConfig['footer_text']['y'] ?? 97 }}%; font-size: calc(var(--card-w) * ({{ $layoutConfig['footer_text']['font_size'] ?? 9 }} / 400)); display: {{ ($layoutConfig['footer_text']['visible'] ?? true) ? 'block' : 'none' }};">
+                             style="left: {{ $layoutConfig['footer_text']['x'] ?? 50 }}%; top: {{ $layoutConfig['footer_text']['y'] ?? 97 }}%; font-size: calc(var(--card-w) * ({{ $layoutConfig['footer_text']['font_size'] ?? 9 }} / 400)); display: {{ $showFooterText ? 'block' : 'none' }};">
                             <div id="previewFooterText" class="font-bold uppercase tracking-wider text-slate-300 drop-shadow whitespace-nowrap leading-none">
-                                {{ $template->footer_text ?? 'SATU LIGA, SATU SEMANGAT' }}
+                                {{ $template->footer_text }}
                             </div>
                         </div>
 
@@ -999,11 +1012,11 @@
         function updateLivePreview() {
             const primaryColor = document.getElementById('primaryColorInput').value;
             const secondaryColor = document.getElementById('secondaryColorInput').value;
-            const headerTitle = document.getElementById('headerTitleInput').value || 'I LEAGUE 2026/2027';
-            const headerSubtitle = document.getElementById('headerSubtitleInput').value || 'FOOTBALL UNITES US';
-            const badgeText = document.getElementById('badgeTextInput').value || 'MATCHDAY COLLECTIBLE';
-            const formatCat = document.getElementById('categoryLabelFormatInput').value || '{category} • MATCHDAY COLLECTIBLE';
-            const footerText = document.getElementById('footerTextInput').value || 'SATU LIGA, SATU SEMANGAT';
+            const headerTitle = (document.getElementById('headerTitleInput')?.value || '').trim();
+            const headerSubtitle = (document.getElementById('headerSubtitleInput')?.value || '').trim();
+            const badgeText = (document.getElementById('badgeTextInput')?.value || '').trim();
+            const formatCat = (document.getElementById('categoryLabelFormatInput')?.value || '').trim();
+            const footerText = (document.getElementById('footerTextInput')?.value || '').trim();
 
             // Sync texts
             document.getElementById('primaryColorText').value = primaryColor;
@@ -1013,13 +1026,30 @@
             const card = document.getElementById('previewCard');
             if (card) card.style.borderColor = secondaryColor;
 
+            // 1. Header & Subtitle: if both are empty/null, hide element completely!
+            const showHeader = Boolean(headerTitle || headerSubtitle);
+            toggleElementVisibility('header_slogan', showHeader);
             const hTitle = document.getElementById('previewHeaderTitle');
-            if (hTitle) hTitle.innerText = headerTitle;
+            if (hTitle) {
+                if (headerTitle) {
+                    hTitle.innerText = headerTitle;
+                    hTitle.style.display = 'block';
+                } else {
+                    hTitle.innerText = '';
+                    hTitle.style.display = 'none';
+                }
+            }
 
             const hSub = document.getElementById('previewHeaderSubtitle');
             if (hSub) {
-                hSub.innerText = headerSubtitle;
-                hSub.style.color = secondaryColor;
+                if (headerSubtitle) {
+                    hSub.innerText = headerSubtitle;
+                    hSub.style.display = 'block';
+                    hSub.style.color = secondaryColor;
+                } else {
+                    hSub.innerText = '';
+                    hSub.style.display = 'none';
+                }
             }
 
             const fanBadge = document.getElementById('previewFanNameBadge');
@@ -1028,14 +1058,26 @@
                 fanBadge.style.borderColor = secondaryColor;
             }
 
+            // 2. Category Badge: if formatCat is empty/null or toggleCategory unchecked, hide element!
+            const showCategory = document.getElementById('toggleCategory').checked && Boolean(formatCat);
+            toggleElementVisibility('category_badge', showCategory);
             const badgeTextEl = document.getElementById('previewBadgeText');
-            if (badgeTextEl) {
-                badgeTextEl.innerText = formatCat.replace('{category}', 'VIP BARAT');
+            if (badgeTextEl && formatCat) {
+                let renderedCat = formatCat.replace('{category}', 'VIP BARAT');
+                if (badgeText) {
+                    renderedCat = renderedCat.replace('{badge}', badgeText);
+                }
+                badgeTextEl.innerText = renderedCat;
                 badgeTextEl.style.color = secondaryColor;
             }
 
+            // 3. Footer Text: if empty/null, hide element completely!
+            const showFooter = Boolean(footerText);
+            toggleElementVisibility('footer_text', showFooter);
             const fText = document.getElementById('previewFooterText');
-            if (fText) fText.innerText = footerText;
+            if (fText) {
+                fText.innerText = footerText;
+            }
 
             // Visibility Toggles
             const showTeamLogos = document.getElementById('toggleTeamLogos').checked;
@@ -1047,7 +1089,6 @@
 
             toggleElementVisibility('match_info', document.getElementById('toggleMatchInfo').checked);
             toggleElementVisibility('fan_name', document.getElementById('toggleFanName').checked);
-            toggleElementVisibility('category_badge', document.getElementById('toggleCategory').checked);
             toggleElementVisibility('qr_code', document.getElementById('toggleQr').checked);
         }
 

@@ -233,16 +233,20 @@ class PhotoboothService
 
                 // Match Details in White Bar
                 if (!empty($layout['match_info']['visible'] ?? true)) {
-                    $dateStr = $event->event_start_date ? $event->event_start_date->translatedFormat('d F Y') : 'MATCHDAY';
-                    $venueStr = $event->venue ?: 'STADION';
-                    $seasonStr = $template->header_title ?? ($event->season_name ?: 'I LEAGUE 2026/2027');
-                    $matchInfo = strtoupper("{$dateStr}   |   {$venueStr}   |   {$seasonStr}");
-                    $miX = round($width * (($layout['match_info']['x'] ?? 50) / 100));
-                    $miY = round($height * (($layout['match_info']['y'] ?? 86) / 100));
-                    $fontSizeMi = round((($layout['match_info']['font_size'] ?? 11) / 400) * $width * 0.75);
-                    $boxMatch = imagettfbbox($fontSizeMi, 0, $fontFile, $matchInfo);
-                    $wM = abs($boxMatch[2] - $boxMatch[0]);
-                    imagettftext($canvas, $fontSizeMi, 0, round($miX - ($wM / 2)), $miY, $white, $fontFile, $matchInfo);
+                    $parts = array_filter([
+                        $event->event_start_date ? $event->event_start_date->translatedFormat('d F Y') : null,
+                        $event->venue ?: null,
+                        $template->header_title ?: null,
+                    ]);
+                    $matchInfo = strtoupper(implode('   |   ', $parts));
+                    if (!empty($matchInfo)) {
+                        $miX = round($width * (($layout['match_info']['x'] ?? 50) / 100));
+                        $miY = round($height * (($layout['match_info']['y'] ?? 86) / 100));
+                        $fontSizeMi = round((($layout['match_info']['font_size'] ?? 11) / 400) * $width * 0.75);
+                        $boxMatch = imagettfbbox($fontSizeMi, 0, $fontFile, $matchInfo);
+                        $wM = abs($boxMatch[2] - $boxMatch[0]);
+                        imagettftext($canvas, $fontSizeMi, 0, round($miX - ($wM / 2)), $miY, $white, $fontFile, $matchInfo);
+                    }
                 }
 
                 // Fan Name

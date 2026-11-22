@@ -1563,11 +1563,11 @@
         backgroundUrl: @json(!empty($photoboothTemplate->background_image) ? asset('storage/' . $photoboothTemplate->background_image) : null),
         primaryColor: @json($photoboothTemplate->primary_color ?? '#5A2D82'),
         secondaryColor: @json($photoboothTemplate->secondary_color ?? '#F95700'),
-        headerTitle: @json($photoboothTemplate->header_title ?? ($event->season_name ?: 'I LEAGUE 2026/2027')),
-        headerSubtitle: @json($photoboothTemplate->header_subtitle ?? 'FOOTBALL UNITES US'),
-        badgeText: @json($photoboothTemplate->badge_text ?? 'MATCHDAY COLLECTIBLE'),
-        categoryLabelFormat: @json($photoboothTemplate->category_label_format ?? '{category} • MATCHDAY COLLECTIBLE'),
-        footerText: @json($photoboothTemplate->footer_text ?? 'SATU LIGA, SATU SEMANGAT'),
+        headerTitle: @json($photoboothTemplate->header_title),
+        headerSubtitle: @json($photoboothTemplate->header_subtitle),
+        badgeText: @json($photoboothTemplate->badge_text),
+        categoryLabelFormat: @json($photoboothTemplate->category_label_format),
+        footerText: @json($photoboothTemplate->footer_text),
         showCategory: {{ ($photoboothTemplate->show_category ?? true) ? 'true' : 'false' }},
         showFanName: {{ ($photoboothTemplate->show_fan_name ?? true) ? 'true' : 'false' }},
         showQr: {{ ($photoboothTemplate->show_qr ?? true) ? 'true' : 'false' }},
@@ -2201,14 +2201,19 @@
             ctx.stroke();
 
             // Header text
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '900 34px Outfit';
-            ctx.textAlign = 'center';
-            ctx.fillText(KIOSK_CONFIG.headerTitle || 'I LEAGUE 2026/2027', cardW / 2, 80);
+            if (KIOSK_CONFIG.headerTitle) {
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '900 34px Outfit';
+                ctx.textAlign = 'center';
+                ctx.fillText(KIOSK_CONFIG.headerTitle, cardW / 2, 80);
+            }
 
-            ctx.fillStyle = accentColor;
-            ctx.font = '700 22px Outfit';
-            ctx.fillText(KIOSK_CONFIG.headerSubtitle || 'FOOTBALL UNITES US', cardW / 2, 118);
+            if (KIOSK_CONFIG.headerSubtitle) {
+                ctx.fillStyle = accentColor;
+                ctx.font = '700 22px Outfit';
+                ctx.textAlign = 'center';
+                ctx.fillText(KIOSK_CONFIG.headerSubtitle, cardW / 2, 118);
+            }
         }
 
         const activeName = (kioskState.currentPhotoFanName || kioskState.customer.name || 'BRIAN ARIBOWO').toUpperCase();
@@ -2317,13 +2322,16 @@
             }
 
             // Category Badge
-            if (layout.category_badge && layout.category_badge.visible !== false && KIOSK_CONFIG.showCategory) {
+            if (layout.category_badge && layout.category_badge.visible !== false && KIOSK_CONFIG.showCategory && KIOSK_CONFIG.categoryLabelFormat) {
                 const catX = (layout.category_badge.x / 100) * cardW;
                 const catY = (layout.category_badge.y / 100) * cardH;
                 const fontCat = Math.round(((layout.category_badge.font_size || 10) / 400) * cardW * 0.75);
                 const catName = (kioskState.selectedCategory && kioskState.selectedCategory.name) ? kioskState.selectedCategory.name.toUpperCase() : 'VIP';
-                const fmt = KIOSK_CONFIG.categoryLabelFormat || '{category} • MATCHDAY COLLECTIBLE';
-                const catText = fmt.replace('{category}', catName);
+                const fmt = KIOSK_CONFIG.categoryLabelFormat;
+                let catText = fmt.replace('{category}', catName);
+                if (KIOSK_CONFIG.badgeText) {
+                    catText = catText.replace('{badge}', KIOSK_CONFIG.badgeText);
+                }
                 ctx.fillStyle = accentColor;
                 ctx.font = `800 ${fontCat}px Outfit`;
                 ctx.textAlign = 'center';
@@ -2331,18 +2339,18 @@
             }
 
             // Footer Text
-            if (layout.footer_text && layout.footer_text.visible !== false) {
+            if (layout.footer_text && layout.footer_text.visible !== false && KIOSK_CONFIG.footerText) {
                 const ftX = (layout.footer_text.x / 100) * cardW;
                 const ftY = (layout.footer_text.y / 100) * cardH;
                 const fontFt = Math.round(((layout.footer_text.font_size || 9) / 400) * cardW * 0.75);
                 ctx.fillStyle = '#cbd5e1';
                 ctx.font = `700 ${fontFt}px Outfit`;
                 ctx.textAlign = 'center';
-                ctx.fillText(KIOSK_CONFIG.footerText || 'SATU LIGA, SATU SEMANGAT', ftX, ftY);
+                ctx.fillText(KIOSK_CONFIG.footerText, ftX, ftY);
             }
 
             // Header Slogan
-            if (layout.header_slogan && layout.header_slogan.visible !== false) {
+            if (layout.header_slogan && layout.header_slogan.visible !== false && (KIOSK_CONFIG.headerTitle || KIOSK_CONFIG.headerSubtitle)) {
                 const hsX = (layout.header_slogan.x / 100) * cardW;
                 const hsY = (layout.header_slogan.y / 100) * cardH;
                 const fontHs = Math.round(((layout.header_slogan.font_size || 14) / 400) * cardW * 0.75);
@@ -2351,7 +2359,9 @@
                 ctx.textAlign = 'center';
                 ctx.shadowColor = 'rgba(0,0,0,0.85)';
                 ctx.shadowBlur = 6;
-                ctx.fillText(KIOSK_CONFIG.headerTitle || 'I LEAGUE 2026/2027', hsX, hsY);
+                if (KIOSK_CONFIG.headerTitle) {
+                    ctx.fillText(KIOSK_CONFIG.headerTitle, hsX, hsY);
+                }
                 ctx.shadowBlur = 0;
             }
 

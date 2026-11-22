@@ -97,15 +97,15 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-black uppercase tracking-wider text-slate-600 mb-2">Header Liga / Turnamen</label>
-                            <input type="text" id="headerTitleInput" name="header_title" value="{{ old('header_title', $template->header_title ?? 'I LEAGUE 2026/2027') }}"
+                            <input type="text" id="headerTitleInput" name="header_title" value="{{ old('header_title', $template->header_title) }}"
                                    class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
-                                   placeholder="Contoh: I LEAGUE 2026/2027" oninput="updateLivePreview()">
+                                   placeholder="Kosongkan jika tidak ingin ditampilkan" oninput="updateLivePreview()">
                         </div>
                         <div>
                             <label class="block text-xs font-black uppercase tracking-wider text-slate-600 mb-2">Sub-Slogan Atas</label>
-                            <input type="text" id="headerSubtitleInput" name="header_subtitle" value="{{ old('header_subtitle', $template->header_subtitle ?? 'FOOTBALL UNITES US') }}"
+                            <input type="text" id="headerSubtitleInput" name="header_subtitle" value="{{ old('header_subtitle', $template->header_subtitle) }}"
                                    class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
-                                   placeholder="Contoh: FOOTBALL UNITES US" oninput="updateLivePreview()">
+                                   placeholder="Kosongkan jika tidak ingin ditampilkan" oninput="updateLivePreview()">
                         </div>
                     </div>
 
@@ -116,9 +116,9 @@
                             <span class="text-[11px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">Dinamis per Suporter</span>
                         </div>
                         <input type="text" id="categoryFormatInput" name="category_label_format" 
-                               value="{{ old('category_label_format', $template->category_label_format ?? '{category} • MATCHDAY COLLECTIBLE') }}"
+                               value="{{ old('category_label_format', $template->category_label_format) }}"
                                class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
-                               placeholder="Contoh: {category} • MATCHDAY COLLECTIBLE" oninput="updateLivePreview()">
+                               placeholder="Kosongkan jika tidak ingin ditampilkan" oninput="updateLivePreview()">
                         
                         <div class="flex items-center gap-2 mt-2">
                             <span class="text-[11px] text-slate-500 font-medium">Tag variabel:</span>
@@ -132,15 +132,15 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-black uppercase tracking-wider text-slate-600 mb-2">Badge Text Cadangan</label>
-                            <input type="text" id="badgeTextInput" name="badge_text" value="{{ old('badge_text', $template->badge_text ?? 'MATCHDAY COLLECTIBLE') }}"
+                            <input type="text" id="badgeTextInput" name="badge_text" value="{{ old('badge_text', $template->badge_text) }}"
                                    class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
-                                   placeholder="Contoh: MATCHDAY COLLECTIBLE" oninput="updateLivePreview()">
+                                   placeholder="Kosongkan jika tidak ingin ditampilkan" oninput="updateLivePreview()">
                         </div>
                         <div>
                             <label class="block text-xs font-black uppercase tracking-wider text-slate-600 mb-2">Footer Slogan</label>
-                            <input type="text" id="footerTextInput" name="footer_text" value="{{ old('footer_text', $template->footer_text ?? 'SATU LIGA, SATU SEMANGAT') }}"
+                            <input type="text" id="footerTextInput" name="footer_text" value="{{ old('footer_text', $template->footer_text) }}"
                                    class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
-                                   placeholder="Contoh: SATU LIGA, SATU SEMANGAT" oninput="updateLivePreview()">
+                                   placeholder="Kosongkan jika tidak ingin ditampilkan" oninput="updateLivePreview()">
                         </div>
                     </div>
 
@@ -380,11 +380,11 @@
         function updateLivePreview() {
             const primaryColor = document.getElementById('primaryColorInput').value;
             const secondaryColor = document.getElementById('secondaryColorInput').value;
-            const headerTitle = document.getElementById('headerTitleInput').value || 'I LEAGUE 2026/2027';
-            const headerSubtitle = document.getElementById('headerSubtitleInput').value || 'FOOTBALL UNITES US';
-            const categoryFormat = document.getElementById('categoryFormatInput').value || '{category} • MATCHDAY COLLECTIBLE';
-            const badgeText = document.getElementById('badgeTextInput').value || 'MATCHDAY COLLECTIBLE';
-            const footerText = document.getElementById('footerTextInput').value || 'SATU LIGA, SATU SEMANGAT';
+            const headerTitle = (document.getElementById('headerTitleInput')?.value || '').trim();
+            const headerSubtitle = (document.getElementById('headerSubtitleInput')?.value || '').trim();
+            const categoryFormat = (document.getElementById('categoryFormatInput')?.value || '').trim();
+            const badgeText = (document.getElementById('badgeTextInput')?.value || '').trim();
+            const footerText = (document.getElementById('footerTextInput')?.value || '').trim();
             const selectedSimCat = document.getElementById('previewCategorySelect').value;
 
             // Sync color input texts
@@ -397,10 +397,22 @@
             card.style.borderColor = secondaryColor;
 
             // Header Texts
-            document.getElementById('previewHeaderTitle').innerText = headerTitle;
-            document.getElementById('previewHeaderSubtitle').innerText = headerSubtitle;
-            document.getElementById('previewHeaderSubtitle').style.color = secondaryColor;
-            document.getElementById('previewLeagueMini').innerText = headerTitle.split(' ')[0] || 'LEAGUE';
+            const hTitle = document.getElementById('previewHeaderTitle');
+            if (hTitle) {
+                hTitle.innerText = headerTitle;
+                hTitle.style.display = headerTitle ? 'block' : 'none';
+            }
+            const hSub = document.getElementById('previewHeaderSubtitle');
+            if (hSub) {
+                hSub.innerText = headerSubtitle;
+                hSub.style.display = headerSubtitle ? 'block' : 'none';
+                hSub.style.color = secondaryColor;
+            }
+            const leagueMini = document.getElementById('previewLeagueMini');
+            if (leagueMini) {
+                leagueMini.innerText = headerTitle ? (headerTitle.split(' ')[0] || 'LEAGUE') : '';
+                leagueMini.style.display = headerTitle ? 'inline' : 'none';
+            }
 
             // Chevron Ribbon & Fan Name
             const ribbon = document.getElementById('previewChevronRibbon');
@@ -408,22 +420,31 @@
             ribbon.style.borderColor = secondaryColor;
 
             // Dynamic Category formatting
-            let formattedCat = categoryFormat.replace('{category}', selectedSimCat);
             const catBadge = document.getElementById('previewCategoryBadge');
-            catBadge.innerText = formattedCat;
-            catBadge.style.color = secondaryColor;
+            if (catBadge) {
+                if (categoryFormat) {
+                    let formattedCat = categoryFormat.replace('{category}', selectedSimCat);
+                    catBadge.innerText = formattedCat;
+                    catBadge.style.color = secondaryColor;
+                    catBadge.style.display = document.getElementById('toggleShowCategory').checked ? 'block' : 'none';
+                } else {
+                    catBadge.style.display = 'none';
+                }
+            }
 
             // Footer Slogan
-            document.getElementById('previewFooterText').innerText = footerText;
+            const fText = document.getElementById('previewFooterText');
+            if (fText) {
+                fText.innerText = footerText;
+                fText.style.display = footerText ? 'block' : 'none';
+            }
 
             // Toggles
-            const showCat = document.getElementById('toggleShowCategory').checked;
             const showFan = document.getElementById('toggleShowFanName').checked;
             const showMatchup = document.getElementById('toggleShowTeamLogos').checked;
             const showInfo = document.getElementById('toggleShowMatchInfo').checked;
             const showQr = document.getElementById('toggleShowQr').checked;
 
-            catBadge.style.display = showCat ? 'block' : 'none';
             document.getElementById('previewFanName').style.display = showFan ? 'block' : 'none';
             document.getElementById('previewMatchupRow').style.display = showMatchup ? 'flex' : 'none';
             document.getElementById('previewInfoStrip').style.display = showInfo ? 'flex' : 'none';
