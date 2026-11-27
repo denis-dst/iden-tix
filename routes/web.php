@@ -100,8 +100,10 @@ Route::prefix('kiosk')->name('kiosk.')->group(function () {
     Route::post('/{tenant_slug}/checkout', [App\Http\Controllers\Kiosk\KioskController::class, 'checkout'])->name('checkout');
     Route::get('/{tenant_slug}/status/{reference}', [App\Http\Controllers\Kiosk\KioskController::class, 'checkStatus'])->name('status');
     Route::post('/{tenant_slug}/simulate-pay/{reference}', [App\Http\Controllers\Kiosk\KioskController::class, 'simulatePayment'])->name('simulate-pay');
+    Route::get('/{tenant_slug}/print/{reference}', [App\Http\Controllers\Kiosk\KioskController::class, 'printThermal'])->name('print');
     Route::post('/{tenant_slug}/photo/save', [App\Http\Controllers\Kiosk\KioskController::class, 'savePhoto'])->name('photo.save');
     Route::post('/{tenant_slug}/redeem/lookup', [App\Http\Controllers\Kiosk\KioskController::class, 'redeemLookup'])->name('redeem.lookup');
+    Route::post('/{tenant_slug}/redeem/process', [App\Http\Controllers\Kiosk\KioskController::class, 'redeemProcess'])->name('redeem.process');
 });
 
 // Tenant Specific Public Event Listing (e.g. /lampung-youth/list-event/)

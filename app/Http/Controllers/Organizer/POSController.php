@@ -258,6 +258,7 @@ class POSController extends Controller
             ->with('success', $message)
             ->with('active_transaction_id', $transaction->id)
             ->with('active_evoucher_url', $activeTicket ? route('tickets.view', $activeTicket->ticket_code) : null)
+            ->with('active_print_url', ($flow === 'both' || $flow === 'print') ? route('organizer.pos.print', $transaction) : null)
             ->with('active_whatsapp_url', $waUrl);
     }
 
@@ -266,8 +267,8 @@ class POSController extends Controller
         $transaction->load(['event', 'tenant', 'tickets.category']);
         $this->authorizeTenant($transaction->event);
 
-        if (($transaction->event->purchase_flow ?? 'redeem') !== 'print') {
-            abort(403, 'Cetak termal hanya tersedia untuk event dengan flow Cetak Ticket Langsung.');
+        if (!in_array($transaction->event->purchase_flow ?? 'redeem', ['print', 'both'], true)) {
+            abort(403, 'Cetak termal hanya tersedia untuk event dengan flow Cetak Ticket atau Evoucher + Cetak.');
         }
 
         return view('organizer.pos.print', compact('transaction'));

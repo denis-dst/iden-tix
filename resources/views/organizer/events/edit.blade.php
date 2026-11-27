@@ -32,12 +32,15 @@
                 <p class="text-gray-500 font-medium">Manage your event details and ticket tiers.</p>
             </div>
             <div class="flex flex-wrap items-center gap-3">
-                <form action="{{ route('organizer.events.duplicate', $event) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menduplikasi event ini beserta seluruh kategori tiket dan gerbang gate? (Kode verifikasi event baru akan di-generate otomatis)')" class="inline">
+                <form action="{{ route('organizer.events.duplicate', $event) }}" method="POST"
+                    onsubmit="return confirm('Apakah Anda yakin ingin menduplikasi event ini beserta seluruh kategori tiket dan gerbang gate? (Kode verifikasi event baru akan di-generate otomatis)')"
+                    class="inline">
                     @csrf
                     <button type="submit"
                         class="px-5 py-2.5 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition shadow-sm flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
                         </svg>
                         Duplikasi Event
                     </button>
@@ -136,14 +139,16 @@
 
                         <!-- Tipe Event -->
                         <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Tipe Event *</label>
-                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" x-data="{ selectedType: '{{ old('type', $event->type ?? 'concert') }}' }">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Tipe
+                                Event *</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
+                                x-data="{ selectedType: '{{ old('type', $event->type ?? 'concert') }}' }">
                                 <input type="hidden" name="type" :value="selectedType">
-                                
+
                                 <!-- Konser Musik -->
                                 <button type="button" @click="selectedType = 'concert'"
-                                        :class="selectedType === 'concert' ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-200 text-orange-950 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'"
-                                        class="p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between h-24">
+                                    :class="selectedType === 'concert' ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-200 text-orange-950 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'"
+                                    class="p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between h-24">
                                     <span class="text-2xl">🎵</span>
                                     <div>
                                         <p class="text-xs font-black">Konser Musik</p>
@@ -153,8 +158,8 @@
 
                                 <!-- Olahraga -->
                                 <button type="button" @click="selectedType = 'sport'"
-                                        :class="selectedType === 'sport' ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-200 text-orange-950 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'"
-                                        class="p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between h-24">
+                                    :class="selectedType === 'sport' ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-200 text-orange-950 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'"
+                                    class="p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between h-24">
                                     <span class="text-2xl">⚽</span>
                                     <div>
                                         <p class="text-xs font-black">Olahraga</p>
@@ -164,8 +169,8 @@
 
                                 <!-- Festival & Expo -->
                                 <button type="button" @click="selectedType = 'festival'"
-                                        :class="selectedType === 'festival' ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-200 text-orange-950 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'"
-                                        class="p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between h-24">
+                                    :class="selectedType === 'festival' ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-200 text-orange-950 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'"
+                                    class="p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between h-24">
                                     <span class="text-2xl">🎪</span>
                                     <div>
                                         <p class="text-xs font-black">Festival & Expo</p>
@@ -175,8 +180,8 @@
 
                                 <!-- Seminar & Workshop -->
                                 <button type="button" @click="selectedType = 'seminar'"
-                                        :class="selectedType === 'seminar' ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-200 text-orange-950 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'"
-                                        class="p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between h-24">
+                                    :class="selectedType === 'seminar' ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-200 text-orange-950 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'"
+                                    class="p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between h-24">
                                     <span class="text-2xl">🎓</span>
                                     <div>
                                         <p class="text-xs font-black">Seminar</p>
@@ -186,8 +191,8 @@
 
                                 <!-- Lainnya -->
                                 <button type="button" @click="selectedType = 'other'"
-                                        :class="selectedType === 'other' ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-200 text-orange-950 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'"
-                                        class="p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between h-24 col-span-2 sm:col-span-1">
+                                    :class="selectedType === 'other' ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-200 text-orange-950 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'"
+                                    class="p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between h-24 col-span-2 sm:col-span-1">
                                     <span class="text-2xl">✨</span>
                                     <div>
                                         <p class="text-xs font-black">Acara Lainnya</p>
@@ -251,16 +256,25 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label
-                                    class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Status Publikasi Event</label>
+                                    class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Status
+                                    Publikasi Event</label>
                                 <select name="status"
                                     class="w-full rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition text-sm font-bold text-slate-800">
-                                    <option value="draft" {{ $event->status == 'draft' ? 'selected' : '' }}>📝 Draft</option>
-                                    <option value="published" {{ $event->status == 'published' ? 'selected' : '' }}>🌐 Published (Publik - Tampil di Beranda)</option>
-                                    <option value="finished" {{ $event->status == 'finished' ? 'selected' : '' }}>🏁 Finished (Acara Selesai - Tetap Tampil di Beranda)</option>
-                                    <option value="private" {{ $event->status == 'private' ? 'selected' : '' }}>🔒 Private (Hanya via Link, Tidak Tampil di Beranda)</option>
-                                    <option value="cancelled" {{ $event->status == 'cancelled' ? 'selected' : '' }}>❌ Cancelled</option>
+                                    <option value="draft" {{ $event->status == 'draft' ? 'selected' : '' }}>📝 Draft
+                                    </option>
+                                    <option value="published" {{ $event->status == 'published' ? 'selected' : '' }}>🌐
+                                        Published (Publik - Tampil di Beranda)</option>
+                                    <option value="finished" {{ $event->status == 'finished' ? 'selected' : '' }}>🏁
+                                        Finished (Acara Selesai - Tetap Tampil di Beranda)</option>
+                                    <option value="private" {{ $event->status == 'private' ? 'selected' : '' }}>🔒 Private
+                                        (Hanya via Link, Tidak Tampil di Beranda)</option>
+                                    <option value="cancelled" {{ $event->status == 'cancelled' ? 'selected' : '' }}>❌
+                                        Cancelled</option>
                                 </select>
-                                <p class="text-[10px] text-gray-400 mt-1 italic">Event berstatus <strong>Private</strong> tidak ditampilkan di halaman depan, namun siapapun dengan link dapat memesan tiket.</p>
+                                <p class="text-[10px] text-gray-400 mt-1 italic">Event berstatus
+                                    <strong>Private</strong> tidak ditampilkan di halaman depan, namun siapapun dengan
+                                    link dapat memesan tiket.
+                                </p>
                             </div>
                             <div>
                                 <label
@@ -295,30 +309,46 @@
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
                                     <span class="p-2 rounded-xl bg-purple-100 text-purple-700">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
                                     </span>
                                     <div>
-                                        <h3 class="text-lg font-black text-slate-800">Bingkai Photobooth Matchday (Kiosk)</h3>
-                                        <p class="text-xs text-slate-500">Unggah bingkai frame custom (PNG transparan) untuk sesi foto suporter di terminal KIOSK.</p>
+                                        <h3 class="text-lg font-black text-slate-800">Bingkai Photobooth Matchday
+                                            (Kiosk)</h3>
+                                        <p class="text-xs text-slate-500">Unggah bingkai frame custom (PNG transparan)
+                                            untuk sesi foto suporter di terminal KIOSK.</p>
                                     </div>
                                 </div>
-                                <a href="{{ route('organizer.photobooth.edit', $event) }}" class="text-xs font-black text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-xl border border-purple-200 transition">
+                                <a href="{{ route('organizer.photobooth.edit', $event) }}"
+                                    class="text-xs font-black text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-xl border border-purple-200 transition">
                                     Editor & Live Preview Lengkap &rarr;
                                 </a>
                             </div>
 
                             <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
-                                <input type="hidden" name="remove_photobooth_frame" id="remove_photobooth_frame_input" value="0">
+                                <input type="hidden" name="remove_photobooth_frame" id="remove_photobooth_frame_input"
+                                    value="0">
                                 <div class="flex items-center justify-between">
-                                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Custom Frame Overlay (PNG Transparan)</label>
+                                    <label
+                                        class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Custom
+                                        Frame Overlay (PNG Transparan)</label>
                                     <div class="flex items-center gap-2">
-                                        <span id="eventFrameStatusBadge" class="text-[10px] font-bold {{ $currentFrameUrl ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600' }} px-2.5 py-0.5 rounded-full">
+                                        <span id="eventFrameStatusBadge"
+                                            class="text-[10px] font-bold {{ $currentFrameUrl ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600' }} px-2.5 py-0.5 rounded-full">
                                             {{ $currentFrameUrl ? 'Frame Terpasang' : 'Belum Diupload' }}
                                         </span>
                                         @if($currentFrameUrl)
-                                            <button type="button" id="btnEventResetFrame" onclick="resetEventPhotoboothFrame()" 
-                                                    class="text-[11px] font-bold text-red-600 hover:text-red-700 bg-white hover:bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 transition flex items-center gap-1 shadow-xs">
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                            <button type="button" id="btnEventResetFrame"
+                                                onclick="resetEventPhotoboothFrame()"
+                                                class="text-[11px] font-bold text-red-600 hover:text-red-700 bg-white hover:bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 transition flex items-center gap-1 shadow-xs">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
                                                 <span>Reset Frame</span>
                                             </button>
                                         @endif
@@ -326,18 +356,25 @@
                                 </div>
 
                                 @if($currentFrameUrl)
-                                    <div id="eventActiveFrameBox" class="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200">
-                                        <img src="{{ $currentFrameUrl }}" class="h-16 w-12 object-contain bg-slate-900 rounded border border-slate-300 shadow-xs" alt="Bingkai Frame">
+                                    <div id="eventActiveFrameBox"
+                                        class="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200">
+                                        <img src="{{ $currentFrameUrl }}"
+                                            class="h-16 w-12 object-contain bg-slate-900 rounded border border-slate-300 shadow-xs"
+                                            alt="Bingkai Frame">
                                         <div class="text-xs">
                                             <div class="font-bold text-slate-800">Bingkai Matchday Aktif</div>
-                                            <div class="text-slate-500 text-[11px] truncate max-w-xs">{{ basename($pbTemplate->frame_overlay) }}</div>
+                                            <div class="text-slate-500 text-[11px] truncate max-w-xs">
+                                                {{ basename($pbTemplate->frame_overlay) }}
+                                            </div>
                                         </div>
                                     </div>
                                 @endif
 
-                                <input type="file" name="photobooth_frame_overlay" id="event_photobooth_frame_input" accept="image/png"
+                                <input type="file" name="photobooth_frame_overlay" id="event_photobooth_frame_input"
+                                    accept="image/png"
                                     class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 transition cursor-pointer">
-                                <p class="text-[11px] text-slate-500">Unggah file bingkai baru untuk menggantikan frame yang sedang aktif di kiosk.</p>
+                                <p class="text-[11px] text-slate-500">Unggah file bingkai baru untuk menggantikan frame
+                                    yang sedang aktif di kiosk.</p>
                             </div>
                         </div>
 
@@ -416,44 +453,70 @@
                         <div class="pt-4 border-t border-gray-100 space-y-3">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <h3 class="text-sm font-black text-slate-700 uppercase tracking-[0.18em]">Privasi & Identitas di E-Voucher</h3>
-                                    <p class="text-xs text-slate-400 mt-0.5">Pilih data identitas yang diizinkan tercetak pada lembar fisik E-Voucher (UU PDP & Pencegahan Penyalahgunaan Data).</p>
+                                    <h3 class="text-sm font-black text-slate-700 uppercase tracking-[0.18em]">Privasi &
+                                        Identitas di E-Voucher</h3>
+                                    <p class="text-xs text-slate-400 mt-0.5">Pilih data identitas yang diizinkan
+                                        tercetak pada lembar fisik E-Voucher (UU PDP & Pencegahan Penyalahgunaan Data).
+                                    </p>
                                 </div>
-                                <span class="text-[10px] font-black px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
+                                <span
+                                    class="text-[10px] font-black px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
                                     Privacy Protected
                                 </span>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <label class="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
-                                    <input type="checkbox" name="evoucher_show_nik" value="1" class="w-4 h-4 mt-0.5 text-orange-500 rounded border-slate-300 focus:ring-orange-500" {{ $optShowNik ? 'checked' : '' }}>
+                                <label
+                                    class="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
+                                    <input type="checkbox" name="evoucher_show_nik" value="1"
+                                        class="w-4 h-4 mt-0.5 text-orange-500 rounded border-slate-300 focus:ring-orange-500"
+                                        {{ $optShowNik ? 'checked' : '' }}>
                                     <div class="text-xs">
-                                        <span class="block font-black text-slate-800">Tampilkan Nomor Identitas / NIK</span>
-                                        <span class="block text-slate-500 text-[11px] mt-0.5 leading-snug">Disarankan dinonaktifkan jika tiket fisik rentan tercecer di tribun.</span>
+                                        <span class="block font-black text-slate-800">Tampilkan Nomor Identitas /
+                                            NIK</span>
+                                        <span class="block text-slate-500 text-[11px] mt-0.5 leading-snug">Disarankan
+                                            dinonaktifkan jika tiket fisik rentan tercecer di tribun.</span>
                                     </div>
                                 </label>
 
-                                <label class="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
-                                    <input type="checkbox" name="evoucher_show_phone" value="1" class="w-4 h-4 mt-0.5 text-orange-500 rounded border-slate-300 focus:ring-orange-500" {{ $optShowPhone ? 'checked' : '' }}>
+                                <label
+                                    class="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
+                                    <input type="checkbox" name="evoucher_show_phone" value="1"
+                                        class="w-4 h-4 mt-0.5 text-orange-500 rounded border-slate-300 focus:ring-orange-500"
+                                        {{ $optShowPhone ? 'checked' : '' }}>
                                     <div class="text-xs">
-                                        <span class="block font-black text-slate-800">Tampilkan No. Telepon / WhatsApp</span>
-                                        <span class="block text-slate-500 text-[11px] mt-0.5 leading-snug">Cegah nomor telepon suporter tersebar saat tiket dibuang.</span>
+                                        <span class="block font-black text-slate-800">Tampilkan No. Telepon /
+                                            WhatsApp</span>
+                                        <span class="block text-slate-500 text-[11px] mt-0.5 leading-snug">Cegah nomor
+                                            telepon suporter tersebar saat tiket dibuang.</span>
                                     </div>
                                 </label>
 
-                                <label class="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
-                                    <input type="checkbox" name="evoucher_show_gender" value="1" class="w-4 h-4 mt-0.5 text-orange-500 rounded border-slate-300 focus:ring-orange-500" {{ $optShowGender ? 'checked' : '' }}>
+                                <label
+                                    class="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
+                                    <input type="checkbox" name="evoucher_show_gender" value="1"
+                                        class="w-4 h-4 mt-0.5 text-orange-500 rounded border-slate-300 focus:ring-orange-500"
+                                        {{ $optShowGender ? 'checked' : '' }}>
                                     <div class="text-xs">
-                                        <span class="block font-black text-slate-800">Tampilkan Gender / Jenis Kelamin</span>
-                                        <span class="block text-slate-500 text-[11px] mt-0.5 leading-snug">Hanya diperlukan jika ada tribun khusus pria/wanita.</span>
+                                        <span class="block font-black text-slate-800">Tampilkan Gender / Jenis
+                                            Kelamin</span>
+                                        <span class="block text-slate-500 text-[11px] mt-0.5 leading-snug">Hanya
+                                            diperlukan jika ada tribun khusus pria/wanita.</span>
                                     </div>
                                 </label>
 
-                                <label class="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
-                                    <input type="checkbox" name="evoucher_mask_sensitive_data" value="1" class="w-4 h-4 mt-0.5 text-orange-500 rounded border-slate-300 focus:ring-orange-500" {{ $optMaskPii ? 'checked' : '' }}>
+                                <label
+                                    class="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
+                                    <input type="checkbox" name="evoucher_mask_sensitive_data" value="1"
+                                        class="w-4 h-4 mt-0.5 text-orange-500 rounded border-slate-300 focus:ring-orange-500"
+                                        {{ $optMaskPii ? 'checked' : '' }}>
                                     <div class="text-xs">
-                                        <span class="block font-black text-slate-800">Sensor Otomatis (Masking) NIK & HP</span>
-                                        <span class="block text-slate-500 text-[11px] mt-0.5 leading-snug">Contoh: <code class="font-bold text-orange-600">320412******0001</code> dan <code class="font-bold text-orange-600">62896****1907</code> agar aman saat dicetak.</span>
+                                        <span class="block font-black text-slate-800">Sensor Otomatis (Masking) NIK &
+                                            HP</span>
+                                        <span class="block text-slate-500 text-[11px] mt-0.5 leading-snug">Contoh: <code
+                                                class="font-bold text-orange-600">320412******0001</code> dan <code
+                                                class="font-bold text-orange-600">62896****1907</code> agar aman saat
+                                            dicetak.</span>
                                     </div>
                                 </label>
                             </div>
@@ -505,7 +568,7 @@
                                 </label>
                             </div>
 
-                            <div x-show="flow === 'print'" x-cloak
+                            <div x-show="flow === 'print' || flow === 'both'" x-cloak
                                 class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
                                 <div>
                                     <label
@@ -527,14 +590,14 @@
                                 </div>
                             </div>
                         </div>
-                                              @php
+                        @php
                             $currentGender = old('attendee_gender_type', $event->getAttendeeGenderSetting());
                             $existingCustomFields = $event->getCustomFields();
                             $rawCustomFields = old('custom_fields_json') ? json_decode(old('custom_fields_json'), true) : $existingCustomFields;
                             if (!is_array($rawCustomFields)) {
                                 $rawCustomFields = [];
                             }
-                            $formattedExistingFields = array_map(function($f) {
+                            $formattedExistingFields = array_map(function ($f) {
                                 return [
                                     'id' => $f['id'] ?? ('cf_' . \Illuminate\Support\Str::random(6)),
                                     'label' => $f['label'] ?? '',
@@ -548,24 +611,25 @@
                             }, $rawCustomFields);
 
                             if (empty($formattedExistingFields) && old('custom_question_text')) {
-                                $formattedExistingFields = [[
-                                    'id' => 'cf_1',
-                                    'label' => old('custom_question_text', ''),
-                                    'type' => old('custom_question_type', 'text'),
-                                    'placeholder' => old('custom_question_placeholder', ''),
-                                    'helper_text' => old('custom_question_helper', ''),
-                                    'options' => old('custom_question_options', ''),
-                                    'is_required' => false,
-                                    'show_in_evoucher' => true,
-                                ]];
+                                $formattedExistingFields = [
+                                    [
+                                        'id' => 'cf_1',
+                                        'label' => old('custom_question_text', ''),
+                                        'type' => old('custom_question_type', 'text'),
+                                        'placeholder' => old('custom_question_placeholder', ''),
+                                        'helper_text' => old('custom_question_helper', ''),
+                                        'options' => old('custom_question_options', ''),
+                                        'is_required' => false,
+                                        'show_in_evoucher' => true,
+                                    ]
+                                ];
                             }
                         @endphp
 
                         {{-- ============================================================
-                             CUSTOM QUESTIONS & ATTENDEE GENDER SETTINGS
-                             ============================================================ --}}
-                        <div class="pt-6 border-t-2 border-dashed border-amber-200 space-y-4"
-                             x-data="{
+                        CUSTOM QUESTIONS & ATTENDEE GENDER SETTINGS
+                        ============================================================ --}}
+                        <div class="pt-6 border-t-2 border-dashed border-amber-200 space-y-4" x-data="{
                                 questionEnabled: {{ old('custom_question_enabled', ($event->umroh_question_enabled || !empty($formattedExistingFields)) ? 1 : 0) ? 'true' : 'false' }},
                                 genderSetting: '{{ $currentGender }}',
                                 questions: @js($formattedExistingFields),
@@ -587,63 +651,88 @@
                              }">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <h4 class="text-sm font-black text-slate-700 uppercase tracking-[0.18em]">📋 Kustomisasi Data & Pertanyaan Peserta</h4>
-                                    <p class="text-xs text-slate-400 mt-0.5">Atur pertanyaan kustom mandiri yang harus diisi peserta saat checkout.</p>
+                                    <h4 class="text-sm font-black text-slate-700 uppercase tracking-[0.18em]">📋
+                                        Kustomisasi Data & Pertanyaan Peserta</h4>
+                                    <p class="text-xs text-slate-400 mt-0.5">Atur pertanyaan kustom mandiri yang harus
+                                        diisi peserta saat checkout.</p>
                                 </div>
                             </div>
 
                             <!-- Custom Question Toggle -->
-                            <label class="flex items-center gap-4 p-5 border-2 rounded-2xl cursor-pointer transition hover:border-amber-400"
-                                   :class="questionEnabled ? 'border-amber-500 bg-amber-50/70' : 'border-slate-200 bg-slate-50'">
+                            <label
+                                class="flex items-center gap-4 p-5 border-2 rounded-2xl cursor-pointer transition hover:border-amber-400"
+                                :class="questionEnabled ? 'border-amber-500 bg-amber-50/70' : 'border-slate-200 bg-slate-50'">
                                 <div class="relative shrink-0">
-                                    <input type="checkbox" name="custom_question_enabled" id="custom_question_enabled_edit" value="1" 
-                                           x-model="questionEnabled"
-                                           class="sr-only">
-                                    <div :class="questionEnabled ? 'bg-amber-500' : 'bg-slate-300'" class="w-12 h-6 rounded-full transition-colors duration-200">
-                                        <div :class="questionEnabled ? 'translate-x-6' : 'translate-x-1'" class="w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-200 mt-1"></div>
+                                    <input type="checkbox" name="custom_question_enabled"
+                                        id="custom_question_enabled_edit" value="1" x-model="questionEnabled"
+                                        class="sr-only">
+                                    <div :class="questionEnabled ? 'bg-amber-500' : 'bg-slate-300'"
+                                        class="w-12 h-6 rounded-full transition-colors duration-200">
+                                        <div :class="questionEnabled ? 'translate-x-6' : 'translate-x-1'"
+                                            class="w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-200 mt-1">
+                                        </div>
                                     </div>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-black text-slate-800">Aktifkan Pertanyaan Custom Data Peserta</p>
-                                    <p class="text-xs text-slate-500">Customer mengisi data pertanyaan tambahan saat registrasi (misal: NIK, Ukuran Kaos, Asal Instansi, Nama Hewan, dsb)</p>
+                                    <p class="text-sm font-black text-slate-800">Aktifkan Pertanyaan Custom Data Peserta
+                                    </p>
+                                    <p class="text-xs text-slate-500">Customer mengisi data pertanyaan tambahan saat
+                                        registrasi (misal: NIK, Ukuran Kaos, Asal Instansi, Nama Hewan, dsb)</p>
                                 </div>
                             </label>
 
-                            <input type="hidden" name="custom_fields_json" :value="questionEnabled ? JSON.stringify(questions) : '[]'">
-                            <input type="hidden" name="umroh_question_enabled" :value="questionEnabled && questions.length > 0 ? 1 : 0">
+                            <input type="hidden" name="custom_fields_json"
+                                :value="questionEnabled ? JSON.stringify(questions) : '[]'">
+                            <input type="hidden" name="umroh_question_enabled"
+                                :value="questionEnabled && questions.length > 0 ? 1 : 0">
 
                             <!-- Question List Cards -->
-                            <div x-show="questionEnabled" x-cloak class="p-5 bg-amber-50/60 border border-amber-200 rounded-2xl space-y-4">
+                            <div x-show="questionEnabled" x-cloak
+                                class="p-5 bg-amber-50/60 border border-amber-200 rounded-2xl space-y-4">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-black text-amber-900 uppercase tracking-wider font-outfit">Daftar Pertanyaan Peserta</span>
-                                    <button type="button" 
-                                            @click="addQuestion()"
-                                            class="px-3.5 py-1.5 bg-amber-600 text-white rounded-xl text-xs font-black uppercase hover:bg-amber-700 transition flex items-center gap-1 shadow-sm">
+                                    <span
+                                        class="text-xs font-black text-amber-900 uppercase tracking-wider font-outfit">Daftar
+                                        Pertanyaan Peserta</span>
+                                    <button type="button" @click="addQuestion()"
+                                        class="px-3.5 py-1.5 bg-amber-600 text-white rounded-xl text-xs font-black uppercase hover:bg-amber-700 transition flex items-center gap-1 shadow-sm">
                                         <span>+ Tambah Pertanyaan</span>
                                     </button>
                                 </div>
 
                                 <div class="space-y-4">
                                     <template x-for="(q, idx) in questions" :key="q.id || idx">
-                                        <div class="p-4 bg-white border border-amber-200 rounded-2xl space-y-3 relative shadow-xs">
+                                        <div
+                                            class="p-4 bg-white border border-amber-200 rounded-2xl space-y-3 relative shadow-xs">
                                             <div class="flex items-center justify-between">
-                                                <span class="text-xs font-black text-slate-800 uppercase tracking-wider" x-text="'Pertanyaan #' + (idx + 1)"></span>
-                                                <button type="button" 
-                                                        @click="removeQuestion(idx)" 
-                                                        class="text-slate-400 hover:text-rose-600 transition text-xs font-bold flex items-center gap-1">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                <span class="text-xs font-black text-slate-800 uppercase tracking-wider"
+                                                    x-text="'Pertanyaan #' + (idx + 1)"></span>
+                                                <button type="button" @click="removeQuestion(idx)"
+                                                    class="text-slate-400 hover:text-rose-600 transition text-xs font-bold flex items-center gap-1">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
                                                     <span>Hapus</span>
                                                 </button>
                                             </div>
 
                                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                                                 <div class="md:col-span-2">
-                                                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Teks / Label Pertanyaan <span class="text-rose-500">*</span></label>
-                                                    <input type="text" x-model="q.label" placeholder="Contoh: Ukuran Kaos / Asal Komunitas / Nama & Ras Kucing" class="w-full text-xs rounded-xl border-slate-200 focus:border-amber-500 focus:ring-amber-500 font-bold py-2.5 px-3 text-slate-800">
+                                                    <label
+                                                        class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Teks
+                                                        / Label Pertanyaan <span class="text-rose-500">*</span></label>
+                                                    <input type="text" x-model="q.label"
+                                                        placeholder="Contoh: Ukuran Kaos / Asal Komunitas / Nama & Ras Kucing"
+                                                        class="w-full text-xs rounded-xl border-slate-200 focus:border-amber-500 focus:ring-amber-500 font-bold py-2.5 px-3 text-slate-800">
                                                 </div>
                                                 <div>
-                                                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Tipe Input</label>
-                                                    <select x-model="q.type" class="w-full text-xs rounded-xl border-slate-200 focus:border-amber-500 focus:ring-amber-500 font-bold py-2.5 px-3 text-slate-800 bg-white">
+                                                    <label
+                                                        class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Tipe
+                                                        Input</label>
+                                                    <select x-model="q.type"
+                                                        class="w-full text-xs rounded-xl border-slate-200 focus:border-amber-500 focus:ring-amber-500 font-bold py-2.5 px-3 text-slate-800 bg-white">
                                                         <option value="text">Teks Singkat (Input)</option>
                                                         <option value="textarea">Teks Panjang (Textarea)</option>
                                                         <option value="select">Pilihan Dropdown (Select)</option>
@@ -654,60 +743,90 @@
                                                 </div>
                                             </div>
 
-                                            <div x-show="q.type === 'phone'" x-cloak class="p-2.5 bg-emerald-50/80 rounded-xl border border-emerald-200/80 flex items-center gap-2 text-emerald-800 text-xs">
+                                            <div x-show="q.type === 'phone'" x-cloak
+                                                class="p-2.5 bg-emerald-50/80 rounded-xl border border-emerald-200/80 flex items-center gap-2 text-emerald-800 text-xs">
                                                 <span>📱</span>
-                                                <span>Otomatis dilengkapi pemilih kode negara (default <strong>+62 Indonesia</strong>) dan validasi nomor HP.</span>
+                                                <span>Otomatis dilengkapi pemilih kode negara (default <strong>+62
+                                                        Indonesia</strong>) dan validasi nomor HP.</span>
                                             </div>
 
-                                            <div x-show="q.type === 'date'" x-cloak class="p-2.5 bg-sky-50/80 rounded-xl border border-sky-200/80 flex items-center gap-2 text-sky-800 text-xs">
+                                            <div x-show="q.type === 'date'" x-cloak
+                                                class="p-2.5 bg-sky-50/80 rounded-xl border border-sky-200/80 flex items-center gap-2 text-sky-800 text-xs">
                                                 <span>📅</span>
-                                                <span>Otomatis menggunakan <strong>pemilih kalender</strong> agar penulisan tanggal seragam.</span>
+                                                <span>Otomatis menggunakan <strong>pemilih kalender</strong> agar
+                                                    penulisan tanggal seragam.</span>
                                             </div>
 
-                                            <div x-show="q.type === 'select'" x-cloak class="p-3 bg-amber-50/50 rounded-xl border border-amber-200/60">
-                                                <label class="block text-[10px] font-black text-amber-900 uppercase tracking-widest mb-1">Pilihan Dropdown (Satu opsi per baris)</label>
-                                                <textarea x-model="q.options" rows="3" placeholder="Contoh:&#10;S (Small)&#10;M (Medium)&#10;L (Large)&#10;XL (Extra Large)" class="w-full text-xs rounded-xl border-slate-200 focus:border-amber-500 focus:ring-amber-500 font-medium py-2 px-3 text-slate-800"></textarea>
+                                            <div x-show="q.type === 'select'" x-cloak
+                                                class="p-3 bg-amber-50/50 rounded-xl border border-amber-200/60">
+                                                <label
+                                                    class="block text-[10px] font-black text-amber-900 uppercase tracking-widest mb-1">Pilihan
+                                                    Dropdown (Satu opsi per baris)</label>
+                                                <textarea x-model="q.options" rows="3"
+                                                    placeholder="Contoh:&#10;S (Small)&#10;M (Medium)&#10;L (Large)&#10;XL (Extra Large)"
+                                                    class="w-full text-xs rounded-xl border-slate-200 focus:border-amber-500 focus:ring-amber-500 font-medium py-2 px-3 text-slate-800"></textarea>
                                             </div>
 
                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                 <div>
-                                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Teks Placeholder (Opsional)</label>
-                                                    <input type="text" x-model="q.placeholder" placeholder="Contoh: Tuliskan jawaban Anda..." class="w-full text-xs rounded-xl border-slate-200 focus:border-amber-500 focus:ring-amber-500 font-medium py-2 px-3 text-slate-600">
+                                                    <label
+                                                        class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Teks
+                                                        Placeholder (Opsional)</label>
+                                                    <input type="text" x-model="q.placeholder"
+                                                        placeholder="Contoh: Tuliskan jawaban Anda..."
+                                                        class="w-full text-xs rounded-xl border-slate-200 focus:border-amber-500 focus:ring-amber-500 font-medium py-2 px-3 text-slate-600">
                                                 </div>
                                                 <div>
-                                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Petunjuk Tambahan (Opsional)</label>
-                                                    <input type="text" x-model="q.helper_text" placeholder="Contoh: Wajib diisi sesuai KTP" class="w-full text-xs rounded-xl border-slate-200 focus:border-amber-500 focus:ring-amber-500 font-medium py-2 px-3 text-slate-600">
+                                                    <label
+                                                        class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Petunjuk
+                                                        Tambahan (Opsional)</label>
+                                                    <input type="text" x-model="q.helper_text"
+                                                        placeholder="Contoh: Wajib diisi sesuai KTP"
+                                                        class="w-full text-xs rounded-xl border-slate-200 focus:border-amber-500 focus:ring-amber-500 font-medium py-2 px-3 text-slate-600">
                                                 </div>
                                             </div>
 
-                                            <div class="pt-2 flex flex-wrap items-center gap-5 border-t border-amber-100">
-                                                <label class="inline-flex items-center gap-2 cursor-pointer select-none">
-                                                    <input type="checkbox" x-model="q.is_required" class="w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500">
-                                                    <span class="text-xs font-bold text-slate-700">Wajib diisi customer saat transaksi</span>
+                                            <div
+                                                class="pt-2 flex flex-wrap items-center gap-5 border-t border-amber-100">
+                                                <label
+                                                    class="inline-flex items-center gap-2 cursor-pointer select-none">
+                                                    <input type="checkbox" x-model="q.is_required"
+                                                        class="w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500">
+                                                    <span class="text-xs font-bold text-slate-700">Wajib diisi customer
+                                                        saat transaksi</span>
                                                 </label>
 
-                                                <label class="inline-flex items-center gap-2 cursor-pointer select-none">
-                                                    <input type="checkbox" x-model="q.show_in_evoucher" class="w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500">
-                                                    <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                                <label
+                                                    class="inline-flex items-center gap-2 cursor-pointer select-none">
+                                                    <input type="checkbox" x-model="q.show_in_evoucher"
+                                                        class="w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500">
+                                                    <span
+                                                        class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                                                         <span>🎫 Tampilkan di E-Voucher</span>
-                                                        <span class="text-[10px] text-slate-400 font-normal hidden sm:inline">(Data dicetak pada tiket)</span>
+                                                        <span
+                                                            class="text-[10px] text-slate-400 font-normal hidden sm:inline">(Data
+                                                            dicetak pada tiket)</span>
                                                     </span>
                                                 </label>
                                             </div>
                                         </div>
                                     </template>
 
-                                    <div x-show="questions.length === 0" class="p-6 text-center border-2 border-dashed border-amber-200 rounded-2xl bg-white/70">
-                                        <p class="text-xs text-slate-400 font-medium">Belum ada pertanyaan kustom ditambahkan.</p>
-                                        <button type="button" @click="addQuestion()" class="mt-2 text-xs font-bold text-amber-600 hover:underline">Tambah Pertanyaan Pertama</button>
+                                    <div x-show="questions.length === 0"
+                                        class="p-6 text-center border-2 border-dashed border-amber-200 rounded-2xl bg-white/70">
+                                        <p class="text-xs text-slate-400 font-medium">Belum ada pertanyaan kustom
+                                            ditambahkan.</p>
+                                        <button type="button" @click="addQuestion()"
+                                            class="mt-2 text-xs font-bold text-amber-600 hover:underline">Tambah
+                                            Pertanyaan Pertama</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {{-- ============================================================
-                             FREE EVENT OPTIONS
-                             ============================================================ --}}
+                        FREE EVENT OPTIONS
+                        ============================================================ --}}
                         <div class="pt-4 border-t-2 border-dashed border-emerald-100 space-y-4"
                             x-data="{ isFree: {{ $event->is_free ? 'true' : 'false' }} }">
                             <div>
@@ -921,12 +1040,17 @@
                                             <div>
                                                 <h4 class="font-bold text-gray-800 text-lg">{{ $category->name }}</h4>
                                                 <div class="flex flex-wrap items-center gap-2 mt-1">
-                                                    <span class="text-sm font-bold text-gray-700">Rp {{ number_format($category->price, 0, ',', '.') }}</span>
+                                                    <span class="text-sm font-bold text-gray-700">Rp
+                                                        {{ number_format($category->price, 0, ',', '.') }}</span>
                                                     @if(($category->service_fee ?? 0) > 0)
-                                                        <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">+ Fee Rp {{ number_format($category->service_fee, 0, ',', '.') }}</span>
+                                                        <span
+                                                            class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">+
+                                                            Fee Rp {{ number_format($category->service_fee, 0, ',', '.') }}</span>
                                                     @endif
                                                     <span class="text-xs text-gray-300">|</span>
-                                                    <span class="text-xs font-bold text-purple-600 uppercase">{{ $category->quota }} Quota</span>
+                                                    <span
+                                                        class="text-xs font-bold text-purple-600 uppercase">{{ $category->quota }}
+                                                        Quota</span>
                                                 </div>
                                                 @if($category->sale_start_at)
                                                     <div class="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-wider">

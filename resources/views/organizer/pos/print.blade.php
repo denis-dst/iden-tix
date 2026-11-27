@@ -11,7 +11,10 @@
     @endphp
     <style>
         @page {
-            size: {{ $paperWidth . 'mm' }} {{ $paperHeight . 'mm' }};
+            size:
+                {{ $paperWidth . 'mm' }}
+                {{ $paperHeight . 'mm' }}
+            ;
             margin: 0;
         }
 
@@ -59,13 +62,21 @@
         }
 
         .sheet {
-            width: {{ $paperWidth . 'mm' }};
-            min-height: {{ $paperHeight . 'mm' }};
+            width:
+                {{ $paperWidth . 'mm' }}
+            ;
+            min-height:
+                {{ $paperHeight . 'mm' }}
+            ;
             margin: 16px auto;
             background: #fff;
             padding: 5mm;
             page-break-after: always;
             overflow: hidden;
+        }
+
+        .sheet:last-child {
+            page-break-after: auto;
         }
 
         .center {
@@ -162,52 +173,7 @@
         <button type="button" onclick="window.print()">Print</button>
     </div>
 
-    @foreach($transaction->tickets->where('status', '!=', 'void') as $ticket)
-        <section class="sheet">
-            <div class="center">
-                <div class="event">{{ $transaction->event->name }}</div>
-                <div class="muted">{{ $transaction->event->venue }} · {{ $transaction->event->city }}</div>
-                <div class="muted">{{ $transaction->event->event_start_date?->format('d M Y H:i') }}</div>
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="row">
-                <span class="label">Invoice</span>
-                <span class="value">{{ $transaction->reference_no }}</span>
-            </div>
-            <div class="row">
-                <span class="label">Pembelian</span>
-                <span
-                    class="value">{{ $transaction->paid_at?->format('d M Y H:i') ?? $transaction->created_at->format('d M Y H:i') }}</span>
-            </div>
-            <div class="row">
-                <span class="label">Kategori</span>
-                <span class="value">{{ $ticket->category->name ?? '-' }}</span>
-            </div>
-            <div class="row">
-                <span class="label">Nama</span>
-                <span class="value">{{ $transaction->customer_name }}</span>
-            </div>
-            <div class="row">
-                <span class="label">No HP</span>
-                <span class="value">{{ $transaction->customer_phone }}</span>
-            </div>
-            <div class="row">
-                <span class="label">Email</span>
-                <span class="value">{{ $transaction->customer_email }}</span>
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="qr">
-                {!! QrCode::size(180)->margin(0)->generate($ticket->ticket_code) !!}
-            </div>
-            <div class="center code">{{ $ticket->ticket_code }}</div>
-            <div class="footer">Tunjukan QR kepada Petugas Penjaga untuk masuk gate. Simpan ticket sampai event selesai.
-            </div>
-        </section>
-    @endforeach
+    @include('tickets.partials.thermal-sheets', ['transaction' => $transaction])
 
     <script>
         window.addEventListener('load', function () {

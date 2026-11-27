@@ -26,10 +26,15 @@
         @if(session('success'))
             <div class="bg-emerald-50 border border-emerald-100 text-emerald-700 px-4 py-3 rounded-2xl text-sm font-bold space-y-3">
                 <div>{{ session('success') }}</div>
-                @if(session('active_evoucher_url'))
+                @if(session('active_evoucher_url') || session('active_print_url'))
                     <div class="flex flex-col md:flex-row gap-2 md:items-center">
-                        <input type="text" readonly value="{{ session('active_evoucher_url') }}" class="flex-1 rounded-lg border-emerald-200 bg-white text-xs font-bold text-slate-600">
-                        <a href="{{ session('active_evoucher_url') }}" target="_blank" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-black uppercase tracking-wider hover:bg-emerald-700 transition text-center">Buka QR</a>
+                        @if(session('active_evoucher_url'))
+                            <input type="text" readonly value="{{ session('active_evoucher_url') }}" class="flex-1 rounded-lg border-emerald-200 bg-white text-xs font-bold text-slate-600">
+                            <a href="{{ session('active_evoucher_url') }}" target="_blank" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-black uppercase tracking-wider hover:bg-emerald-700 transition text-center">Buka QR</a>
+                        @endif
+                        @if(session('active_print_url'))
+                            <a href="{{ session('active_print_url') }}" target="_blank" class="px-4 py-2 bg-orange-600 text-white rounded-lg text-xs font-black uppercase tracking-wider hover:bg-orange-700 transition text-center">Cetak Tiket Termal</a>
+                        @endif
                         @if(($global_settings['global_wa_notifications_enabled'] ?? '1') !== '0')
                             @if(session('active_transaction_id'))
                                 <button type="button" id="btn-send-wa" data-action="{{ route('organizer.transactions.send-whatsapp', session('active_transaction_id')) }}" class="px-4 py-2 bg-emerald-500 text-white rounded-lg text-xs font-black uppercase tracking-wider hover:bg-emerald-600 transition text-center flex items-center justify-center gap-1.5 focus:outline-none">
@@ -142,7 +147,7 @@
                         @endif
                     </p>
                 </div>
-                @if($flow === 'print')
+                @if(in_array($flow, ['print', 'both']))
                     <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
                         <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Ukuran Kertas</div>
                         <div class="text-xl font-black text-slate-800 mt-1">{{ $event->thermal_paper_width_mm ?? 80 }} x {{ $event->thermal_paper_height_mm ?? 160 }} mm</div>

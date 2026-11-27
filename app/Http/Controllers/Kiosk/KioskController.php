@@ -282,7 +282,7 @@ class KioskController extends Controller
      */
     public function checkStatus(Request $request, string $tenant_slug, string $reference)
     {
-        $transaction = Transaction::where('reference_no', $reference)->first();
+        $transaction = Transaction::where('reference_no', $reference)->with('event')->first();
 
         if (!$transaction) {
             return response()->json([
@@ -306,6 +306,9 @@ class KioskController extends Controller
             'transaction_id' => $transaction->id,
             'customer_name' => $transaction->customer_name,
             'customer_email' => $transaction->customer_email,
+            'customer_phone' => $transaction->customer_phone,
+            'paid_at_formatted' => $transaction->paid_at ? $transaction->paid_at->format('d M Y H:i') : ($transaction->created_at ? $transaction->created_at->format('d M Y H:i') : now()->format('d M Y H:i')),
+            'purchase_flow' => $transaction->event->purchase_flow ?? 'redeem',
             'quantity' => $transaction->quantity,
             'tickets' => $tickets,
         ]);
@@ -317,7 +320,7 @@ class KioskController extends Controller
     public function simulatePayment(Request $request, string $tenant_slug, string $reference)
     {
         return DB::transaction(function () use ($reference) {
-            $transaction = Transaction::where('reference_no', $reference)->lockForUpdate()->firstOrFail();
+            $transaction = Transaction::where('reference_no', $reference)->with('event')->lockForUpdate()->firstOrFail();
 
             if ($transaction->payment_status !== 'paid') {
                 $transaction->update([
@@ -339,6 +342,9 @@ class KioskController extends Controller
                 'transaction_id' => $transaction->id,
                 'customer_name' => $transaction->customer_name,
                 'customer_email' => $transaction->customer_email,
+                'customer_phone' => $transaction->customer_phone,
+                'paid_at_formatted' => $transaction->paid_at ? $transaction->paid_at->format('d M Y H:i') : ($transaction->created_at ? $transaction->created_at->format('d M Y H:i') : now()->format('d M Y H:i')),
+                'purchase_flow' => $transaction->event->purchase_flow ?? 'redeem',
                 'quantity' => $transaction->quantity,
                 'tickets' => $tickets,
                 'message' => 'Pembayaran simulasi berhasil diverifikasi.',
@@ -347,13 +353,14 @@ class KioskController extends Controller
     }
 
     /**
-     * Helper to format tickets for Kiosk display (including individual QR codes).
+     * Helper to format tickets for Kiosk display (including individual QR codes and thermal metadata).
      */
     protected function formatTicketsForKiosk(Transaction $transaction)
     {
-        return $transaction->tickets()->with('category')->take($transaction->quantity)->get()->map(function ($ticket, $idx) use ($transaction) {
+        return $transaction->tickets()->with('category')->where('status', '!=', 'void')->take($transaction->quantity)->get()->map(function ($ticket, $idx) use ($transaction) {
             $qrSvg = (string) QrCode::format('svg')
-                ->size(150)
+                ->size(180)
+                ->margin(0)
                 ->errorCorrection('H')
                 ->generate($ticket->ticket_code);
 
@@ -364,10 +371,45 @@ class KioskController extends Controller
                 'ticket_code' => $ticket->ticket_code,
                 'category_name' => $ticket->category->name ?? 'Regular',
                 'visitor_name' => $ticket->visitor_data['name'] ?? $transaction->customer_name ?? 'Pengunjung',
+                'visitor_phone' => $ticket->visitor_data['phone'] ?? $transaction->customer_phone ?? '-',
+                'visitor_email' => $ticket->visitor_data['email'] ?? $transaction->customer_email ?? '-',
                 'qr_svg' => $qrSvg,
                 'status' => $ticket->status,
+                'is_redeemed' => $ticket->status === 'redeemed',
+                'redeemed_at' => $ticket->redeemed_at ? $ticket->redeemed_at->format('d M Y H:i') : null,
             ];
         });
+    }
+
+    /**
+     * Public Kiosk standalone thermal print page (matches Organizer POS thermal layout).
+     */
+    public function printThermal(Request $request, string $tenant_slug, string $reference)
+    {
+        $tenant = Tenant::where('slug', $tenant_slug)->firstOrFail();
+
+        $transaction = Transaction::where('reference_no', $reference)
+            ->where('tenant_id', $tenant->id)
+            ->with(['event', 'tenant', 'tickets.category'])
+            ->firstOrFail();
+
+        if ($transaction->payment_status !== 'paid' && !in_array($transaction->payment_method, ['free', 'promo'], true)) {
+            abort(403, 'Transaksi belum dibayar.');
+        }
+
+        if (!in_array($transaction->event->purchase_flow ?? 'redeem', ['print', 'both'], true)) {
+            abort(403, 'Cetak termal hanya tersedia untuk event dengan flow Cetak Ticket atau Evoucher + Cetak.');
+        }
+
+        $tickets = $transaction->tickets->where('status', '!=', 'void');
+        if ($request->filled('tickets')) {
+            $codes = array_filter(array_map('trim', explode(',', (string) $request->query('tickets'))));
+            if (!empty($codes)) {
+                $tickets = $tickets->whereIn('ticket_code', $codes);
+            }
+        }
+
+        return view('kiosk.print', compact('transaction', 'tickets', 'tenant'));
     }
 
     /**
@@ -438,55 +480,263 @@ class KioskController extends Controller
     }
 
     /**
+     * Extract clean ticket code or invoice reference from raw manual/QR input.
+     */
+    protected function extractLookupCandidates(string $rawCode): array
+    {
+        $rawCode = trim($rawCode);
+        $extracted = $rawCode;
+        if (preg_match('/(GTX-[A-Za-z0-9_-]+)/i', $rawCode, $matches)) {
+            $extracted = $matches[1];
+        } else {
+            $pathPart = basename(parse_url($rawCode, PHP_URL_PATH) ?: $rawCode);
+            if ($pathPart !== '') {
+                $extracted = $pathPart;
+            }
+        }
+        $cleanRaw = preg_replace('/[\s]+/', '', $rawCode);
+        $cleanExtracted = preg_replace('/[\s]+/', '', $extracted);
+
+        return array_values(array_unique(array_filter([$rawCode, $cleanRaw, $extracted, $cleanExtracted])));
+    }
+
+    /**
+     * Format single Ticket model into Kiosk payload (for redeem & thermal print).
+     */
+    protected function formatSingleTicketPayload(Ticket $ticket): array
+    {
+        $tx = $ticket->transaction;
+        $qrSvg = (string) QrCode::format('svg')
+            ->size(180)
+            ->margin(0)
+            ->errorCorrection('H')
+            ->generate($ticket->ticket_code);
+
+        return [
+            'id' => $ticket->id,
+            'ticket_code' => $ticket->ticket_code,
+            'category_name' => $ticket->category->name ?? 'Regular',
+            'visitor_name' => $ticket->visitor_data['name'] ?? $tx->customer_name ?? 'Pengunjung',
+            'visitor_phone' => $ticket->visitor_data['phone'] ?? $tx->customer_phone ?? '-',
+            'visitor_email' => $ticket->visitor_data['email'] ?? $tx->customer_email ?? '-',
+            'qr_svg' => $qrSvg,
+            'status' => $ticket->status,
+            'is_redeemed' => $ticket->status === 'redeemed',
+            'redeemed_at' => $ticket->redeemed_at ? $ticket->redeemed_at->format('d M Y H:i') : null,
+        ];
+    }
+
+    /**
      * Handle Ticket Exchange / Penukaran Tiket lookup on Kiosk.
      */
     public function redeemLookup(Request $request, string $tenant_slug)
     {
         $tenant = Tenant::where('slug', $tenant_slug)->firstOrFail();
 
-        $code = trim($request->input('code', ''));
-        if (empty($code)) {
+        $rawInput = trim((string) $request->input('code', ''));
+        if ($rawInput === '') {
             return response()->json([
                 'success' => false,
-                'message' => 'Silakan masukkan kode tiket atau scan QR voucher.',
+                'message' => 'Silakan masukkan kode tiket, nomor invoice, atau scan QR voucher.',
             ], 422);
         }
 
-        // Try ticket code first
-        $ticket = Ticket::where('ticket_code', $code)
-            ->where('tenant_id', $tenant->id)
-            ->with(['event', 'category'])
+        $candidates = $this->extractLookupCandidates($rawInput);
+        $tickets = collect();
+        $transaction = null;
+
+        // 1. Try direct ticket_code or wristband_qr lookup first
+        $directTicket = Ticket::where('tenant_id', $tenant->id)
+            ->where(function ($q) use ($candidates) {
+                $q->whereIn('ticket_code', $candidates)
+                  ->orWhereIn('wristband_qr', $candidates);
+            })
+            ->with(['event', 'category', 'transaction'])
             ->first();
 
-        // If not found, try transaction reference no
-        if (!$ticket) {
-            $transaction = Transaction::where('reference_no', $code)
-                ->where('tenant_id', $tenant->id)
-                ->with(['event', 'category', 'tickets'])
+        if ($directTicket) {
+            $transaction = $directTicket->transaction;
+            $tickets = collect([$directTicket]);
+        } else {
+            // 2. Try transaction reference_no lookup (returns all non-void tickets in the invoice)
+            $transaction = Transaction::where('tenant_id', $tenant->id)
+                ->whereIn('reference_no', array_map('strtoupper', $candidates))
+                ->with(['event', 'category', 'tickets.category'])
                 ->first();
 
-            if ($transaction && $transaction->tickets->isNotEmpty()) {
-                $ticket = $transaction->tickets->first();
+            if (!$transaction) {
+                $transaction = Transaction::where('tenant_id', $tenant->id)
+                    ->whereIn('reference_no', $candidates)
+                    ->with(['event', 'category', 'tickets.category'])
+                    ->first();
+            }
+
+            if ($transaction) {
+                $tickets = $transaction->tickets->where('status', '!=', 'void')->values();
             }
         }
 
-        if (!$ticket) {
+        if ($tickets->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Tiket dengan kode tersebut tidak ditemukan.',
+                'message' => 'Tiket atau nomor invoice tersebut tidak ditemukan.',
             ], 404);
         }
 
+        // Verify payment status
+        if ($transaction && $transaction->payment_status !== 'paid' && !in_array($transaction->payment_method, ['free', 'promo'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pembayaran transaksi ini belum lunas (Status: ' . strtoupper($transaction->payment_status) . ').',
+            ], 422);
+        }
+
+        $activeTickets = $tickets->filter(fn ($t) => $t->status !== 'void')->values();
+        if ($activeTickets->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tiket ini sudah dibatalkan (void).',
+            ], 422);
+        }
+
+        $primaryTicket = $activeTickets->first();
+        $event = $primaryTicket->event ?? $transaction?->event;
+
+        // Validate against currently opened event match on /kiosk/{slug}/match/{event_slug} if provided
+        if ($request->filled('event_id') && $event && (int) $request->input('event_id') !== (int) $event->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tiket ini terdaftar untuk pertandingan "' . $event->name . '", bukan pertandingan yang sedang aktif di terminal ini.',
+            ], 422);
+        }
+
+        $formattedTickets = $activeTickets->map(fn ($t) => $this->formatSingleTicketPayload($t))->values();
+        $eventVenueCity = $event ? trim(($event->venue ?? '') . ($event->city ? ' · ' . $event->city : '')) : '-';
+
         return response()->json([
             'success' => true,
-            'ticket_code' => $ticket->ticket_code,
-            'status' => $ticket->status,
-            'event_name' => $ticket->event->name,
-            'category_name' => $ticket->category->name ?? 'Regular',
-            'visitor_name' => $ticket->visitor_data['name'] ?? $ticket->transaction->customer_name ?? 'Pengunjung',
-            'is_redeemed' => $ticket->status === 'redeemed',
-            'redeemed_at' => $ticket->redeemed_at ? $ticket->redeemed_at->format('d M Y H:i') : null,
+            'reference_no' => $transaction->reference_no ?? $primaryTicket->ticket_code,
+            'event_id' => $event->id ?? null,
+            'event_name' => $event->name ?? '-',
+            'event_venue_city' => $eventVenueCity,
+            'event_start_formatted' => ($event && $event->event_start_date) ? $event->event_start_date->format('d M Y H:i') : '-',
+            'purchase_flow' => $event->purchase_flow ?? 'redeem',
+            'thermal_width_mm' => (int) ($event->thermal_paper_width_mm ?? 80),
+            'thermal_height_mm' => (int) ($event->thermal_paper_height_mm ?? 160),
+            'customer_name' => $transaction->customer_name ?? ($primaryTicket->visitor_data['name'] ?? 'Pengunjung'),
+            'customer_phone' => $transaction->customer_phone ?? '-',
+            'customer_email' => $transaction->customer_email ?? '-',
+            'paid_at_formatted' => ($transaction && $transaction->paid_at)
+                ? $transaction->paid_at->format('d M Y H:i')
+                : ($transaction && $transaction->created_at ? $transaction->created_at->format('d M Y H:i') : now()->format('d M Y H:i')),
+            'tickets' => $formattedTickets,
+            // Legacy scalar fields for backward compatibility
+            'ticket_code' => $primaryTicket->ticket_code,
+            'status' => $primaryTicket->status,
+            'category_name' => $primaryTicket->category->name ?? 'Regular',
+            'visitor_name' => $primaryTicket->visitor_data['name'] ?? $transaction->customer_name ?? 'Pengunjung',
+            'is_redeemed' => $primaryTicket->status === 'redeemed',
+            'redeemed_at' => $primaryTicket->redeemed_at ? $primaryTicket->redeemed_at->format('d M Y H:i') : null,
         ]);
+    }
+
+    /**
+     * Confirm ticket exchange / thermal print on Kiosk (prevents duplicate printing/redeem).
+     */
+    public function redeemProcess(Request $request, string $tenant_slug)
+    {
+        $tenant = Tenant::where('slug', $tenant_slug)->firstOrFail();
+
+        $validated = $request->validate([
+            'ticket_ids' => 'required|array|min:1',
+            'ticket_ids.*' => 'integer',
+            'event_id' => 'nullable|integer',
+        ]);
+
+        return DB::transaction(function () use ($tenant, $validated) {
+            $tickets = Ticket::where('tenant_id', $tenant->id)
+                ->whereIn('id', $validated['ticket_ids'])
+                ->with(['event', 'category', 'transaction'])
+                ->lockForUpdate()
+                ->get();
+
+            if ($tickets->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tiket yang dipilih tidak ditemukan.',
+                ], 404);
+            }
+
+            $primaryTicket = $tickets->first();
+            $event = $primaryTicket->event;
+            $transaction = $primaryTicket->transaction;
+            $flow = $event->purchase_flow ?? 'redeem';
+
+            if (!empty($validated['event_id']) && $event && (int) $validated['event_id'] !== (int) $event->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tiket tidak sesuai dengan pertandingan di Kiosk ini.',
+                ], 422);
+            }
+
+            if (!in_array($flow, ['print', 'both'], true)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Penukaran cetak termal di Kiosk hanya tersedia untuk flow Cetak Ticket atau Evoucher + Cetak.',
+                ], 422);
+            }
+
+            $validToRedeem = [];
+            foreach ($tickets as $ticket) {
+                $tx = $ticket->transaction;
+                if ($tx && $tx->payment_status !== 'paid' && !in_array($tx->payment_method, ['free', 'promo'], true)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Tiket {$ticket->ticket_code} belum berstatus lunas.",
+                    ], 422);
+                }
+                if ($ticket->status === 'void') {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Tiket {$ticket->ticket_code} telah dibatalkan.",
+                    ], 422);
+                }
+                if ($ticket->status === 'redeemed') {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Tiket {$ticket->ticket_code} sudah ditukar / dicetak pada " . ($ticket->redeemed_at ? $ticket->redeemed_at->format('d M Y H:i') : '-'),
+                    ], 422);
+                }
+                $validToRedeem[] = $ticket;
+            }
+
+            $now = now();
+            $formattedTickets = [];
+            foreach ($validToRedeem as $ticket) {
+                $ticket->update([
+                    'status' => 'redeemed',
+                    'redeemed_at' => $now,
+                ]);
+                $formattedTickets[] = $this->formatSingleTicketPayload($ticket->fresh(['category', 'transaction']));
+            }
+
+            $eventVenueCity = $event ? trim(($event->venue ?? '') . ($event->city ? ' · ' . $event->city : '')) : '-';
+
+            return response()->json([
+                'success' => true,
+                'message' => count($formattedTickets) . ' tiket berhasil ditukar dan siap dicetak.',
+                'reference_no' => $transaction->reference_no ?? $primaryTicket->ticket_code,
+                'event_name' => $event->name ?? '-',
+                'event_venue_city' => $eventVenueCity,
+                'event_start_formatted' => ($event && $event->event_start_date) ? $event->event_start_date->format('d M Y H:i') : '-',
+                'thermal_width_mm' => (int) ($event->thermal_paper_width_mm ?? 80),
+                'thermal_height_mm' => (int) ($event->thermal_paper_height_mm ?? 160),
+                'paid_at_formatted' => ($transaction && $transaction->paid_at)
+                    ? $transaction->paid_at->format('d M Y H:i')
+                    : ($transaction && $transaction->created_at ? $transaction->created_at->format('d M Y H:i') : $now->format('d M Y H:i')),
+                'tickets' => $formattedTickets,
+            ]);
+        });
     }
 
     /**

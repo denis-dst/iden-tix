@@ -288,7 +288,7 @@
                             </label>
                         </div>
 
-                        <div x-show="flow === 'print'" x-cloak class="grid grid-cols-1 md:grid-cols-2 gap-4 p-5 bg-slate-50 border border-slate-200 rounded-2xl">
+                        <div x-show="flow === 'print' || flow === 'both'" x-cloak class="grid grid-cols-1 md:grid-cols-2 gap-4 p-5 bg-slate-50 border border-slate-200 rounded-2xl">
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Lebar Kertas (mm)</label>
                                 <input type="number" name="thermal_paper_width_mm" value="{{ old('thermal_paper_width_mm', 80) }}" min="40" max="120" class="w-full rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500 py-2.5 px-4 font-bold">

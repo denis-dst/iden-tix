@@ -14,6 +14,9 @@
     {{-- Local Google MediaPipe Selfie Segmentation for AI Virtual Background PhotoBooth --}}
     <script src="{{ asset('vendor/mediapipe/selfie_segmentation/selfie_segmentation.js') }}"></script>
 
+    {{-- Local HTML5 QR Code Scanner for Penukaran Tiket Kiosk --}}
+    <script src="{{ asset('vendor/html5-qrcode/html5-qrcode.min.js') }}"></script>
+
     <style>
         :root {
             --primary-orange: #f95700;
@@ -1302,10 +1305,259 @@
         #cardCanvas {
             display: none;
         }
+
+        /* Top Bar Penukaran Tiket Quick Button */
+        .kiosk-topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-topbar-redeem {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(249, 87, 0, 0.16);
+            color: #ff8533;
+            border: 1px solid rgba(249, 87, 0, 0.45);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-topbar-redeem:hover {
+            background: var(--primary-orange);
+            color: #ffffff;
+            border-color: var(--primary-orange);
+        }
+
+        /* Screen 01 Match Context Pill */
+        .welcome-match-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #f8fafc;
+            padding: 6px 16px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        /* Screen 06 Post-Purchase Output Choice Cards (Evoucher + Cetak / Print) */
+        .kiosk-output-choice-wrap {
+            width: 100%;
+            max-width: 620px;
+            margin: 0 auto 16px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(249, 87, 0, 0.35);
+            border-radius: 18px;
+            padding: 16px 18px;
+            text-align: left;
+        }
+
+        .kiosk-output-choice-title {
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #ff8533;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .kiosk-output-choice-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        @media (max-width: 560px) {
+            .kiosk-output-choice-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .kiosk-output-btn {
+            background: rgba(30, 41, 59, 0.9);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            padding: 14px;
+            text-align: left;
+            color: #ffffff;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .kiosk-output-btn:hover {
+            border-color: rgba(249, 87, 0, 0.65);
+            background: rgba(30, 41, 59, 1);
+            transform: translateY(-1px);
+        }
+
+        .kiosk-output-btn.is-email-selected {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.15);
+            box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.4);
+        }
+
+        .kiosk-output-btn.is-print-primary {
+            border-color: rgba(249, 87, 0, 0.75);
+            background: rgba(249, 87, 0, 0.14);
+        }
+
+        .kiosk-output-btn.is-print-done {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.16);
+        }
+
+        .kiosk-output-btn-head {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .kiosk-output-btn-desc {
+            font-size: 11px;
+            font-weight: 600;
+            color: #cbd5e1;
+            line-height: 1.4;
+        }
+
+        /* Screen 06 Scrollable Safety on Shorter Viewports */
+        #screen06 {
+            max-height: 82vh;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        /* Redeem Modal Ticket List & Camera Scanner */
+        .redeem-scanner-wrap {
+            margin-top: 12px;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 2px solid rgba(249, 87, 0, 0.5);
+            background: #000000;
+            display: none;
+        }
+
+        .redeem-ticket-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+            max-height: 230px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .redeem-ticket-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+            padding: 10px 12px;
+            text-align: left;
+        }
+
+        /* Thermal Print Container (Hidden on Screen, Exclusively Rendered in @media print) */
+        #kioskPrintArea {
+            display: none;
+        }
+
+        @php
+            $kioskPaperWidth = $event->thermal_paper_width_mm ?? 80;
+            $kioskPaperHeight = $event->thermal_paper_height_mm ?? 160;
+        @endphp
+
+        @page {
+            size: {{ $kioskPaperWidth . 'mm' }} {{ $kioskPaperHeight . 'mm' }};
+            margin: 0;
+        }
+
+        .kiosk-thermal-sheet {
+            width: {{ $kioskPaperWidth . 'mm' }};
+            min-height: {{ $kioskPaperHeight . 'mm' }};
+            margin: 0 auto;
+            background: #ffffff;
+            color: #111827;
+            font-family: Arial, Helvetica, sans-serif;
+            padding: 5mm;
+            page-break-after: always;
+            break-after: page;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .kiosk-thermal-sheet:last-child {
+            page-break-after: auto;
+            break-after: auto;
+        }
+
+        .kiosk-thermal-sheet .center { text-align: center; }
+        .kiosk-thermal-sheet .event { font-size: 15px; line-height: 1.15; font-weight: 900; text-transform: uppercase; color: #111827; }
+        .kiosk-thermal-sheet .muted { color: #4b5563; font-size: 10px; line-height: 1.35; }
+        .kiosk-thermal-sheet .divider { border-top: 1px dashed #111827; margin: 8px 0; }
+        .kiosk-thermal-sheet .row { display: flex; justify-content: space-between; gap: 8px; font-size: 10px; line-height: 1.4; margin: 3px 0; color: #111827; }
+        .kiosk-thermal-sheet .label { color: #4b5563; white-space: nowrap; }
+        .kiosk-thermal-sheet .value { font-weight: 800; text-align: right; overflow-wrap: anywhere; }
+        .kiosk-thermal-sheet .qr { width: 38mm; height: 38mm; margin: 8px auto 4px; display: flex; align-items: center; justify-content: center; }
+        .kiosk-thermal-sheet .qr svg { width: 100%; height: 100%; }
+        .kiosk-thermal-sheet .code { font-family: "Courier New", monospace; font-size: 11px; font-weight: 900; letter-spacing: 1px; overflow-wrap: anywhere; color: #111827; }
+        .kiosk-thermal-sheet .footer { margin-top: 6px; font-size: 9px; color: #4b5563; text-align: center; }
+
+        @media print {
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #ffffff !important;
+                color: #111827 !important;
+                display: block !important;
+                width: auto !important;
+                min-height: 0 !important;
+                height: auto !important;
+                overflow: visible !important;
+            }
+
+            body > *:not(#kioskPrintArea) {
+                display: none !important;
+            }
+
+            #kioskPrintArea {
+                display: block !important;
+                position: static !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+        }
     </style>
 </head>
 <body>
 
+<div id="kioskPrintArea" aria-hidden="true"></div>
 <div id="flashOverlay"></div>
 <canvas id="cardCanvas" width="1024" height="1536"></canvas>
 
@@ -1322,7 +1574,13 @@
             </span>
             <span class="kiosk-brand-badge">{{ $tenant->name ?? 'OFFICIAL CLUB' }}</span>
         </div>
-        <div class="kiosk-step-indicator" id="stepIndicator">SCREEN 01/09</div>
+        <div class="kiosk-topbar-right">
+            <button type="button" id="topBarRedeemBtn" class="btn-topbar-redeem" onclick="openRedeemModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5v4h2V5h4V3H5c-1.1 0-2 .9-2 2zm2 10H3v4c0 1.1.9 2 2 2h4v-2H5v-4zm14 4h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zm0-16h-4v2h4v4h2V5c0-1.1-.9-2-2-2z"/></svg>
+                <span>PENUKARAN TIKET</span>
+            </button>
+            <div class="kiosk-step-indicator" id="stepIndicator">SCREEN 01/09</div>
+        </div>
     </div>
 
     <!-- Main Kiosk Bezel Terminal -->
@@ -1332,6 +1590,12 @@
              SCREEN 01: WELCOME SCREEN
              ========================================== -->
         <div class="kiosk-screen active" id="screen01">
+            @if(!empty($event->name))
+                <div class="welcome-match-pill">
+                    <span style="width: 7px; height: 7px; border-radius: 50%; background: #22c55e;"></span>
+                    <span>{{ $event->effective_home_team_name }} VS {{ $event->effective_away_team_name }}</span>
+                </div>
+            @endif
             <h1 class="welcome-title">SELAMAT DATANG</h1>
             <div class="welcome-logo-wrap">
                 <svg class="welcome-logo-svg" viewBox="0 0 100 100">
@@ -1617,6 +1881,34 @@
                 <div id="screen06TicketPillsWrap" style="display: flex; gap: 8px; justify-content: flex-start; flex-wrap: wrap; margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08);"></div>
             </div>
 
+            <!-- Pilihan Output Tiket untuk Flow 'Evoucher + Cetak' & 'Cetak Ticket' -->
+            <div id="screen06OutputChoiceWrap" class="kiosk-output-choice-wrap" style="display: none;">
+                <div class="kiosk-output-choice-title">
+                    <span id="screen06OutputHeaderTitle">PILIH OUTPUT TIKET ANDA (<span id="screen06ChoiceQty">1</span> TIKET)</span>
+                    <span style="font-size: 10px; color: #94a3b8; font-weight: 700;">E-VOUCHER EMAIL SUDAH TERKIRIM</span>
+                </div>
+
+                <div class="kiosk-output-choice-grid" id="screen06OutputGrid">
+                    <button type="button" id="btnChoiceEmail" class="kiosk-output-btn" onclick="selectKioskOutputChoice('email')">
+                        <div class="kiosk-output-btn-head">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="#60a5fa"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                            <span>CUKUP DIKIRIM KE EMAIL</span>
+                        </div>
+                        <div class="kiosk-output-btn-desc">Gunakan E-Voucher di email Anda tanpa perlu cetak kertas fisik.</div>
+                    </button>
+
+                    <button type="button" id="btnChoicePrint" class="kiosk-output-btn is-print-primary" onclick="selectKioskOutputChoice('print')">
+                        <div class="kiosk-output-btn-head">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="#ff8533"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+                            <span>CETAK TIKET TERMAL (<span id="screen06PrintCountLabel">1</span> TIKET)</span>
+                        </div>
+                        <div class="kiosk-output-btn-desc">Langsung cetak fisik sejumlah tiket yang dibeli melalui printer termal.</div>
+                    </button>
+                </div>
+
+                <div id="screen06OutputFeedback" style="display: none; margin-top: 10px; font-size: 12px; font-weight: 800; color: #4ade80;"></div>
+            </div>
+
             <!-- Free Photo Experience Offer (Adjusts chances to quantity) -->
             <div class="free-experience-banner" id="screen06PhotoBanner">
                 <h4 id="screen06PhotoBannerTitle">Nikmati FREE PHOTO EXPERIENCE!</h4>
@@ -1791,6 +2083,24 @@
                         </div>
                     </div>
                     <div id="screen09TicketPillsWrap" style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);"></div>
+
+                    <!-- Opsi Cetak Termal di Screen 09 (jika flow 'both' / 'print') -->
+                    <div id="screen09ThermalWrap" style="display: none; margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.14);">
+                        <div id="screen09ThermalHint" style="font-size: 11px; font-weight: 700; color: #cbd5e1; margin-bottom: 10px; text-align: center;">
+                            Butuh tiket fisik? Cetak langsung tiket termal Anda sekarang atau cukup gunakan E-Voucher di email.
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+                            <button type="button" id="btnScreen09PrintThermal" onclick="selectKioskOutputChoice('print', true)"
+                                    style="background: var(--primary-orange); color: #ffffff; border: none; border-radius: 10px; padding: 10px 16px; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+                                <span id="btnScreen09PrintLabel">CETAK TIKET TERMAL (1 TIKET)</span>
+                            </button>
+                            <button type="button" id="btnScreen09EmailOnly" onclick="selectKioskOutputChoice('email', true)"
+                                    style="background: rgba(255,255,255,0.1); color: #ffffff; border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 10px 16px; font-size: 12px; font-weight: 800; text-transform: uppercase; cursor: pointer;">
+                                CUKUP VIA EMAIL
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Gallery of Captured Photos on Screen 09 -->
@@ -1814,26 +2124,36 @@
      MODAL: PENUKARAN TIKET (REDEEM / EXCHANGE)
      ========================================== -->
 <div class="kiosk-modal-backdrop" id="redeemModal">
-    <div class="kiosk-modal-card">
-        <div class="kiosk-modal-header">
-            <div class="kiosk-modal-title">PENUKARAN TIKET</div>
+    <div class="kiosk-modal-card" style="max-width: 620px; max-height: 90vh; overflow-y: auto;">
+        <div class="kiosk-modal-header" style="margin-bottom: 16px;">
+            <div>
+                <div class="kiosk-modal-title">PENUKARAN TIKET</div>
+                <div style="font-size: 11px; color: #94a3b8; font-weight: 700; margin-top: 2px;">{{ $event->name }}</div>
+            </div>
             <button type="button" class="btn-modal-close" onclick="closeModal('redeemModal')">&times;</button>
         </div>
 
-        <div style="margin-bottom: 20px;">
-            <label class="form-label">Masukkan Kode Tiket / No. Invoice</label>
-            <div style="display: flex; gap: 10px; margin-top: 8px;">
-                <input type="text" id="redeemInputCode" class="form-input" placeholder="Contoh: 8192839182 / KIOSK-..." style="text-transform: uppercase;">
-                <button type="button" class="btn-kiosk-primary" style="flex: 0 0 120px;" onclick="lookupTicketRedeem()">CARI</button>
+        <div style="margin-bottom: 14px;">
+            <label class="form-label" style="color: #cbd5e1;">Scan QR E-Voucher atau Masukkan Kode Tiket / No. Invoice</label>
+            <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
+                <input type="text" id="redeemInputCode" class="form-input" placeholder="Contoh: GTX-... / 8192839182 / KIOSK-..." style="flex: 1 1 220px; text-transform: uppercase;" onkeydown="if(event.key==='Enter'){event.preventDefault();lookupTicketRedeem();}">
+                <button type="button" class="btn-kiosk-primary" style="flex: 0 0 92px; min-height: 46px; padding: 10px 14px;" onclick="lookupTicketRedeem()">CARI</button>
+                <button type="button" id="btnToggleRedeemScan" class="btn-kiosk-secondary" style="flex: 0 0 auto; min-height: 46px; padding: 10px 14px; background: #1e293b; color: #ffffff; border: 1px solid rgba(249,87,0,0.6); display: inline-flex; align-items: center; gap: 6px;" onclick="toggleRedeemQrScanner()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5v4h2V5h4V3H5c-1.1 0-2 .9-2 2zm2 10H3v4c0 1.1.9 2 2 2h4v-2H5v-4zm14 4h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zm0-16h-4v2h4v4h2V5c0-1.1-.9-2-2-2z"/></svg>
+                    <span>SCAN QR</span>
+                </button>
+            </div>
+
+            <!-- Inline Camera QR Reader -->
+            <div id="kioskRedeemReaderWrap" class="redeem-scanner-wrap">
+                <div id="kioskQrReader" style="width: 100%;"></div>
+                <div style="padding: 8px; font-size: 11px; font-weight: 700; color: #cbd5e1; text-align: center; background: #0f172a;">
+                    Arahkan QR Code E-Voucher Anda ke depan kamera Kiosk
+                </div>
             </div>
         </div>
 
-        <div id="redeemResultBox" style="display: none; background: #1e293b; border-radius: 12px; padding: 18px; margin-top: 16px;">
-            <div id="redeemStatusBadge" style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 800; margin-bottom: 10px;"></div>
-            <div style="font-size: 16px; font-weight: 800; color: #ffffff;" id="redeemEventName"></div>
-            <div style="font-size: 14px; color: #94a3b8; margin: 4px 0;" id="redeemVisitorName"></div>
-            <div style="font-size: 14px; font-weight: 700; color: var(--primary-orange);" id="redeemCategory"></div>
-        </div>
+        <div id="redeemResultBox" style="display: none; background: #1e293b; border-radius: 14px; padding: 16px; margin-top: 14px; border: 1px solid rgba(255,255,255,0.12);"></div>
     </div>
 </div>
 
@@ -1969,6 +2289,11 @@
         tenantSlug: '{{ $tenant->slug }}',
         eventId: {{ $event->id }},
         eventName: @json($event->name),
+        eventVenueCity: @json(trim(($event->venue ?? '') . ($event->city ? ' · ' . $event->city : ''))),
+        eventStartFormatted: @json($event->event_start_date ? $event->event_start_date->format('d M Y H:i') : '-'),
+        purchaseFlow: @json($event->purchase_flow ?? 'redeem'),
+        thermalWidthMm: {{ (int) ($event->thermal_paper_width_mm ?? 80) }},
+        thermalHeightMm: {{ (int) ($event->thermal_paper_height_mm ?? 160) }},
         maxTickets: {{ (int) $maxTickets }},
         identityMode: @json($kioskIdentityMode),
         matchDate: @json($event->event_start_date ? $event->event_start_date->translatedFormat('d F Y | H:i') . ' WIB' : '29 NOVEMBER 2026 | 19.00 WIB'),
@@ -2001,8 +2326,10 @@
             checkout: '{{ route('kiosk.checkout', $tenant->slug) }}',
             status: '{{ url('kiosk/' . $tenant->slug . '/status') }}',
             simulatePay: '{{ url('kiosk/' . $tenant->slug . '/simulate-pay') }}',
+            printThermal: '{{ url('kiosk/' . $tenant->slug . '/print') }}',
             savePhoto: '{{ route('kiosk.photo.save', $tenant->slug) }}',
-            redeemLookup: '{{ route('kiosk.redeem.lookup', $tenant->slug) }}'
+            redeemLookup: '{{ route('kiosk.redeem.lookup', $tenant->slug) }}',
+            redeemProcess: '{{ route('kiosk.redeem.process', $tenant->slug) }}'
         }
     };
 
@@ -2209,6 +2536,12 @@
             birthdate: ''
         },
         transaction: null,
+        paidAtFormatted: '',
+        outputChoice: null,
+        hasPrintedThermal: false,
+        redeemData: null,
+        redeemQrScanner: null,
+        isRedeemCameraRunning: false,
         capturedRawPhoto: null,
         generatedCardData: null,
         cameraStream: null,
@@ -2233,6 +2566,12 @@
             kioskState.currentScreen = screenNumber;
             const stepInd = document.getElementById('stepIndicator');
             if (stepInd) stepInd.innerText = `SCREEN 0${screenNumber}/09`;
+        }
+
+        // Toggle quick "PENUKARAN TIKET" topbar button on Welcome & Category Selection screens
+        const topRedeemBtn = document.getElementById('topBarRedeemBtn');
+        if (topRedeemBtn) {
+            topRedeemBtn.style.display = (screenNumber <= 2) ? 'inline-flex' : 'none';
         }
 
         // Screen specific hooks
@@ -2705,12 +3044,183 @@
         }
     }
 
+    // Escape HTML utility for dynamic print & DOM rendering
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    // Build exact POS-compatible thermal ticket sheets and invoke native browser print
+    function printThermalTickets(tickets, meta = {}) {
+        const printArea = document.getElementById('kioskPrintArea');
+        if (!printArea || !Array.isArray(tickets) || tickets.length === 0) {
+            alert('Data tiket belum siap untuk dicetak.');
+            return false;
+        }
+
+        const eventName = meta.event_name || KIOSK_CONFIG.eventName || '-';
+        const eventVenueCity = meta.event_venue_city || KIOSK_CONFIG.eventVenueCity || '-';
+        const eventStartFormatted = meta.event_start_formatted || KIOSK_CONFIG.eventStartFormatted || '-';
+        const referenceNo = meta.reference_no || (kioskState.transaction && kioskState.transaction.reference_no) || '-';
+        const paidAt = meta.paid_at_formatted || kioskState.paidAtFormatted || '-';
+        const fallbackName = meta.customer_name || (kioskState.customer && kioskState.customer.name) || 'Pengunjung';
+        const fallbackPhone = meta.customer_phone || (kioskState.customer && kioskState.customer.phone) || '-';
+        const fallbackEmail = meta.customer_email || (kioskState.customer && kioskState.customer.email) || '-';
+
+        let sheetsHtml = '';
+        tickets.forEach((ticket) => {
+            const catName = ticket.category_name || '-';
+            const vName = ticket.visitor_name || fallbackName;
+            const vPhone = ticket.visitor_phone || fallbackPhone;
+            const vEmail = ticket.visitor_email || fallbackEmail;
+            const tCode = ticket.ticket_code || '-';
+            const qrSvg = ticket.qr_svg || generateSimulatedQrSvg(tCode);
+
+            sheetsHtml += `
+                <section class="kiosk-thermal-sheet">
+                    <div class="center">
+                        <div class="event">${escapeHtml(eventName)}</div>
+                        <div class="muted">${escapeHtml(eventVenueCity)}</div>
+                        <div class="muted">${escapeHtml(eventStartFormatted)}</div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="row">
+                        <span class="label">Invoice</span>
+                        <span class="value">${escapeHtml(referenceNo)}</span>
+                    </div>
+                    <div class="row">
+                        <span class="label">Pembelian</span>
+                        <span class="value">${escapeHtml(paidAt)}</span>
+                    </div>
+                    <div class="row">
+                        <span class="label">Kategori</span>
+                        <span class="value">${escapeHtml(catName)}</span>
+                    </div>
+                    <div class="row">
+                        <span class="label">Nama</span>
+                        <span class="value">${escapeHtml(vName)}</span>
+                    </div>
+                    <div class="row">
+                        <span class="label">No HP</span>
+                        <span class="value">${escapeHtml(vPhone)}</span>
+                    </div>
+                    <div class="row">
+                        <span class="label">Email</span>
+                        <span class="value">${escapeHtml(vEmail)}</span>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="qr">${qrSvg}</div>
+                    <div class="center code">${escapeHtml(tCode)}</div>
+                    <div class="footer">Tunjukan QR kepada Petugas Penjaga untuk masuk gate. Simpan ticket sampai event selesai.</div>
+                </section>
+            `;
+        });
+
+        printArea.innerHTML = sheetsHtml;
+        window.print();
+        return true;
+    }
+
+    // Mark Kiosk tickets as redeemed in DB when thermal print is selected (prevents later duplicate reprint)
+    function markKioskTicketsPrintedOnServer(ticketIds) {
+        if (!Array.isArray(ticketIds) || ticketIds.length === 0) return;
+        fetch(KIOSK_CONFIG.routes.redeemProcess, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                ticket_ids: ticketIds,
+                event_id: KIOSK_CONFIG.eventId
+            })
+        }).catch((err) => console.warn('Background print sync notice:', err));
+    }
+
+    // Handle post-purchase output choice on Screen 06 / Screen 09 (Email vs Thermal Print)
+    function selectKioskOutputChoice(choice, fromScreen09 = false) {
+        kioskState.outputChoice = choice;
+
+        const btnEmail = document.getElementById('btnChoiceEmail');
+        const btnPrint = document.getElementById('btnChoicePrint');
+        const feedback = document.getElementById('screen06OutputFeedback');
+
+        if (choice === 'email') {
+            if (btnEmail) btnEmail.classList.add('is-email-selected');
+            if (btnPrint) btnPrint.classList.remove('is-print-done');
+            if (feedback) {
+                feedback.style.display = 'block';
+                feedback.style.color = '#4ade80';
+                feedback.innerText = '✓ Dipilih: Cukup dikirim ke email. Silakan lanjut ambil foto gratis atau klik Tidak, Selesai.';
+            }
+            if (fromScreen09) {
+                const hint = document.getElementById('screen09ThermalHint');
+                if (hint) {
+                    hint.style.color = '#4ade80';
+                    hint.innerText = '✓ E-Voucher telah dikirim ke email Anda. Kiosk kembali ke menu awal...';
+                }
+                startAutoResetTimer(5);
+            }
+            return;
+        }
+
+        if (choice === 'print') {
+            const printed = printThermalTickets(kioskState.tickets);
+            if (!printed) return;
+
+            if (!kioskState.hasPrintedThermal) {
+                kioskState.hasPrintedThermal = true;
+                const realIds = (kioskState.tickets || []).map(t => t.id).filter(Boolean);
+                markKioskTicketsPrintedOnServer(realIds);
+            }
+
+            if (btnEmail) btnEmail.classList.remove('is-email-selected');
+            if (btnPrint) {
+                btnPrint.classList.add('is-print-done');
+                const printLabel = document.getElementById('screen06PrintCountLabel');
+                if (printLabel && btnPrint.querySelector('.kiosk-output-btn-head span')) {
+                    btnPrint.querySelector('.kiosk-output-btn-head span').innerHTML = `✓ TIKET TERMAL DICETAK (${kioskState.tickets.length} - CETAK LAGI)`;
+                }
+            }
+            if (feedback) {
+                feedback.style.display = 'block';
+                feedback.style.color = '#4ade80';
+                feedback.innerText = `✓ Mencetak ${kioskState.tickets.length} tiket termal. Silakan lanjut ambil foto gratis atau klik Tidak, Selesai.`;
+            }
+
+            const s9BtnLabel = document.getElementById('btnScreen09PrintLabel');
+            if (s9BtnLabel) {
+                s9BtnLabel.innerText = `CETAK ULANG TIKET TERMAL (${kioskState.tickets.length} TIKET)`;
+            }
+            if (fromScreen09) {
+                const hint = document.getElementById('screen09ThermalHint');
+                if (hint) {
+                    hint.style.color = '#4ade80';
+                    hint.innerText = `✓ ${kioskState.tickets.length} tiket termal berhasil diproses untuk dicetak!`;
+                }
+                startAutoResetTimer(5);
+            }
+        }
+    }
+
     // Payment Success Transition: generates exact number of E-Voucher QR codes and photo chances
     function onPaymentSuccess(data) {
         // Strict idempotency: if already paid or processed, ignore duplicate triggers
         if (kioskState.isPaid) return;
         kioskState.isPaid = true;
         kioskState.isProcessingPayment = false;
+        kioskState.outputChoice = null;
+        kioskState.hasPrintedThermal = false;
 
         // Clear poll interval
         if (kioskState.pollInterval) {
@@ -2728,6 +3238,12 @@
         }
 
         document.getElementById('waitingStatusText').innerText = 'PEMBAYARAN BERHASIL!';
+
+        if (data && data.paid_at_formatted) {
+            kioskState.paidAtFormatted = data.paid_at_formatted;
+        } else {
+            kioskState.paidAtFormatted = new Date().toLocaleString('id-ID');
+        }
 
         // Determine exact quantity purchased
         const targetQuantity = (data && data.quantity) ? parseInt(data.quantity) : (kioskState.quantity || 1);
@@ -2748,6 +3264,8 @@
                     ticket_code: code,
                     category_name: kioskState.selectedCategory ? kioskState.selectedCategory.name : 'VIP BARAT',
                     visitor_name: kioskState.customer.name || 'SUPORTER',
+                    visitor_phone: kioskState.customer.phone || '-',
+                    visitor_email: kioskState.customer.email || '-',
                     qr_svg: generateSimulatedQrSvg(code)
                 });
             }
@@ -2762,7 +3280,10 @@
 
         setTimeout(() => {
             goToScreen(6);
-            startAutoPhotoStandbyTimer();
+            const flow = (data && data.purchase_flow) ? data.purchase_flow : KIOSK_CONFIG.purchaseFlow;
+            if (flow !== 'both' && flow !== 'print') {
+                startAutoPhotoStandbyTimer();
+            }
         }, 1200);
     }
 
@@ -2794,9 +3315,10 @@
     // Render E-Voucher tickets notification on Screen 06 (QR Code disembunyikan demi privasi)
     function renderScreen06EVouchers() {
         const email = kioskState.customer.email || 'email Anda';
+        const ticketCount = kioskState.tickets ? kioskState.tickets.length : (kioskState.quantity || 1);
         const emailNote = document.getElementById('screen06EmailNote');
         if (emailNote) {
-            emailNote.innerHTML = `E-ticket (${kioskState.tickets.length} tiket) telah dikirim ke: <strong style="color: #60a5fa;">${email}</strong>`;
+            emailNote.innerHTML = `E-ticket (${ticketCount} tiket) telah dikirim ke: <strong style="color: #60a5fa;">${escapeHtml(email)}</strong>`;
         }
 
         const pillsWrap = document.getElementById('screen06TicketPillsWrap');
@@ -2807,12 +3329,53 @@
                 html += `
                     <div class="kiosk-ticket-pill-item">
                         <span style="color: #f97316; font-weight: 800;">${badgeLabel}</span>
-                        <span style="font-weight: 700;">${t.category_name}</span>
-                        <span style="color: #94a3b8; font-size: 10px;">(${t.ticket_code})</span>
+                        <span style="font-weight: 700;">${escapeHtml(t.category_name)}</span>
+                        <span style="color: #94a3b8; font-size: 10px;">(${escapeHtml(t.ticket_code)})</span>
                     </div>
                 `;
             });
             pillsWrap.innerHTML = html;
+        }
+
+        // Configure Post-Purchase Output Choice Card ('both' = Evoucher + Cetak, 'print' = Cetak Ticket)
+        const choiceWrap = document.getElementById('screen06OutputChoiceWrap');
+        const btnEmail = document.getElementById('btnChoiceEmail');
+        const btnPrint = document.getElementById('btnChoicePrint');
+        const outputGrid = document.getElementById('screen06OutputGrid');
+        const feedback = document.getElementById('screen06OutputFeedback');
+        const choiceQty = document.getElementById('screen06ChoiceQty');
+        const headerTitle = document.getElementById('screen06OutputHeaderTitle');
+        const autoNotice = document.getElementById('photoAutoNotice');
+
+        if (choiceWrap) {
+            const flow = KIOSK_CONFIG.purchaseFlow || 'redeem';
+            if (flow === 'both' || flow === 'print') {
+                choiceWrap.style.display = 'block';
+                if (autoNotice) autoNotice.style.display = 'none';
+                if (choiceQty) choiceQty.innerText = ticketCount;
+                if (feedback) feedback.style.display = 'none';
+                if (btnEmail) {
+                    btnEmail.classList.remove('is-email-selected');
+                    btnEmail.style.display = (flow === 'both') ? 'flex' : 'none';
+                }
+                if (outputGrid) {
+                    outputGrid.style.gridTemplateColumns = (flow === 'both') ? '' : '1fr';
+                }
+                if (headerTitle) {
+                    headerTitle.innerHTML = (flow === 'both')
+                        ? `PILIH OUTPUT TIKET ANDA (${ticketCount} TIKET)`
+                        : `CETAK TIKET FISIK TERMAL (${ticketCount} TIKET)`;
+                }
+                if (btnPrint) {
+                    btnPrint.classList.remove('is-print-done');
+                    const headSpan = btnPrint.querySelector('.kiosk-output-btn-head span');
+                    if (headSpan) {
+                        headSpan.innerHTML = `CETAK TIKET TERMAL (<span id="screen06PrintCountLabel">${ticketCount}</span> TIKET)`;
+                    }
+                }
+            } else {
+                choiceWrap.style.display = 'none';
+            }
         }
 
         // Configure Photo Experience banner
@@ -3550,12 +4113,46 @@
                 html += `
                     <div class="kiosk-ticket-pill-item">
                         <span style="color: #f97316; font-weight: 800;">${badgeLabel}</span>
-                        <span style="font-weight: 700;">${t.category_name}</span>
-                        <span style="color: #94a3b8; font-size: 10px;">(${t.ticket_code})</span>
+                        <span style="font-weight: 700;">${escapeHtml(t.category_name)}</span>
+                        <span style="color: #94a3b8; font-size: 10px;">(${escapeHtml(t.ticket_code)})</span>
                     </div>
                 `;
             });
             pillsWrap.innerHTML = html;
+        }
+
+        // Configure Thermal Print options on Screen 09 when flow is 'both' or 'print'
+        const thermalWrap = document.getElementById('screen09ThermalWrap');
+        const printLabelEl = document.getElementById('btnScreen09PrintLabel');
+        const emailOnlyBtn = document.getElementById('btnScreen09EmailOnly');
+        const thermalHint = document.getElementById('screen09ThermalHint');
+        if (thermalWrap) {
+            const flow = KIOSK_CONFIG.purchaseFlow || 'redeem';
+            if (flow === 'both' || flow === 'print') {
+                thermalWrap.style.display = 'block';
+                if (printLabelEl) {
+                    printLabelEl.innerText = kioskState.hasPrintedThermal
+                        ? `CETAK ULANG TIKET TERMAL (${totalTickets} TIKET)`
+                        : `CETAK TIKET TERMAL (${totalTickets} TIKET)`;
+                }
+                if (emailOnlyBtn) {
+                    emailOnlyBtn.style.display = (flow === 'both' && !kioskState.hasPrintedThermal) ? 'inline-block' : 'none';
+                }
+                if (thermalHint) {
+                    if (kioskState.hasPrintedThermal) {
+                        thermalHint.style.color = '#4ade80';
+                        thermalHint.innerText = `✓ ${totalTickets} tiket termal sudah diproses cetak. Anda dapat mencetak ulang atau kembali ke menu awal.`;
+                    } else if (kioskState.outputChoice === 'email') {
+                        thermalHint.style.color = '#4ade80';
+                        thermalHint.innerText = '✓ E-Voucher sudah dikirim ke email Anda. Klik tombol di bawah jika ingin mencetak tiket fisik.';
+                    } else {
+                        thermalHint.style.color = '#cbd5e1';
+                        thermalHint.innerText = 'Butuh tiket fisik? Cetak langsung tiket termal Anda sekarang atau cukup gunakan E-Voucher di email.';
+                    }
+                }
+            } else {
+                thermalWrap.style.display = 'none';
+            }
         }
 
         // Render all captured collectible cards in Screen 09
@@ -3624,9 +4221,12 @@
         }
     }
 
-    // Auto Reset Timer on Screen 09 (5 Seconds)
-    function startAutoResetTimer() {
-        let sec = 5;
+    // Auto Reset Timer on Screen 09 (5 Seconds default, 15s if awaiting print choice)
+    function startAutoResetTimer(customSeconds = null) {
+        const flow = KIOSK_CONFIG.purchaseFlow || 'redeem';
+        let sec = customSeconds !== null
+            ? customSeconds
+            : (((flow === 'both' || flow === 'print') && !kioskState.outputChoice) ? 15 : 5);
         const display = document.getElementById('autoResetTimer');
         if (display) display.innerText = sec;
 
@@ -3648,9 +4248,16 @@
             clearInterval(kioskState.autoPhotoTimer);
             kioskState.autoPhotoTimer = null;
         }
+        stopRedeemQrScanner();
         stopCamera();
+        const printArea = document.getElementById('kioskPrintArea');
+        if (printArea) printArea.innerHTML = '';
         kioskState.isPaid = false;
         kioskState.isProcessingPayment = false;
+        kioskState.outputChoice = null;
+        kioskState.hasPrintedThermal = false;
+        kioskState.paidAtFormatted = '';
+        kioskState.redeemData = null;
         kioskState.quantity = 0;
         kioskState.totalAmount = 0;
         kioskState.totalPhotos = 0;
@@ -3685,7 +4292,18 @@
     }
 
     function openRedeemModal() {
+        kioskState.redeemData = null;
+        const input = document.getElementById('redeemInputCode');
+        const box = document.getElementById('redeemResultBox');
+        if (input) input.value = '';
+        if (box) {
+            box.style.display = 'none';
+            box.innerHTML = '';
+        }
         openModal('redeemModal');
+        setTimeout(() => {
+            if (input) input.focus();
+        }, 120);
     }
 
     function openMerchModal() {
@@ -3693,8 +4311,88 @@
     }
 
     function closeModal(id) {
+        if (id === 'redeemModal') {
+            stopRedeemQrScanner();
+        }
         const el = document.getElementById(id);
         if (el) el.classList.remove('active');
+    }
+
+    async function toggleRedeemQrScanner() {
+        if (kioskState.isRedeemCameraRunning) {
+            await stopRedeemQrScanner();
+            return;
+        }
+        if (typeof Html5Qrcode === 'undefined') {
+            alert('Modul pemindai kamera belum termuat. Silakan ketik kode tiket / gunakan IR scanner.');
+            return;
+        }
+
+        const wrap = document.getElementById('kioskRedeemReaderWrap');
+        const btn = document.getElementById('btnToggleRedeemScan');
+        if (wrap) wrap.style.display = 'block';
+        if (btn) btn.querySelector('span').innerText = 'STOP';
+
+        try {
+            kioskState.redeemQrScanner = new Html5Qrcode('kioskQrReader');
+            await kioskState.redeemQrScanner.start(
+                { facingMode: 'user' },
+                { fps: 10, qrbox: { width: 220, height: 220 } },
+                async (decodedText) => {
+                    const input = document.getElementById('redeemInputCode');
+                    if (input) input.value = decodedText.trim();
+                    await stopRedeemQrScanner();
+                    lookupTicketRedeem();
+                },
+                () => {}
+            );
+            kioskState.isRedeemCameraRunning = true;
+        } catch (err) {
+            // Fallback to environment / any first available camera
+            try {
+                const devices = await Html5Qrcode.getCameras();
+                if (devices && devices.length > 0) {
+                    if (!kioskState.redeemQrScanner) {
+                        kioskState.redeemQrScanner = new Html5Qrcode('kioskQrReader');
+                    }
+                    await kioskState.redeemQrScanner.start(
+                        devices[0].id,
+                        { fps: 10, qrbox: { width: 220, height: 220 } },
+                        async (decodedText) => {
+                            const input = document.getElementById('redeemInputCode');
+                            if (input) input.value = decodedText.trim();
+                            await stopRedeemQrScanner();
+                            lookupTicketRedeem();
+                        },
+                        () => {}
+                    );
+                    kioskState.isRedeemCameraRunning = true;
+                    return;
+                }
+            } catch (e2) {
+                console.warn('Redeem QR scanner fallback error:', e2);
+            }
+            if (wrap) wrap.style.display = 'none';
+            if (btn) btn.querySelector('span').innerText = 'SCAN QR';
+            alert('Kamera QR tidak dapat diakses pada perangkat ini. Silakan masukkan kode tiket atau gunakan IR scanner.');
+        }
+    }
+
+    async function stopRedeemQrScanner() {
+        const wrap = document.getElementById('kioskRedeemReaderWrap');
+        const btn = document.getElementById('btnToggleRedeemScan');
+        if (kioskState.redeemQrScanner && kioskState.isRedeemCameraRunning) {
+            try {
+                await kioskState.redeemQrScanner.stop();
+                await kioskState.redeemQrScanner.clear();
+            } catch (e) {
+                console.warn('Stop QR scanner warning:', e);
+            }
+        }
+        kioskState.isRedeemCameraRunning = false;
+        kioskState.redeemQrScanner = null;
+        if (wrap) wrap.style.display = 'none';
+        if (btn) btn.querySelector('span').innerText = 'SCAN QR';
     }
 
     async function lookupTicketRedeem() {
@@ -3703,7 +4401,7 @@
 
         const box = document.getElementById('redeemResultBox');
         box.style.display = 'block';
-        box.innerHTML = '<div style="color: #cbd5e1;">Mencari data tiket...</div>';
+        box.innerHTML = '<div style="color: #cbd5e1; font-weight: 700;">Mencari data tiket...</div>';
 
         try {
             const res = await fetch(KIOSK_CONFIG.routes.redeemLookup, {
@@ -3713,33 +4411,181 @@
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify({ code: code })
+                body: JSON.stringify({
+                    code: code,
+                    event_id: KIOSK_CONFIG.eventId
+                })
             });
             const data = await res.json();
 
-            if (data.success) {
-                const statusColor = data.is_redeemed ? '#f87171' : '#22c55e';
-                const statusText = data.is_redeemed ? `SUDAH DITUKAR (${data.redeemed_at})` : 'TIKET VALID - SIAP DITUKAR';
-
-                box.innerHTML = `
-                    <div style="background: ${statusColor}; color: #000000; display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 800; margin-bottom: 8px;">
-                        ${statusText}
-                    </div>
-                    <div style="font-size: 16px; font-weight: 800; color: #ffffff;">${data.event_name}</div>
-                    <div style="font-size: 14px; color: #94a3b8; margin: 4px 0;">Pemegang: <strong>${data.visitor_name}</strong></div>
-                    <div style="font-size: 14px; font-weight: 700; color: var(--primary-orange);">Kategori: ${data.category_name}</div>
-                `;
+            if (data.success && Array.isArray(data.tickets)) {
+                kioskState.redeemData = data;
+                renderRedeemLookupResult(data);
             } else {
-                box.innerHTML = `<div style="color: #f87171; font-weight: 700;">${data.message || 'Tiket tidak ditemukan.'}</div>`;
+                kioskState.redeemData = null;
+                box.innerHTML = `<div style="color: #f87171; font-weight: 800;">${escapeHtml(data.message || 'Tiket tidak ditemukan.')}</div>`;
             }
         } catch (e) {
-            box.innerHTML = '<div style="color: #f87171;">Terjadi kesalahan saat mencari tiket.</div>';
+            box.innerHTML = '<div style="color: #f87171; font-weight: 700;">Terjadi kesalahan saat mencari tiket.</div>';
+        }
+    }
+
+    function renderRedeemLookupResult(data) {
+        const box = document.getElementById('redeemResultBox');
+        if (!box) return;
+
+        const tickets = data.tickets || [];
+        const unredeemed = tickets.filter(t => !t.is_redeemed);
+        const supportsPrint = (data.purchase_flow === 'both' || data.purchase_flow === 'print');
+
+        let listHtml = '<div class="redeem-ticket-list">';
+        tickets.forEach((t) => {
+            const badgeBg = t.is_redeemed ? '#ef4444' : '#22c55e';
+            const badgeLabel = t.is_redeemed ? `SUDAH DITUKAR (${t.redeemed_at || '-'})` : 'SIAP DITUKAR';
+            const checkControl = (!t.is_redeemed && supportsPrint)
+                ? `<input type="checkbox" class="redeem-ticket-check" value="${t.id}" checked style="width: 18px; height: 18px; accent-color: #f95700; cursor: pointer;">`
+                : '';
+
+            listHtml += `
+                <label class="redeem-ticket-row" style="cursor: ${(!t.is_redeemed && supportsPrint) ? 'pointer' : 'default'};">
+                    <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                        ${checkControl}
+                        <div style="min-width: 0;">
+                            <div style="font-size: 13px; font-weight: 800; color: #ffffff;">${escapeHtml(t.visitor_name)} &bull; <span style="color: #ff8533;">${escapeHtml(t.category_name)}</span></div>
+                            <div style="font-size: 11px; color: #94a3b8; font-family: monospace;">${escapeHtml(t.ticket_code)}</div>
+                        </div>
+                    </div>
+                    <span style="background: ${badgeBg}; color: #000000; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 900; white-space: nowrap;">${escapeHtml(badgeLabel)}</span>
+                </label>
+            `;
+        });
+        listHtml += '</div>';
+
+        let actionHtml = '';
+        if (supportsPrint) {
+            if (unredeemed.length > 0) {
+                actionHtml = `
+                    <button type="button" id="btnProcessRedeemPrint" class="btn-kiosk-primary" style="width: 100%; margin-top: 14px; min-height: 50px;" onclick="processRedeemExchange()">
+                        TUKAR & CETAK TIKET TERMAL (${unredeemed.length} TIKET)
+                    </button>
+                `;
+            } else {
+                actionHtml = `
+                    <div style="margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(239,68,68,0.14); border: 1px solid rgba(239,68,68,0.4); color: #fca5a5; font-size: 12px; font-weight: 800;">
+                        Semua tiket pada pencarian ini sudah pernah ditukar / dicetak.
+                    </div>
+                `;
+            }
+        } else if (data.purchase_flow === 'redeem') {
+            actionHtml = `
+                <div style="margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(245,158,11,0.14); border: 1px solid rgba(245,158,11,0.4); color: #fcd34d; font-size: 12px; font-weight: 700;">
+                    Event ini menggunakan gelang fisik (Wristband). Tunjukkan QR E-Voucher ini kepada petugas di Loket Penukaran Gelang.
+                </div>
+            `;
+        } else {
+            actionHtml = `
+                <div style="margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.4); color: #86efac; font-size: 12px; font-weight: 700;">
+                    Tiket aktif & valid! QR E-Voucher ini dapat langsung dipindai oleh petugas di Gate masuk.
+                </div>
+            `;
+        }
+
+        box.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap;">
+                <div>
+                    <div style="font-size: 15px; font-weight: 900; color: #ffffff;">${escapeHtml(data.event_name)}</div>
+                    <div style="font-size: 12px; color: #94a3b8; font-weight: 600; margin-top: 2px;">Invoice: <strong style="color: #e2e8f0;">${escapeHtml(data.reference_no)}</strong> &bull; ${escapeHtml(data.customer_name)}</div>
+                </div>
+                <span style="background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.45); color: #93c5fd; font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase;">
+                    ${tickets.length} TIKET DITEMUKAN
+                </span>
+            </div>
+            ${listHtml}
+            ${actionHtml}
+        `;
+    }
+
+    async function processRedeemExchange() {
+        const checkedBoxes = Array.from(document.querySelectorAll('.redeem-ticket-check:checked'));
+        const ticketIds = checkedBoxes.map(cb => parseInt(cb.value, 10)).filter(Boolean);
+        if (ticketIds.length === 0) {
+            alert('Pilih minimal 1 tiket yang belum ditukar.');
+            return;
+        }
+
+        const btn = document.getElementById('btnProcessRedeemPrint');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = 'MEMPROSES PENUKARAN...';
+        }
+
+        try {
+            const res = await fetch(KIOSK_CONFIG.routes.redeemProcess, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    ticket_ids: ticketIds,
+                    event_id: KIOSK_CONFIG.eventId
+                })
+            });
+            const data = await res.json();
+
+            if (!data.success || !Array.isArray(data.tickets)) {
+                alert(data.message || 'Gagal memproses penukaran tiket.');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = `TUKAR & CETAK TIKET TERMAL (${ticketIds.length} TIKET)`;
+                }
+                return;
+            }
+
+            // Trigger thermal print for exchanged tickets
+            kioskState.lastExchangedPayload = data;
+            printThermalTickets(data.tickets, data);
+
+            const box = document.getElementById('redeemResultBox');
+            if (box) {
+                box.innerHTML = `
+                    <div style="text-align: center; padding: 10px 4px;">
+                        <div style="font-size: 36px; margin-bottom: 6px;">✅</div>
+                        <div style="font-size: 17px; font-weight: 900; color: #4ade80; text-transform: uppercase;">PENUKARAN BERHASIL!</div>
+                        <div style="font-size: 13px; color: #cbd5e1; margin: 6px 0 14px;">
+                            ${data.tickets.length} tiket termal telah ditukar dan diproses untuk dicetak.
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+                            <button type="button" class="btn-kiosk-primary" style="min-height: 46px; padding: 10px 18px;" onclick="printThermalTickets(kioskState.lastExchangedPayload.tickets, kioskState.lastExchangedPayload)">
+                                CETAK ULANG SESI INI
+                            </button>
+                            <button type="button" class="btn-kiosk-secondary" style="min-height: 46px; padding: 10px 18px;" onclick="openRedeemModal()">
+                                TUKAR TIKET LAIN
+                            </button>
+                            <button type="button" class="btn-kiosk-secondary" style="min-height: 46px; padding: 10px 18px;" onclick="closeModal('redeemModal')">
+                                TUTUP
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        } catch (err) {
+            console.error('Redeem process error:', err);
+            alert('Terjadi kesalahan jaringan saat memproses penukaran tiket.');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = `TUKAR & CETAK TIKET TERMAL (${ticketIds.length} TIKET)`;
+            }
         }
     }
 
     // Close modal when clicking backdrop
     window.addEventListener('click', (e) => {
         if (e.target && e.target.classList && e.target.classList.contains('kiosk-modal-backdrop')) {
+            if (e.target.id === 'redeemModal') {
+                stopRedeemQrScanner();
+            }
             e.target.classList.remove('active');
         }
     });
